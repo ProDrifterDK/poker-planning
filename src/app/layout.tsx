@@ -12,10 +12,18 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+        }}
+      >
         <Providers>
           <Header />
-          <main>{children}</main>
+          <main style={{ flex: 1 }}>{children}</main> {/* Hace que el contenido crezca */}
           <Footer />
         </Providers>
       </body>

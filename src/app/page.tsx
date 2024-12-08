@@ -1,5 +1,7 @@
 'use client';
 
+import { firestore } from '@/lib/firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 import { Box, Button, Card, TextField, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -8,9 +10,15 @@ export default function HomePage() {
   const router = useRouter();
   const [roomCode, setRoomCode] = useState('');
 
-  const handleCreateRoom = () => {
-    // Redirige a una nueva sala
-    router.push(`/room/${Math.random().toString(36).substring(7)}`);
+  const handleCreateRoom = async () => {
+    const roomId = Math.random().toString(36).substring(7);
+
+    // Crea la sala en Firestore
+    await setDoc(doc(firestore, 'rooms', roomId), {
+      createdAt: new Date(),
+    });
+
+    router.push(`/room/${roomId}`);
   };
 
   const handleJoinRoom = () => {
