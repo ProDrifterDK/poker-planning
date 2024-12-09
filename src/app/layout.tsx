@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <Providers>
           <Header />
-          <main style={{ flex: 1 }}>{children}</main> {/* Hace que el contenido crezca */}
+          <main style={{ flex: 1 }}>{children}</main>
           <Footer />
         </Providers>
       </body>
