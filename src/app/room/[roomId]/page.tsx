@@ -9,6 +9,7 @@ import {
     Button,
     Snackbar,
     Alert,
+    useTheme,
 } from '@mui/material';
 import { realtimeDb } from '../../../lib/firebaseConfig';
 import { ref, push, onValue, update } from 'firebase/database';
@@ -16,29 +17,30 @@ import { Participant } from '../../../types/room';
 import Card from '../../../components/Card';
 
 export default function RoomPage() {
+    const theme = useTheme();
     const params = useParams();
     const roomId = params.roomId;
 
-    const [name, setName] = useState<string>('');
-    const [isJoined, setIsJoined] = useState<boolean>(false);
+    const [name, setName] = useState('');
+    const [isJoined, setIsJoined] = useState(false);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
-    const [reveal, setReveal] = useState<boolean>(false);
+    const [reveal, setReveal] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [estimationOptions, setEstimationOptions] = useState<(number | string)[]>([1, 2, 3, 5, 8, 13, 21, '☕']);
 
     useEffect(() => {
         const roomRef = ref(realtimeDb, `rooms/${roomId}`);
 
-        // Escuchar cambios en el nodo completo de la sala
         const unsubscribe = onValue(roomRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            // Actualiza "participants"
+            // participants
             if (data.participants) {
                 const participantsArray: Participant[] = Object.entries(data.participants).map(
                     ([key, value]) => {
-                        const participant = value as { name: string; estimation?: number };
+                        const participant = value as { name: string; estimation?: number | string };
                         return {
                             id: key,
                             name: participant.name,
@@ -49,9 +51,14 @@ export default function RoomPage() {
                 setParticipants(participantsArray);
             }
 
-            // Actualiza "reveal" guardado en la DB
+            // reveal
             if (typeof data.reveal === 'boolean') {
                 setReveal(data.reveal);
+            }
+
+            // series
+            if (Array.isArray(data.seriesValues)) {
+                setEstimationOptions(data.seriesValues);
             }
         });
 
@@ -68,62 +75,69 @@ export default function RoomPage() {
     };
 
     const selectEstimation = async (value: number | string) => {
-        const myParticipant = participants.find((p) => p.name === name);
         if (reveal) {
             setErrorMessage('No puedes cambiar tu estimación hasta una nueva votación.');
             return;
         }
-
         setSelectedEstimation(value);
 
+        const myParticipant = participants.find((p) => p.name === name);
         if (myParticipant) {
-            const participantRef = ref(
-                realtimeDb,
-                `rooms/${roomId}/participants/${myParticipant.id}`
-            );
+            const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${myParticipant.id}`);
             await update(participantRef, { estimation: value });
         }
     };
 
-    // Aquí, en lugar de actualizar solo el estado local,
-    // guardamos el flag "reveal" en la DB.
     const revealEstimations = async () => {
         const roomRef = ref(realtimeDb, `rooms/${roomId}`);
         await update(roomRef, { reveal: true });
     };
 
-    // Reiniciamos estimaciones y seteamos "reveal" a false
     const startNewVote = async () => {
-        participants.forEach(async (participant) => {
-            const participantRef = ref(
-                realtimeDb,
-                `rooms/${roomId}/participants/${participant.id}`
-            );
-            await update(participantRef, { estimation: null });
-        });
+        // Poner todas las estimaciones a null
+        await Promise.all(participants.map(async (participant) => {
+            const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participant.id}`);
+            return update(participantRef, { estimation: null });
+        }));
 
+        // Actualizar reveal
         const roomRef = ref(realtimeDb, `rooms/${roomId}`);
         await update(roomRef, { reveal: false });
 
         setSelectedEstimation(null);
     };
 
-    const calculateAverage = () => {
-        const numericEstimations = participants
-            .map((p) => p.estimation)
-            .filter((est) => typeof est === 'number') as number[];
+    /**
+     * Calculamos el promedio y también un conteo de
+     * cuántos eligieron cada opción.
+     */
+    const calculateSummary = () => {
+        const allEstimations = participants.map((p) => p.estimation);
+        const numericEstimations = allEstimations.filter((val) => typeof val === 'number') as number[];
 
-        if (!numericEstimations.length) return '0';
+        // Contamos cuántos eligió cada opción (numérica o string)
+        const counts: Record<string, number> = {};
+        allEstimations.forEach((val) => {
+            if (val == null) return;
+            const key = String(val);
+            counts[key] = (counts[key] || 0) + 1;
+        });
 
-        const total = numericEstimations.reduce((sum, value) => sum + value, 0);
-        return (total / numericEstimations.length).toFixed(2);
+        // Calculamos promedio numérico
+        let avg = 'N/A';
+        if (numericEstimations.length > 0) {
+            const total = numericEstimations.reduce((sum, value) => sum + value, 0);
+            avg = (total / numericEstimations.length).toFixed(2);
+        }
+
+        return { counts, avg };
     };
 
-    const allParticipantsHaveEstimated = participants.every(
-        (participant) => participant.estimation !== null && participant.estimation !== undefined
-    );
+    const { counts, avg } = calculateSummary();
 
-    const estimationOptions = [1, 2, 3, 5, 8, 13, 21, '☕'];
+    const allParticipantsHaveEstimated = participants.every(
+        (p) => p.estimation !== null && p.estimation !== undefined
+    );
 
     return (
         <Box display="flex" flexDirection="column" alignItems="center" padding={2}>
@@ -142,14 +156,21 @@ export default function RoomPage() {
                     <Box marginTop={2}>
                         <Button
                             onClick={joinRoom}
-                            style={{
+                            disabled={!name.trim()}
+                            sx={{
                                 padding: '10px 20px',
                                 fontSize: '16px',
                                 backgroundColor: 'orange',
                                 color: 'white',
                                 fontWeight: 'bold',
                                 borderRadius: '5px',
-                                cursor: 'pointer',
+                                textTransform: 'none',
+                                '&.Mui-disabled': {
+                                    backgroundColor: '#999',
+                                    color: '#ccc',
+                                    cursor: 'not-allowed',
+                                    opacity: 0.7
+                                },
                             }}
                         >
                             Unirse
@@ -168,7 +189,8 @@ export default function RoomPage() {
                     >
                         {participants.map((participant) => {
                             const noSelection =
-                                participant.estimation === null || participant.estimation === undefined;
+                                participant.estimation === null ||
+                                participant.estimation === undefined;
 
                             return (
                                 <Box key={participant.id} textAlign="center">
@@ -195,7 +217,7 @@ export default function RoomPage() {
                     >
                         {estimationOptions.map((value) => (
                             <Card
-                                key={value}
+                                key={String(value)}
                                 value={value}
                                 selected={selectedEstimation === value}
                                 onClick={() => selectEstimation(value)}
@@ -208,7 +230,7 @@ export default function RoomPage() {
                         {allParticipantsHaveEstimated && !reveal && (
                             <Button
                                 onClick={revealEstimations}
-                                style={{
+                                sx={{
                                     padding: '10px 20px',
                                     fontSize: '16px',
                                     backgroundColor: 'blue',
@@ -216,6 +238,7 @@ export default function RoomPage() {
                                     fontWeight: 'bold',
                                     borderRadius: '5px',
                                     cursor: 'pointer',
+                                    textTransform: 'none',
                                 }}
                             >
                                 Revelar Estimaciones
@@ -224,14 +247,15 @@ export default function RoomPage() {
                         {reveal && (
                             <Button
                                 onClick={startNewVote}
-                                style={{
+                                sx={{
                                     padding: '10px 20px',
                                     fontSize: '16px',
-                                    backgroundColor: 'green',
+                                    backgroundColor: theme.palette.primary.main,
                                     color: 'white',
                                     fontWeight: 'bold',
                                     borderRadius: '5px',
                                     cursor: 'pointer',
+                                    textTransform: 'none',
                                 }}
                             >
                                 Nueva Votación
@@ -240,10 +264,87 @@ export default function RoomPage() {
                     </Box>
 
                     {reveal && (
-                        <Box marginTop={2}>
-                            <Typography variant="h6">
-                                Promedio de estimaciones: {calculateAverage()}
+                        <Box marginTop={4}>
+                            <Typography variant="h5" gutterBottom>
+                                Detalle de estimaciones
                             </Typography>
+
+                            {/* 1) Sacamos la cantidad máxima de votos */}
+                            {Object.keys(counts).length > 0 && (
+                                (() => {
+                                    const maxCount = Math.max(...Object.values(counts));
+                                    // Evitar división por cero
+                                    const safeMax = maxCount === 0 ? 1 : maxCount;
+
+                                    return (
+                                        <Box
+                                            display="flex"
+                                            flexWrap="wrap"
+                                            justifyContent="center"
+                                            gap={4}
+                                            marginTop={4}
+                                        >
+                                            {Object.entries(counts).map(([option, count]) => {
+                                                // 2) Barra en función de la proporción de votos
+                                                const barHeight = (count / safeMax) * 100;
+
+                                                return (
+                                                    <Box
+                                                        key={option}
+                                                        display="flex"
+                                                        flexDirection="column"
+                                                        alignItems="center"
+                                                        justifyContent="end"
+                                                        // Ajustamos un alto total suficiente para ver la barra
+                                                        sx={{ height: 200 }}
+                                                    >
+                                                        {/* 3) Barra vertical */}
+                                                        <Box
+                                                            sx={{
+                                                                width: 8,
+                                                                backgroundColor: theme.palette.primary.main,
+                                                                borderRadius: 2,
+                                                                transition: 'height 0.3s ease',
+                                                                // lo situamos "arriba" (al final del contenedor)
+                                                                marginBottom: 1,
+                                                                height: barHeight,
+                                                            }}
+                                                        />
+                                                        {/* 4) La Card pequeñita */}
+                                                        <Card
+                                                            value={option}
+                                                            selected={false}
+                                                            showCorners={false}
+                                                            // Podrías agregarle estilos para que sea más chica
+                                                            sx={{
+                                                                width: 50,
+                                                                height: 60,
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontSize: '1.2rem',
+                                                            }}
+                                                            flipped={false}
+                                                            noSelection={false}
+                                                            onClick={() => { }}
+                                                        />
+                                                        <Typography variant="body2" marginTop={1}>
+                                                            {count} {count === 1 ? 'Voto' : 'Votos'}
+                                                        </Typography>
+                                                    </Box>
+                                                );
+                                            })}
+                                        </Box>
+                                    );
+                                })()
+                            )}
+
+                            {/* 6) Promedio */}
+                            <Box marginTop={4}>
+                                <Typography variant="h6">
+                                    Promedio de estimaciones: {avg}
+                                </Typography>
+                            </Box>
                         </Box>
                     )}
 
