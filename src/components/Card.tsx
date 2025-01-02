@@ -9,6 +9,7 @@ interface CardProps {
     flipped: boolean; // Determina si la carta está volteada
     sx?: SxProps;
     noSelection: boolean; // Para manejar el estado de "sin carta seleccionada"
+    showCorners?: boolean; // <-- Agregado: true/false para decidir si mostrar esquinas
 }
 
 export default function Card({
@@ -18,6 +19,7 @@ export default function Card({
     flipped,
     sx,
     noSelection,
+    showCorners = true, // por defecto true
 }: CardProps) {
     return (
         <Box
@@ -60,52 +62,55 @@ export default function Card({
                         border: selected ? '3px solid #ff9800' : '1px solid #ccc',
                     }}
                 >
-                    {/* Decoración superior izquierda */}
                     {value !== undefined && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: 8,
-                                left: 8,
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                color: '#555',
-                            }}
-                        >
-                            {value}
-                        </Box>
-                    )}
+                        <>
+                            {/* Valor central */}
+                            <Typography
+                                variant="h3"
+                                sx={{
+                                    fontWeight: 'bold',
+                                    color: '#333',
+                                    textAlign: 'center',
+                                    fontFamily: 'serif',
+                                }}
+                            >
+                                {value}
+                            </Typography>
 
-                    {/* Valor central */}
-                    {value !== undefined && (
-                        <Typography
-                            variant="h3"
-                            sx={{
-                                fontWeight: 'bold',
-                                color: '#333',
-                                textAlign: 'center',
-                                fontFamily: 'serif',
-                            }}
-                        >
-                            {value}
-                        </Typography>
-                    )}
+                            {/* Muestra esquinas solo si showCorners === true */}
+                            {showCorners && (
+                                <>
+                                    {/* Decoración superior izquierda */}
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            left: 8,
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            color: '#555',
+                                        }}
+                                    >
+                                        {value}
+                                    </Box>
 
-                    {/* Decoración inferior derecha */}
-                    {value !== undefined && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: 8,
-                                right: 8,
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                color: '#555',
-                                transform: 'rotate(180deg)',
-                            }}
-                        >
-                            {value}
-                        </Box>
+                                    {/* Decoración inferior derecha */}
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 8,
+                                            right: 8,
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            color: '#555',
+                                            transform: 'rotate(180deg)',
+                                        }}
+                                    >
+                                        {value}
+                                    </Box>
+                                </>
+                            )}
+                        </>
                     )}
                 </Box>
 
