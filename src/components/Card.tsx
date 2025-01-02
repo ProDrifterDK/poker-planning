@@ -3,7 +3,7 @@
 import { Box, SxProps, Typography } from '@mui/material';
 
 interface CardProps {
-    value?: number; // Puede ser undefined si no hay selección
+    value?: number | string;
     selected: boolean;
     onClick: () => void;
     flipped: boolean; // Determina si la carta está volteada
