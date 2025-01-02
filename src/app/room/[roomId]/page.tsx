@@ -22,16 +22,21 @@ export default function RoomPage() {
     const [name, setName] = useState<string>('');
     const [isJoined, setIsJoined] = useState<boolean>(false);
     const [participants, setParticipants] = useState<Participant[]>([]);
-    const [selectedEstimation, setSelectedEstimation] = useState<number | null>(null);
+    const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
     const [reveal, setReveal] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        const participantsRef = ref(realtimeDb, `rooms/${roomId}/participants`);
-        const unsubscribe = onValue(participantsRef, (snapshot) => {
+        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+
+        // Escuchar cambios en el nodo completo de la sala
+        const unsubscribe = onValue(roomRef, (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                const participantsArray: Participant[] = Object.entries(data).map(
+            if (!data) return;
+
+            // Actualiza "participants"
+            if (data.participants) {
+                const participantsArray: Participant[] = Object.entries(data.participants).map(
                     ([key, value]) => {
                         const participant = value as { name: string; estimation?: number };
                         return {
@@ -42,6 +47,11 @@ export default function RoomPage() {
                     }
                 );
                 setParticipants(participantsArray);
+            }
+
+            // Actualiza "reveal" guardado en la DB
+            if (typeof data.reveal === 'boolean') {
+                setReveal(data.reveal);
             }
         });
 
@@ -57,7 +67,7 @@ export default function RoomPage() {
         }
     };
 
-    const selectEstimation = async (value: number) => {
+    const selectEstimation = async (value: number | string) => {
         const myParticipant = participants.find((p) => p.name === name);
         if (reveal) {
             setErrorMessage('No puedes cambiar tu estimación hasta una nueva votación.');
@@ -75,31 +85,45 @@ export default function RoomPage() {
         }
     };
 
-    const revealEstimations = () => {
-        setReveal(true);
+    // Aquí, en lugar de actualizar solo el estado local,
+    // guardamos el flag "reveal" en la DB.
+    const revealEstimations = async () => {
+        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+        await update(roomRef, { reveal: true });
     };
 
+    // Reiniciamos estimaciones y seteamos "reveal" a false
     const startNewVote = async () => {
         participants.forEach(async (participant) => {
-            const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participant.id}`);
+            const participantRef = ref(
+                realtimeDb,
+                `rooms/${roomId}/participants/${participant.id}`
+            );
             await update(participantRef, { estimation: null });
         });
 
-        setReveal(false);
+        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+        await update(roomRef, { reveal: false });
+
         setSelectedEstimation(null);
     };
 
     const calculateAverage = () => {
-        const estimations = participants
-            .map((participant) => participant.estimation)
-            .filter((estimation) => estimation !== null && estimation !== undefined) as number[];
-        const total = estimations.reduce((sum, value) => sum + value, 0);
-        return (total / estimations.length).toFixed(2);
+        const numericEstimations = participants
+            .map((p) => p.estimation)
+            .filter((est) => typeof est === 'number') as number[];
+
+        if (!numericEstimations.length) return '0';
+
+        const total = numericEstimations.reduce((sum, value) => sum + value, 0);
+        return (total / numericEstimations.length).toFixed(2);
     };
 
     const allParticipantsHaveEstimated = participants.every(
         (participant) => participant.estimation !== null && participant.estimation !== undefined
     );
+
+    const estimationOptions = [1, 2, 3, 5, 8, 13, 21, '☕'];
 
     return (
         <Box display="flex" flexDirection="column" alignItems="center" padding={2}>
@@ -169,7 +193,7 @@ export default function RoomPage() {
                         marginTop={4}
                         gap={4}
                     >
-                        {[1, 2, 3, 5, 8, 13, 21].map((value) => (
+                        {estimationOptions.map((value) => (
                             <Card
                                 key={value}
                                 value={value}

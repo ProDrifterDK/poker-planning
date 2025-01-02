@@ -1,9 +1,7 @@
-// src/types/room.ts
-
 export interface Participant {
   id: string;
   name: string;
-  estimation?: number;
+  estimation?: number | string;
 }
 
 export interface Room {
