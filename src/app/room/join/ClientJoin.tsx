@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '@/lib/firebaseConfig';
+import { ref, get } from 'firebase/database';
+import { realtimeDb } from '@/lib/firebaseConfig';
 import { Box, Typography } from '@mui/material';
 
 export default function ClientJoin() {
@@ -15,10 +15,9 @@ export default function ClientJoin() {
         const checkRoomAndRedirect = async () => {
             if (!roomCode) return;
 
-            const roomDocRef = doc(firestore, 'rooms', roomCode);
-            const roomSnapshot = await getDoc(roomDocRef);
-
-            if (roomSnapshot.exists()) {
+            const roomRef = ref(realtimeDb, `rooms/${roomCode}`);
+            const snapshot = await get(roomRef);
+            if (snapshot.exists()) {
                 router.push(`/room/${roomCode}`);
             } else {
                 alert('La sala no existe');
