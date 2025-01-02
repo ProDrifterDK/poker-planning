@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, SxProps, Typography } from '@mui/material';
+import { Box, SxProps, Typography, useTheme } from '@mui/material';
 
 interface CardProps {
     value?: number | string;
@@ -9,7 +9,8 @@ interface CardProps {
     flipped: boolean; // Determina si la carta está volteada
     sx?: SxProps;
     noSelection: boolean; // Para manejar el estado de "sin carta seleccionada"
-    showCorners?: boolean; // <-- Agregado: true/false para decidir si mostrar esquinas
+    showCorners?: boolean; // true/false para decidir si mostrar esquinas
+    fontSize?: string | number; // <-- nuevo prop para tamaño de fuente
 }
 
 export default function Card({
@@ -19,8 +20,14 @@ export default function Card({
     flipped,
     sx,
     noSelection,
-    showCorners = true, // por defecto true
+    showCorners = true,
+    fontSize = '2.5rem'
 }: CardProps) {
+    const theme = useTheme();
+
+    // Obtenemos la paleta custom de "card"
+    const cardPalette = theme.palette.card || {};
+
     return (
         <Box
             onClick={onClick}
@@ -29,7 +36,7 @@ export default function Card({
                 height: 150,
                 perspective: '1000px',
                 cursor: 'pointer',
-                ...sx,
+                ...sx, // sx del prop, sobrescribe lo anterior
             }}
         >
             <Box
@@ -50,28 +57,36 @@ export default function Card({
                         width: '100%',
                         height: '100%',
                         backfaceVisibility: 'hidden',
-                        backgroundColor: noSelection ? '#e0e0e0' : '#ffffff', // Gris si no hay selección
-                        borderRadius: 5,
+                        backgroundColor: noSelection
+                            ? cardPalette.noSelectionBg
+                            : cardPalette.defaultBg,
+
+                        borderRadius: 2,  // 1 = 4px en MUI spacing
                         boxShadow: selected
-                            ? '0px 4px 12px rgba(255, 152, 0, 0.7)'
-                            : '0px 4px 8px rgba(0, 0, 0, 0.2)',
+                            ? cardPalette.boxShadowSelected
+                            : cardPalette.boxShadow,
+
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: selected ? '3px solid #ff9800' : '1px solid #ccc',
+
+                        border: selected
+                            ? `3px solid ${cardPalette.borderSelected}`
+                            : `1px solid ${cardPalette.border}`,
                     }}
                 >
                     {value !== undefined && (
                         <>
                             {/* Valor central */}
                             <Typography
-                                variant="h3"
+                                // Usamos fontSize (prop) y color de la paleta
                                 sx={{
                                     fontWeight: 'bold',
-                                    color: '#333',
                                     textAlign: 'center',
                                     fontFamily: 'serif',
+                                    fontSize: fontSize,
+                                    color: cardPalette.text,
                                 }}
                             >
                                 {value}
@@ -86,9 +101,9 @@ export default function Card({
                                             position: 'absolute',
                                             top: 8,
                                             left: 8,
-                                            fontSize: '14px',
+                                            fontSize: 14,
                                             fontWeight: 'bold',
-                                            color: '#555',
+                                            color: cardPalette.text,
                                         }}
                                     >
                                         {value}
@@ -100,9 +115,9 @@ export default function Card({
                                             position: 'absolute',
                                             bottom: 8,
                                             right: 8,
-                                            fontSize: '14px',
+                                            fontSize: 14,
                                             fontWeight: 'bold',
-                                            color: '#555',
+                                            color: cardPalette.text,
                                             transform: 'rotate(180deg)',
                                         }}
                                     >
@@ -121,9 +136,9 @@ export default function Card({
                         width: '100%',
                         height: '100%',
                         backfaceVisibility: 'hidden',
-                        backgroundColor: '#1976d2',
-                        borderRadius: 5,
-                        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+                        backgroundColor: theme.palette.primary.main,
+                        borderRadius: 1,
+                        boxShadow: cardPalette.boxShadow,
                         transform: 'rotateY(180deg)',
                         display: 'flex',
                         justifyContent: 'center',
