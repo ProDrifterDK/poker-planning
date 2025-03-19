@@ -3,6 +3,7 @@
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import ThemeToggleButton from './ThemeToggleButton';
+import { OnboardingButton } from './Onboarding';
 
 export default function Header() {
     const router = useRouter();
@@ -19,7 +20,8 @@ export default function Header() {
                 >
                     Planning Poker
                 </Typography>
-                <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <OnboardingButton variant="icon" color="inherit" />
                     <ThemeToggleButton />
                 </Box>
             </Toolbar>

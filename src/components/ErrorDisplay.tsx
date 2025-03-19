@@ -46,7 +46,7 @@ export default function ErrorDisplay({
       <Typography variant="body1" fontWeight="bold">
         {currentError.message}
       </Typography>
-      
+
       {showDetails && currentError.details !== undefined && currentError.details !== null && (
         <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
           {typeof currentError.details === 'object'
@@ -54,7 +54,7 @@ export default function ErrorDisplay({
             : String(currentError.details)}
         </Typography>
       )}
-      
+
       {showRecoveryButton && currentError.recoveryAction && (
         <Button
           onClick={() => {
@@ -79,8 +79,8 @@ export default function ErrorDisplay({
         onClose={() => clearError()}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          severity={getSeverity(currentError.type)} 
+        <Alert
+          severity={getSeverity(currentError.type)}
           onClose={() => clearError()}
           sx={{ width: "100%" }}
         >
@@ -93,8 +93,8 @@ export default function ErrorDisplay({
   // Si no se usa Snackbar, mostrar un Alert normal
   return (
     <Box sx={{ mb: 2, width: "100%" }}>
-      <Alert 
-        severity={getSeverity(currentError.type)} 
+      <Alert
+        severity={getSeverity(currentError.type)}
         onClose={() => clearError()}
       >
         {errorContent}
@@ -114,17 +114,17 @@ function getSeverity(errorType: ErrorType): "error" | "warning" | "info" | "succ
     case ErrorType.ROOM_CREATION_FAILED:
     case ErrorType.UNKNOWN_ERROR:
       return "error";
-      
+
     case ErrorType.TIMEOUT_ERROR:
     case ErrorType.JOIN_ROOM_FAILED:
     case ErrorType.VOTE_FAILED:
       return "warning";
-      
+
     case ErrorType.DATA_NOT_FOUND:
     case ErrorType.INVALID_DATA:
     case ErrorType.VALIDATION_ERROR:
       return "info";
-      
+
     default:
       return "error";
   }

@@ -3,3 +3,8 @@ jest.setup.js
 cypress.config.js
 cypress/
 __tests__/
+node_modules
+.next
+out
+*.config.js
+public
