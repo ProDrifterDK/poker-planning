@@ -42,19 +42,21 @@ export default function ErrorDisplay({
 
   // Contenido del error
   const errorContent = (
-    <>
+    <React.Fragment>
       <Typography variant="body1" fontWeight="bold">
         {currentError.message}
       </Typography>
       
-      {showDetails && currentError.details && (
+      {showDetails && currentError.details !== undefined && currentError.details !== null && (
         <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
-          {JSON.stringify(currentError.details)}
+          {typeof currentError.details === 'object'
+            ? JSON.stringify(currentError.details)
+            : String(currentError.details)}
         </Typography>
       )}
       
       {showRecoveryButton && currentError.recoveryAction && (
-        <Button 
+        <Button
           onClick={() => {
             currentError.recoveryAction?.();
             clearError();
@@ -65,7 +67,7 @@ export default function ErrorDisplay({
           {recoveryButtonText}
         </Button>
       )}
-    </>
+    </React.Fragment>
   );
 
   // Si se usa Snackbar, envolver el contenido en un Snackbar
