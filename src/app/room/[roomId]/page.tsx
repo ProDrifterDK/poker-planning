@@ -11,146 +11,69 @@ import {
     Alert,
     useTheme,
     IconButton,
+    CircularProgress,
 } from '@mui/material';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import MenuCloseIcon from '@mui/icons-material/Menu';
-import { realtimeDb } from '../../../lib/firebaseConfig';
-import { ref, push, onValue, update } from 'firebase/database';
-import { Participant } from '../../../types/room';
 import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
+import { useRoomStore } from '@/store/roomStore';
 
 export default function RoomPage() {
     const theme = useTheme();
     const params = useParams();
-    const roomId = params.roomId;
-
+    const roomId = params.roomId as string;
     const [name, setName] = useState('');
-    const [isJoined, setIsJoined] = useState(false);
-    const [participants, setParticipants] = useState<Participant[]>([]);
-    const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
-    const [reveal, setReveal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [estimationOptions, setEstimationOptions] = useState<(number | string)[]>([1, 2, 3, 5, 8, 13, 21, '☕']);
-
-    // Estado de la sidebar plegable
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Este estado local indica cuál es el "Issue actual" en discusión
-    const [currentIssueId, setCurrentIssueId] = useState<string | null>(null);
+    // Usar el store de Zustand
+    const {
+        roomId: storeRoomId,
+        participants,
+        currentIssueId,
+        reveal,
+        estimationOptions,
+        error,
+        isLoading,
+        joinRoomWithName,
+        selectEstimation,
+        selectCurrentIssue,
+        revealEstimations,
+        startNewVote,
+        setError,
+    } = useRoomStore();
 
-    useEffect(() => {
-        if (!roomId) return;
+    // Estado local para la estimación seleccionada
+    const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
 
-        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-        const unsubscribe = onValue(roomRef, (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            // Participants
-            if (data.participants) {
-                const participantsArray: Participant[] = Object.entries(data.participants).map(
-                    ([key, value]) => {
-                        const participant = value as { name: string; estimation?: number | string };
-                        return {
-                            id: key,
-                            name: participant.name,
-                            estimation: participant.estimation,
-                        };
-                    }
-                );
-                setParticipants(participantsArray);
-            }
-
-            // reveal
-            if (typeof data.reveal === 'boolean') {
-                setReveal(data.reveal);
-            }
-
-            // series
-            if (Array.isArray(data.seriesValues)) {
-                setEstimationOptions(data.seriesValues);
-            }
-
-            // currentIssueId
-            if (typeof data.currentIssueId === 'string') {
-                setCurrentIssueId(data.currentIssueId);
-            } else {
-                setCurrentIssueId(null);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [roomId]);
+    // Verificar si el usuario ya está en la sala
+    const isJoined = storeRoomId === roomId && participants.length > 0;
 
     // Unirse a la sala
-    const joinRoom = async () => {
+    const handleJoinRoom = async () => {
         if (!roomId) return;
-        if (name.trim()) {
-            const participantsRef = ref(realtimeDb, `rooms/${roomId}/participants`);
-            const newParticipantRef = push(participantsRef);
-            await update(newParticipantRef, { name });
-            setIsJoined(true);
+        if (!name.trim()) {
+            setErrorMessage('Debes ingresar tu nombre');
+            return;
+        }
+
+        try {
+            await joinRoomWithName(roomId, name);
+        } catch (error) {
+            console.error('Error al unirse a la sala:', error);
         }
     };
 
     // Seleccionar carta
-    const selectEstimation = async (value: number | string) => {
+    const handleSelectEstimation = async (value: number | string) => {
         if (reveal) {
             setErrorMessage('No puedes cambiar tu estimación hasta una nueva votación.');
             return;
         }
+        
         setSelectedEstimation(value);
-
-        const myParticipant = participants.find((p) => p.name === name);
-        if (myParticipant) {
-            const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${myParticipant.id}`);
-            await update(participantRef, { estimation: value });
-        }
-    };
-
-    // Revelar estimaciones
-    const revealEstimations = async () => {
-        if (!roomId) return;
-        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-        await update(roomRef, { reveal: true });
-
-        // Calcular promedio local
-        const { avg } = calculateSummary();
-
-        // Si hay un issue actual, guardamos su promedio en la DB
-        if (currentIssueId) {
-            const issueRef = ref(realtimeDb, `rooms/${roomId}/issues/${currentIssueId}`);
-            await update(issueRef, { average: avg });
-        }
-    };
-
-    // "Volver a votar"
-    const startNewVote = async () => {
-        if (!roomId) return;
-
-        // Poner todas las estimaciones a null
-        await Promise.all(
-            participants.map(async (participant) => {
-                const participantRef = ref(
-                    realtimeDb,
-                    `rooms/${roomId}/participants/${participant.id}`
-                );
-                return update(participantRef, { estimation: null });
-            })
-        );
-
-        // reveal = false
-        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-        await update(roomRef, { reveal: false });
-
-        setSelectedEstimation(null);
-
-        // Limpia el promedio del issue actual
-        if (currentIssueId) {
-            const issueRef = ref(realtimeDb, `rooms/${roomId}/issues/${currentIssueId}`);
-            await update(issueRef, { average: null });
-        }
+        await selectEstimation(value);
     };
 
     // Calcular conteo y promedio
@@ -182,6 +105,21 @@ export default function RoomPage() {
     // Toggle sidebar
     const handleToggleSidebar = () => setSidebarOpen((prev) => !prev);
 
+    // Wrapper para selectCurrentIssue que acepta string | null
+    const handleSelectCurrentIssue = (issueId: string | null) => {
+        if (issueId !== null) {
+            selectCurrentIssue(issueId);
+        }
+    };
+
+    // Efecto para limpiar el error
+    useEffect(() => {
+        if (error) {
+            setErrorMessage(error);
+            setError(null);
+        }
+    }, [error, setError]);
+
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
@@ -191,38 +129,54 @@ export default function RoomPage() {
                 </Typography>
 
                 {!isJoined ? (
-                    <>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            maxWidth: 500,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            p: 3,
+                            borderRadius: 2,
+                            boxShadow: 3,
+                            bgcolor: 'background.paper',
+                        }}
+                    >
+                        <Typography variant="h5" textAlign="center">
+                            Unirse a la Sala
+                        </Typography>
+                        
                         <TextField
                             label="Tu nombre"
                             variant="outlined"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             fullWidth
+                            disabled={isLoading}
                         />
-                        <Box marginTop={2}>
-                            <Button
-                                onClick={joinRoom}
-                                disabled={!name.trim()}
-                                sx={{
-                                    padding: '10px 20px',
-                                    fontSize: '16px',
-                                    backgroundColor: 'orange',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    borderRadius: '5px',
-                                    textTransform: 'none',
-                                    '&.Mui-disabled': {
-                                        backgroundColor: '#999',
-                                        color: '#ccc',
-                                        cursor: 'not-allowed',
-                                        opacity: 0.7,
-                                    },
-                                }}
-                            >
-                                Unirse
-                            </Button>
-                        </Box>
-                    </>
+                        
+                        <Button
+                            onClick={handleJoinRoom}
+                            disabled={!name.trim() || isLoading}
+                            sx={{
+                                padding: '10px 20px',
+                                fontSize: '16px',
+                                backgroundColor: 'orange',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                borderRadius: '5px',
+                                textTransform: 'none',
+                                '&.Mui-disabled': {
+                                    backgroundColor: '#999',
+                                    color: '#ccc',
+                                    cursor: 'not-allowed',
+                                    opacity: 0.7,
+                                },
+                            }}
+                        >
+                            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Unirse'}
+                        </Button>
+                    </Box>
                 ) : (
                     <>
                         {/* Botón toggle sidebar */}
@@ -287,7 +241,7 @@ export default function RoomPage() {
                                     key={String(value)}
                                     value={value}
                                     selected={selectedEstimation === value}
-                                    onClick={() => selectEstimation(value)}
+                                    onClick={() => handleSelectEstimation(value)}
                                     flipped={false}
                                     noSelection={false}
                                 />
@@ -434,7 +388,7 @@ export default function RoomPage() {
                     <IssueSidebar
                         roomId={roomId}
                         currentIssueId={currentIssueId}
-                        setCurrentIssueId={setCurrentIssueId}
+                        setCurrentIssueId={handleSelectCurrentIssue}
                     />
                 </Box>
             )}

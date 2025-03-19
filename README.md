@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Planning Poker Pro
 
-## Getting Started
+Una aplicación de Planning Poker para estimación ágil de tareas, desarrollada con Next.js, TypeScript, Material-UI y Firebase.
 
-First, run the development server:
+## Características
 
+- Creación de salas con código único
+- Diferentes series de estimación (Fibonacci, T-Shirt, Powers of 2, Days)
+- Votación en tiempo real
+- Revelación sincronizada de votos
+- Cálculo automático de promedios
+- Gestión de issues
+- Soporte para temas claro/oscuro
+
+## Tecnologías
+
+- **Frontend**: Next.js 15 con TypeScript
+- **UI**: Material-UI (MUI)
+- **Estado**: Zustand para gestión de estado global
+- **Backend**: Firebase Realtime Database
+- **Testing**: Jest, React Testing Library, Cypress
+
+## Comenzando
+
+### Requisitos previos
+
+- Node.js 18.0 o superior
+- npm 9.0 o superior
+
+### Instalación
+
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/tu-usuario/planning-poker-pro.git
+   cd planning-poker-pro
+   ```
+
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+
+3. Configura las variables de entorno:
+   Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables:
+   ```
+   NEXT_PUBLIC_FIREBASE_API_KEY=tu-api-key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-auth-domain
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu-project-id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-storage-bucket
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu-messaging-sender-id
+   NEXT_PUBLIC_FIREBASE_APP_ID=tu-app-id
+   NEXT_PUBLIC_FIREBASE_DATABASE_URL=tu-database-url
+   ```
+
+4. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+
+5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
+## Testing
+
+El proyecto incluye tests unitarios, de integración y end-to-end.
+
+### Tests unitarios y de integración
+
+Ejecutar todos los tests:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ejecutar tests en modo watch:
+```bash
+npm run test:watch
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Generar informe de cobertura:
+```bash
+npm run test:coverage
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Tests end-to-end
 
-## Learn More
+Abrir Cypress en modo interactivo:
+```bash
+npm run cypress
+```
 
-To learn more about Next.js, take a look at the following resources:
+Ejecutar tests de Cypress en modo headless:
+```bash
+npm run cypress:headless
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ejecutar tests de Cypress con servidor de desarrollo:
+```bash
+npm run cypress:ci
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura del proyecto
 
-## Deploy on Vercel
+```
+├── __tests__/              # Tests unitarios y de integración
+│   ├── unit/               # Tests unitarios
+│   ├── integration/        # Tests de integración
+│   └── mocks/              # Mocks para testing
+├── cypress/                # Tests end-to-end
+├── public/                 # Archivos estáticos
+├── src/
+│   ├── app/                # Rutas y páginas (Next.js App Router)
+│   ├── components/         # Componentes React
+│   ├── context/            # Contextos de React
+│   ├── lib/                # Utilidades y configuraciones
+│   ├── store/              # Stores de Zustand
+│   ├── styles/             # Estilos globales
+│   └── types/              # Definiciones de TypeScript
+├── .env.local              # Variables de entorno locales
+├── jest.config.js          # Configuración de Jest
+├── jest.setup.js           # Configuración de setup para Jest
+└── cypress.config.js       # Configuración de Cypress
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Licencia
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para más detalles.
