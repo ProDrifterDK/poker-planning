@@ -12,9 +12,11 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Divider,
 } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
+import { OnboardingButton } from "./Onboarding";
 
 export default function RoomManager() {
   const router = useRouter();
@@ -84,12 +86,23 @@ export default function RoomManager() {
       padding={2}
       gap={4}
     >
-      <Typography variant="h3" marginBottom={2}>
-        Planning Poker
-      </Typography>
+      <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+        <Typography variant="h3" marginBottom={1}>
+          Planning Poker
+        </Typography>
+        
+        <Box display="flex" alignItems="center" gap={2}>
+          <OnboardingButton variant="text" />
+          <Divider orientation="vertical" flexItem />
+          <Typography variant="body2" color="text.secondary">
+            ¿Primera vez? Prueba nuestro tutorial interactivo
+          </Typography>
+        </Box>
+      </Box>
 
       {/* Sección para CREAR SALA */}
       <Box
+        data-onboarding="create-room"
         sx={{
           p: 4,
           width: "100%",
@@ -152,6 +165,7 @@ export default function RoomManager() {
 
       {/* Sección para UNIRSE A SALA */}
       <Box
+        data-onboarding="join-room"
         sx={{
           p: 4,
           width: "100%",

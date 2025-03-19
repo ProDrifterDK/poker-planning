@@ -230,6 +230,7 @@ export default function RoomPage() {
 
                         {/* Opciones de estimación */}
                         <Box
+                            data-onboarding="card-deck"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="center"
@@ -252,6 +253,7 @@ export default function RoomPage() {
                         <Box marginTop={4} display="flex" justifyContent="center" gap={2}>
                             {allParticipantsHaveEstimated && !reveal && (
                                 <Button
+                                    data-onboarding="reveal-button"
                                     onClick={revealEstimations}
                                     sx={{
                                         padding: '10px 20px',
@@ -386,6 +388,7 @@ export default function RoomPage() {
                     }}
                 >
                     <IssueSidebar
+                        data-onboarding="issue-sidebar"
                         roomId={roomId}
                         currentIssueId={currentIssueId}
                         setCurrentIssueId={handleSelectCurrentIssue}

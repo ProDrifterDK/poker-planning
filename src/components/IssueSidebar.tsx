@@ -197,7 +197,6 @@ export default function IssueSidebar({
                     </DialogContentText>
 
                     <TextField
-                        autoFocus
                         margin="dense"
                         label="Issue Key (ej: PROJ-123)"
                         type="text"
