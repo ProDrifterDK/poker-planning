@@ -1,6 +1,6 @@
 'use client';
 
-import { SxProps, Typography, useTheme } from '@mui/material';
+import { SxProps, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Box } from '@mui/material';
 
@@ -29,6 +29,8 @@ export default function Card({
     fontSize = '2.5rem'
 }: CardProps) {
     const theme = useTheme();
+    // Usamos useMediaQuery para detectar si estamos en un dispositivo móvil
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Obtenemos la paleta custom de "card"
     const cardPalette = theme.palette.card || {};
@@ -91,8 +93,8 @@ export default function Card({
             whileTap="tap"
             variants={containerVariants}
             sx={{
-                width: 100,
-                height: 150,
+                width: isMobile ? 70 : 100,
+                height: isMobile ? 105 : 150,
                 perspective: '1000px',
                 cursor: 'pointer',
                 ...sx, // sx del prop, sobrescribe lo anterior
@@ -157,7 +159,7 @@ export default function Card({
                                         fontWeight: 'bold',
                                         textAlign: 'center',
                                         fontFamily: 'serif',
-                                        fontSize: fontSize,
+                                        fontSize: isMobile ? `calc(${fontSize} * 0.7)` : fontSize,
                                         color: cardPalette.text,
                                     }}
                                 >
@@ -175,9 +177,9 @@ export default function Card({
                                         transition={{ delay: 0.1, duration: 0.3 }}
                                         style={{
                                             position: 'absolute',
-                                            top: 8,
-                                            left: 8,
-                                            fontSize: 14,
+                                            top: isMobile ? 5 : 8,
+                                            left: isMobile ? 5 : 8,
+                                            fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
                                             color: cardPalette.text,
                                         }}
@@ -192,9 +194,9 @@ export default function Card({
                                         transition={{ delay: 0.1, duration: 0.3 }}
                                         style={{
                                             position: 'absolute',
-                                            bottom: 8,
-                                            right: 8,
-                                            fontSize: 14,
+                                            bottom: isMobile ? 5 : 8,
+                                            right: isMobile ? 5 : 8,
+                                            fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
                                             color: cardPalette.text,
                                             transform: 'rotate(180deg)',

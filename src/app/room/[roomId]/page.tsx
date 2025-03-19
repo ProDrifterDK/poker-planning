@@ -124,7 +124,13 @@ export default function RoomPage() {
         <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
             <Box flex="1" display="flex" flexDirection="column" alignItems="center" padding={2}>
-                <Typography variant="h4" gutterBottom>
+                <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{
+                        fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                    }}
+                >
                     Sala: {roomId}
                 </Typography>
 
@@ -203,8 +209,13 @@ export default function RoomPage() {
                             justifyContent="center"
                             alignItems="center"
                             flexWrap="wrap"
-                            gap={4}
+                            gap={{ xs: 2, sm: 3, md: 4 }}
                             marginTop={4}
+                            sx={{
+                                width: '100%',
+                                maxWidth: '100vw',
+                                px: { xs: 1, sm: 2 }
+                            }}
                         >
                             {participants.map((participant) => {
                                 const noSelection =
@@ -213,7 +224,17 @@ export default function RoomPage() {
 
                                 return (
                                     <Box key={participant.id} textAlign="center">
-                                        <Typography variant="body2" gutterBottom>
+                                        <Typography
+                                            variant="body2"
+                                            gutterBottom
+                                            sx={{
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                maxWidth: { xs: 70, sm: 100 }
+                                            }}
+                                        >
                                             {participant.name}
                                         </Typography>
                                         <Card
@@ -235,7 +256,13 @@ export default function RoomPage() {
                             flexWrap="wrap"
                             justifyContent="center"
                             marginTop={4}
-                            gap={4}
+                            gap={{ xs: 2, sm: 3, md: 4 }}
+                            sx={{
+                                width: '100%',
+                                maxWidth: '100vw',
+                                px: { xs: 1, sm: 2 },
+                                overflowX: 'hidden'
+                            }}
                         >
                             {estimationOptions.map((value) => (
                                 <Card
@@ -256,8 +283,8 @@ export default function RoomPage() {
                                     data-onboarding="reveal-button"
                                     onClick={revealEstimations}
                                     sx={{
-                                        padding: '10px 20px',
-                                        fontSize: '16px',
+                                        padding: { xs: '8px 16px', sm: '10px 20px' },
+                                        fontSize: { xs: '14px', sm: '16px' },
                                         backgroundColor: theme.palette.primary.main,
                                         color: 'white',
                                         fontWeight: 'bold',
@@ -273,8 +300,8 @@ export default function RoomPage() {
                                 <Button
                                     onClick={startNewVote}
                                     sx={{
-                                        padding: '10px 20px',
-                                        fontSize: '16px',
+                                        padding: { xs: '8px 16px', sm: '10px 20px' },
+                                        fontSize: { xs: '14px', sm: '16px' },
                                         backgroundColor: theme.palette.secondary.main,
                                         color: 'white',
                                         fontWeight: 'bold',
@@ -291,7 +318,13 @@ export default function RoomPage() {
                         {/* Detalle de estimaciones y promedio */}
                         {reveal && (
                             <Box marginTop={4}>
-                                <Typography variant="h5" gutterBottom>
+                                <Typography
+                                    variant="h5"
+                                    gutterBottom
+                                    sx={{
+                                        fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                                    }}
+                                >
                                     Detalle de estimaciones
                                 </Typography>
                                 {Object.keys(counts).length > 0 && (() => {
@@ -302,8 +335,13 @@ export default function RoomPage() {
                                             display="flex"
                                             flexWrap="wrap"
                                             justifyContent="center"
-                                            gap={4}
+                                            gap={{ xs: 2, sm: 3, md: 4 }}
                                             marginTop={4}
+                                            sx={{
+                                                width: '100%',
+                                                maxWidth: '100vw',
+                                                px: { xs: 1, sm: 2 }
+                                            }}
                                         >
                                             {Object.entries(counts).map(([option, count]) => {
                                                 const barHeight = (count / safeMax) * 100;
@@ -314,11 +352,11 @@ export default function RoomPage() {
                                                         flexDirection="column"
                                                         alignItems="center"
                                                         justifyContent="end"
-                                                        sx={{ height: 200 }}
+                                                        sx={{ height: { xs: 150, sm: 200 } }}
                                                     >
                                                         <Box
                                                             sx={{
-                                                                width: 8,
+                                                                width: { xs: 6, sm: 8 },
                                                                 backgroundColor: theme.palette.primary.main,
                                                                 borderRadius: 2,
                                                                 transition: 'height 0.3s ease',
@@ -332,8 +370,8 @@ export default function RoomPage() {
                                                             showCorners={false}
                                                             fontSize="1.2rem"
                                                             sx={{
-                                                                width: 50,
-                                                                height: 60,
+                                                                width: { xs: 40, sm: 50 },
+                                                                height: { xs: 50, sm: 60 },
                                                                 display: 'flex',
                                                                 alignItems: 'center',
                                                                 justifyContent: 'center',
@@ -342,7 +380,13 @@ export default function RoomPage() {
                                                             noSelection={false}
                                                             onClick={() => { }}
                                                         />
-                                                        <Typography variant="body2" marginTop={1}>
+                                                        <Typography
+                                                            variant="body2"
+                                                            marginTop={1}
+                                                            sx={{
+                                                                fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                                                            }}
+                                                        >
                                                             {count} {count === 1 ? 'Voto' : 'Votos'}
                                                         </Typography>
                                                     </Box>
@@ -352,7 +396,12 @@ export default function RoomPage() {
                                     );
                                 })()}
                                 <Box marginTop={4}>
-                                    <Typography variant="h6">
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontSize: { xs: '1rem', sm: '1.25rem' }
+                                        }}
+                                    >
                                         Promedio de estimaciones: {avg}
                                     </Typography>
                                 </Box>
