@@ -86,17 +86,13 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
           elevation={3}
           sx={{
             position: 'fixed',
-            zIndex: 1500,
-            width: 320,
-            maxWidth: '90vw',
-            boxShadow: 3,
-            // Centrado absoluto usando inset y margin auto
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            margin: 'auto',
-            height: 'fit-content',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: { xs: '90%', sm: 450 },
+            p: 3,
+            borderRadius: 2,
+            zIndex: 1000,
             backgroundColor: theme.palette.background.paper,
             border: `1px solid ${theme.palette.divider}`,
           }}
