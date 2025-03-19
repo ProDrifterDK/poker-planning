@@ -130,12 +130,19 @@ export default function RoomPage() {
                     sx={{
                         fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
                     }}
+                    role="heading"
+                    aria-level={1}
+                    aria-label={`Sala de Planning Poker con código ${roomId}`}
                 >
                     Sala: {roomId}
                 </Typography>
 
                 {!isJoined ? (
                     <Box
+                        component="form"
+                        role="form"
+                        aria-labelledby="join-room-title"
+                        onSubmit={(e) => { e.preventDefault(); handleJoinRoom(); }}
                         sx={{
                             width: '100%',
                             maxWidth: 500,
@@ -148,7 +155,13 @@ export default function RoomPage() {
                             bgcolor: 'background.paper',
                         }}
                     >
-                        <Typography variant="h5" textAlign="center">
+                        <Typography
+                            variant="h5"
+                            textAlign="center"
+                            id="join-room-title"
+                            role="heading"
+                            aria-level={2}
+                        >
                             Unirse a la Sala
                         </Typography>
                         
@@ -159,9 +172,15 @@ export default function RoomPage() {
                             onChange={(e) => setName(e.target.value)}
                             fullWidth
                             disabled={isLoading}
+                            required
+                            aria-required="true"
+                            inputProps={{
+                                'aria-label': 'Tu nombre para unirte a la sala',
+                            }}
                         />
                         
                         <Button
+                            type="submit"
                             onClick={handleJoinRoom}
                             disabled={!name.trim() || isLoading}
                             sx={{
@@ -179,8 +198,9 @@ export default function RoomPage() {
                                     opacity: 0.7,
                                 },
                             }}
+                            aria-label="Unirse a la sala"
                         >
-                            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Unirse'}
+                            {isLoading ? <CircularProgress size={24} color="inherit" aria-label="Cargando..." /> : 'Unirse'}
                         </Button>
                     </Box>
                 ) : (
@@ -198,6 +218,9 @@ export default function RoomPage() {
                                     backgroundColor: theme.palette.background.paper,
                                     boxShadow: `0px 2px 6px rgba(0,0,0,0.2)`,
                                 }}
+                                aria-label={sidebarOpen ? "Cerrar panel lateral" : "Abrir panel lateral"}
+                                aria-expanded={sidebarOpen}
+                                aria-controls="issue-sidebar"
                             >
                                 {sidebarOpen ? <MenuCloseIcon /> : <MenuOpenIcon />}
                             </IconButton>
@@ -214,7 +237,11 @@ export default function RoomPage() {
                             sx={{
                                 width: '100%',
                                 maxWidth: '100vw',
-                                px: { xs: 1, sm: 2 }
+                                px: { xs: 1, sm: 2 },
+                                py: { xs: 3, sm: 4 }, // Añadir padding vertical para las animaciones
+                                overflowX: 'hidden',
+                                overflowY: 'visible', // Permitir que las animaciones se desborden verticalmente
+                                position: 'relative', // Para el posicionamiento correcto de los elementos animados
                             }}
                         >
                             {participants.map((participant) => {
@@ -261,7 +288,10 @@ export default function RoomPage() {
                                 width: '100%',
                                 maxWidth: '100vw',
                                 px: { xs: 1, sm: 2 },
-                                overflowX: 'hidden'
+                                py: { xs: 3, sm: 4 }, // Añadir padding vertical para las animaciones
+                                overflowX: 'hidden',
+                                overflowY: 'visible', // Permitir que las animaciones se desborden verticalmente
+                                position: 'relative', // Para el posicionamiento correcto de los elementos animados
                             }}
                         >
                             {estimationOptions.map((value) => (
@@ -292,6 +322,8 @@ export default function RoomPage() {
                                         cursor: 'pointer',
                                         textTransform: 'none',
                                     }}
+                                    aria-label="Revelar todas las estimaciones"
+                                    role="button"
                                 >
                                     Revelar Estimaciones
                                 </Button>
@@ -309,6 +341,8 @@ export default function RoomPage() {
                                         cursor: 'pointer',
                                         textTransform: 'none',
                                     }}
+                                    aria-label="Iniciar nueva votación"
+                                    role="button"
                                 >
                                     Volver a Votar
                                 </Button>
@@ -324,6 +358,9 @@ export default function RoomPage() {
                                     sx={{
                                         fontSize: { xs: '1.25rem', sm: '1.5rem' }
                                     }}
+                                    aria-live="polite"
+                                    role="heading"
+                                    aria-level={2}
                                 >
                                     Detalle de estimaciones
                                 </Typography>
@@ -340,7 +377,11 @@ export default function RoomPage() {
                                             sx={{
                                                 width: '100%',
                                                 maxWidth: '100vw',
-                                                px: { xs: 1, sm: 2 }
+                                                px: { xs: 1, sm: 2 },
+                                                py: { xs: 3, sm: 4 }, // Añadir padding vertical para las animaciones
+                                                overflowX: 'hidden',
+                                                overflowY: 'visible', // Permitir que las animaciones se desborden verticalmente
+                                                position: 'relative', // Para el posicionamiento correcto de los elementos animados
                                             }}
                                         >
                                             {Object.entries(counts).map(([option, count]) => {
@@ -363,6 +404,8 @@ export default function RoomPage() {
                                                                 marginBottom: 1,
                                                                 height: barHeight,
                                                             }}
+                                                            role="img"
+                                                            aria-label={`${count} ${count === 1 ? 'voto' : 'votos'} para el valor ${option}`}
                                                         />
                                                         <Card
                                                             value={option}
@@ -401,8 +444,10 @@ export default function RoomPage() {
                                         sx={{
                                             fontSize: { xs: '1rem', sm: '1.25rem' }
                                         }}
+                                        aria-live="polite"
+                                        role="status"
                                     >
-                                        Promedio de estimaciones: {avg}
+                                        Promedio de estimaciones: <span aria-label={`${avg} puntos`}>{avg}</span>
                                     </Typography>
                                 </Box>
                             </Box>
@@ -412,8 +457,14 @@ export default function RoomPage() {
                             open={!!errorMessage}
                             autoHideDuration={3000}
                             onClose={() => setErrorMessage(null)}
+                            aria-live="assertive"
+                            role="alert"
                         >
-                            <Alert severity="warning" onClose={() => setErrorMessage(null)}>
+                            <Alert
+                                severity="warning"
+                                onClose={() => setErrorMessage(null)}
+                                aria-label={errorMessage || "Mensaje de error"}
+                            >
                                 {errorMessage}
                             </Alert>
                         </Snackbar>
@@ -424,6 +475,9 @@ export default function RoomPage() {
             {/* SIDEBAR a la derecha, sólo si el usuario ingresó su nombre */}
             {isJoined && (
                 <Box
+                    id="issue-sidebar"
+                    role="complementary"
+                    aria-label="Panel de gestión de issues"
                     sx={{
                         width: sidebarOpen ? 300 : 0,
                         transition: 'width 0.3s ease',

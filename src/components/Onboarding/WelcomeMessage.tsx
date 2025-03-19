@@ -15,7 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useOnboardingStore } from '@/store/onboardingStore';
 
 // Componente de motion para Paper
-const MotionPaper = motion(Paper);
+const MotionPaper = motion.create(Paper);
 
 interface WelcomeMessageProps {
   showDelay?: number;

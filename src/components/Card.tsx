@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Box } from '@mui/material';
 
 // Creamos versiones de motion de los componentes que necesitamos
-const MotionBox = motion(Box);
+const MotionBox = motion.create(Box);
 
 interface CardProps {
     value?: number | string;
@@ -75,12 +75,12 @@ export default function Card({
         selected: {
             scale: 1.05,
             boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.2)",
-            borderWidth: 3
+            // No animamos borderWidth ya que no es animable
         },
         unselected: {
             scale: 1,
             boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
-            borderWidth: 1
+            // No animamos borderWidth ya que no es animable
         }
     };
 
@@ -92,6 +92,10 @@ export default function Card({
             whileHover="hover"
             whileTap="tap"
             variants={containerVariants}
+            role="button"
+            aria-pressed={selected}
+            aria-label={value ? `Carta con valor ${value}` : 'Carta sin valor'}
+            tabIndex={0}
             sx={{
                 width: isMobile ? 70 : 100,
                 height: isMobile ? 105 : 150,
@@ -136,6 +140,7 @@ export default function Card({
                         alignItems: 'center',
                         justifyContent: 'center',
 
+                        // Aplicamos el borde directamente sin animarlo
                         border: selected
                             ? `3px solid ${cardPalette.borderSelected}`
                             : `1px solid ${cardPalette.border}`,
@@ -160,7 +165,7 @@ export default function Card({
                                         textAlign: 'center',
                                         fontFamily: 'serif',
                                         fontSize: isMobile ? `calc(${fontSize} * 0.7)` : fontSize,
-                                        color: cardPalette.text,
+                                        color: cardPalette.text || '#000000', // Asegurar alto contraste
                                     }}
                                 >
                                     {value}
@@ -181,7 +186,7 @@ export default function Card({
                                             left: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text,
+                                            color: cardPalette.text || '#000000', // Asegurar alto contraste
                                         }}
                                     >
                                         {value}
@@ -198,7 +203,7 @@ export default function Card({
                                             right: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text,
+                                            color: cardPalette.text || '#000000', // Asegurar alto contraste
                                             transform: 'rotate(180deg)',
                                         }}
                                     >
@@ -241,8 +246,15 @@ export default function Card({
                             stiffness: 400,
                             damping: 10
                         }}
+                        aria-hidden="false"
+                        role="img"
+                        aria-label="Reverso de la carta de Planning Poker"
                     >
                         PPP
+                        {/* Texto oculto para lectores de pantalla */}
+                        <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>
+                            Reverso de la carta de Planning Poker
+                        </span>
                     </motion.div>
                 </MotionBox>
             </MotionBox>

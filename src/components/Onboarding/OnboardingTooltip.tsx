@@ -18,7 +18,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useOnboardingStore, OnboardingStep } from '@/store/onboardingStore';
 
 // Componentes de motion
-const MotionCard = motion(Card);
+const MotionCard = motion.create(Card);
 
 // Un componente básico para el tutorial interactivo sin manipulación del DOM
 const BasicOnboardingTooltip: React.FC = () => {
