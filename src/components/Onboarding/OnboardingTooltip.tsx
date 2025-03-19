@@ -8,13 +8,17 @@ import {
     CardActions,
     CardContent,
     Typography,
-    IconButton,
-    Fade
+    IconButton
 } from '@mui/material';
+import { motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useOnboardingStore, OnboardingStep } from '@/store/onboardingStore';
+
+// Componentes de motion
+const MotionCard = motion(Card);
 
 // Un componente básico para el tutorial interactivo sin manipulación del DOM
 const BasicOnboardingTooltip: React.FC = () => {
@@ -70,71 +74,123 @@ const BasicOnboardingTooltip: React.FC = () => {
     };
 
     return (
-        <Fade in={isActive}>
-            <Card
-                sx={{
-                    position: 'fixed',
-                    zIndex: 1500,
-                    width: 320,
-                    maxWidth: '90vw',
-                    boxShadow: 3,
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                }}
-            >
+        <AnimatePresence>
+            {isActive && (
+                <MotionCard
+                    initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                    transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25
+                    }}
+                    sx={{
+                        position: 'fixed',
+                        zIndex: 1500,
+                        width: 320,
+                        maxWidth: '90vw',
+                        boxShadow: 3,
+                        // Centrado absoluto usando inset y margin auto
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                        margin: 'auto',
+                        height: 'fit-content',
+                    }}
+                >
                 <CardContent>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="h6" component="h2">
-                            {currentStepConfig.title}
-                        </Typography>
-                        <IconButton
-                            size="small"
-                            onClick={handleSkipClick}
-                            aria-label="Cerrar tutorial"
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1, duration: 0.3 }}
                         >
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
+                            <Typography variant="h6" component="h2">
+                                {currentStepConfig.title}
+                            </Typography>
+                        </motion.div>
+                        <motion.div
+                            initial={{ opacity: 0, rotate: -90 }}
+                            animate={{ opacity: 1, rotate: 0 }}
+                            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                            whileHover={{ rotate: 90, scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                        >
+                            <IconButton
+                                size="small"
+                                onClick={handleSkipClick}
+                                aria-label="Cerrar tutorial"
+                            >
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </motion.div>
                     </Box>
 
-                    <Typography variant="body2" color="text.secondary">
-                        {currentStepConfig.description}
-                    </Typography>
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                    >
+                        <Typography variant="body2" color="text.secondary">
+                            {currentStepConfig.description}
+                        </Typography>
+                    </motion.div>
                 </CardContent>
 
                 <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
-                    <Button
-                        startIcon={<ArrowBackIcon />}
-                        onClick={handlePreviousClick}
-                        disabled={isFirstStep}
-                        size="small"
+                    <motion.div
+                        whileHover={{ x: -3 }}
+                        whileTap={{ scale: 0.95 }}
                     >
-                        Anterior
-                    </Button>
+                        <Button
+                            startIcon={<ArrowBackIcon />}
+                            onClick={handlePreviousClick}
+                            disabled={isFirstStep}
+                            size="small"
+                        >
+                            Anterior
+                        </Button>
+                    </motion.div>
 
                     {isLastStep ? (
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleCompleteClick}
-                            size="small"
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.1, type: "spring" }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            Finalizar
-                        </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleCompleteClick}
+                                size="small"
+                            >
+                                Finalizar
+                            </Button>
+                        </motion.div>
                     ) : (
-                        <Button
-                            endIcon={<ArrowForwardIcon />}
-                            variant="contained"
-                            color="primary"
-                            onClick={handleNextClick}
-                            size="small"
+                        <motion.div
+                            whileHover={{ x: 3 }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            {isFirstStep ? 'Comenzar' : 'Siguiente'}
-                        </Button>
+                            <Button
+                                endIcon={<ArrowForwardIcon />}
+                                variant="contained"
+                                color="primary"
+                                onClick={handleNextClick}
+                                size="small"
+                            >
+                                {isFirstStep ? 'Comenzar' : 'Siguiente'}
+                            </Button>
+                        </motion.div>
                     )}
                 </CardActions>
-            </Card>
-        </Fade>
+                </MotionCard>
+            )}
+        </AnimatePresence>
     );
 };
 
