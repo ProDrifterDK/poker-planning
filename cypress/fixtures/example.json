@@ -1,0 +1,24 @@
+{
+  "name": "Test User",
+  "roomCode": "testroom",
+  "issues": [
+    {
+      "key": "PROJ-1",
+      "summary": "Implementar autenticación de usuarios"
+    },
+    {
+      "key": "PROJ-2",
+      "summary": "Diseñar interfaz de usuario para dashboard"
+    },
+    {
+      "key": "PROJ-3",
+      "summary": "Optimizar rendimiento de consultas a la base de datos"
+    }
+  ],
+  "estimationSeries": {
+    "fibonacci": [1, 2, 3, 5, 8, 13, 21, "?", "∞", "☕"],
+    "tshirt": ["XS", "S", "M", "L", "XL", "XXL", "?", "∞", "☕"],
+    "powers2": [1, 2, 4, 8, 16, 32, "?", "∞", "☕"],
+    "days": ["1d", "2d", "3d", "5d", "8d", "?", "∞", "☕"]
+  }
+}
