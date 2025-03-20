@@ -92,14 +92,12 @@ const BasicOnboardingTooltip: React.FC = () => {
                         width: 320,
                         maxWidth: '90vw',
                         boxShadow: 3,
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        p: 1,
-                        borderRadius: 2,
-                        backgroundColor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                        margin: 'auto',
+                        height: 'fit-content'
                     }}
                 >
                 <CardContent sx={{ p: 3 }}>
