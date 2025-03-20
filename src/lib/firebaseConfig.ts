@@ -1,6 +1,18 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  User
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -17,3 +29,33 @@ const app = initializeApp(firebaseConfig);
 
 export const firestore = getFirestore(app);
 export const realtimeDb = getDatabase(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+
+// Funciones de autenticación
+export const signUpWithEmail = async (email: string, password: string) => {
+  return createUserWithEmailAndPassword(auth, email, password);
+};
+
+export const signInWithEmail = async (email: string, password: string) => {
+  return signInWithEmailAndPassword(auth, email, password);
+};
+
+export const signInWithGoogle = async () => {
+  return signInWithPopup(auth, googleProvider);
+};
+
+export const logOut = async () => {
+  return signOut(auth);
+};
+
+export const resetPassword = async (email: string) => {
+  return sendPasswordResetEmail(auth, email);
+};
+
+export const updateUserProfile = async (user: User, displayName: string, photoURL?: string) => {
+  return updateProfile(user, {
+    displayName,
+    photoURL: photoURL || null
+  });
+};

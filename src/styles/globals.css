@@ -4,11 +4,17 @@ html, body {
     padding: 0;
     font-family: Arial, sans-serif;
     box-sizing: border-box;
-  }
+}
   
-  main {
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-  }
+}
   
