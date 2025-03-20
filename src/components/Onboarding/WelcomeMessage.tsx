@@ -87,9 +87,8 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
           elevation={3}
           sx={{
             position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            bottom: 20,
+            right: 20,
             width: { xs: '90%', sm: 400 },
             p: 3,
             borderRadius: 2,
