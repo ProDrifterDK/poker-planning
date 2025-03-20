@@ -3,6 +3,7 @@ import { ref, onValue, update, push, get as firebaseGet } from "firebase/databas
 import { realtimeDb } from "@/lib/firebaseConfig";
 import { Participant } from "@/types/room";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
+import { UserRole } from "@/types/roles";
 
 // Interfaces para el store
 /**
@@ -202,7 +203,8 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       await update(newParticipantRef, {
         name,
         joinedAt: Date.now(),
-        active: true
+        active: true,
+        role: UserRole.PARTICIPANT // Asignar rol de participante por defecto
       });
 
       // Configurar listeners para la sala
@@ -221,11 +223,16 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
             const participant = value as {
               name: string;
               estimation?: number | string;
+              role?: string;
             };
             return {
               id: key,
               name: participant.name,
               estimation: participant.estimation,
+              // Usar el rol del participante si existe, o asignar PARTICIPANT por defecto
+              role: (participant.role as UserRole) || UserRole.PARTICIPANT,
+              // Opcionalmente, podemos añadir el userId si está disponible
+              userId: undefined
             };
           });
           set({ participants: participantsArray });
