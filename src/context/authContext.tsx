@@ -15,6 +15,8 @@ import {
   resetPassword,
   updateUserProfile
 } from '@/lib/firebaseConfig';
+import { getUserRole, initializeUserProfile } from '@/lib/roleService';
+import { UserRole, Permission, hasPermission as checkPermission } from '@/types/roles';
 
 // Variable para detectar si estamos en el cliente
 const isClient = typeof window !== 'undefined';
@@ -58,6 +60,7 @@ const getReadableErrorMessage = (error: FirebaseError): string => {
 // Definir la interfaz para el contexto
 interface AuthContextType {
   currentUser: User | null;
+  userRole: UserRole | null;
   loading: boolean;
   error: string | null;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
@@ -67,6 +70,8 @@ interface AuthContextType {
   resetUserPassword: (email: string) => Promise<void>;
   updateProfile: (displayName: string, photoURL?: string) => Promise<void>;
   clearError: () => void;
+  hasPermission: (permission: import('@/types/roles').Permission) => boolean;
+  isModerator: () => boolean;
 }
 
 // Crear el contexto
@@ -88,9 +93,21 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Función para cargar el rol del usuario
+  const loadUserRole = async (user: User) => {
+    try {
+      const role = await getUserRole(user.uid);
+      setUserRole(role);
+    } catch (error) {
+      console.error('Error al cargar el rol del usuario:', error);
+      setUserRole(UserRole.PARTICIPANT); // Rol por defecto en caso de error
+    }
+  };
 
   // Solo ejecutar en el cliente
   useEffect(() => {
@@ -98,8 +115,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Escuchar cambios en el estado de autenticación solo en el cliente
     if (isClient) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setCurrentUser(user);
+        
+        if (user) {
+          // Inicializar o actualizar el perfil del usuario
+          await initializeUserProfile(user);
+          // Cargar el rol del usuario
+          await loadUserRole(user);
+        } else {
+          setUserRole(null);
+        }
+        
         setLoading(false);
       });
 
@@ -110,6 +137,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false);
     return undefined;
   }, []);
+
+  // Verificar si el usuario tiene un permiso específico
+  const hasPermission = (permission: Permission): boolean => {
+    if (!userRole) return false;
+    return checkPermission(userRole, permission);
+  };
+
+  // Verificar si el usuario es moderador
+  const isModerator = (): boolean => {
+    return userRole === UserRole.MODERATOR;
+  };
 
   // No renderizar nada hasta que el componente esté montado en el cliente
   if (!mounted && isClient) {
@@ -232,6 +270,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value = {
     currentUser,
+    userRole,
     loading,
     error,
     signUp,
@@ -240,7 +279,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     resetUserPassword,
     updateProfile,
-    clearError
+    clearError,
+    hasPermission,
+    isModerator
   };
 
   return (

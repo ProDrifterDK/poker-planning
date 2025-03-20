@@ -45,6 +45,7 @@ const UserProfile: React.FC = () => {
     try {
       await updateProfile(displayName);
       setIsSuccess(true);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
       // No registramos el error en la consola por razones de seguridad
@@ -57,6 +58,7 @@ const UserProfile: React.FC = () => {
     try {
       await logout();
       // La redirección se manejará automáticamente por el ProtectedRoute
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // No registramos el error en la consola por razones de seguridad
     }

@@ -22,7 +22,7 @@ import PersonIcon from '@mui/icons-material/Person';
 
 export default function Header() {
     const router = useRouter();
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, isModerator } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -117,6 +117,20 @@ export default function Header() {
                                 <Divider />
                                 <MenuItem onClick={handleProfile}>
                                     Mi Perfil
+                                </MenuItem>
+                                {isModerator() && (
+                                    <MenuItem onClick={() => {
+                                        router.push('/admin');
+                                        handleClose();
+                                    }}>
+                                        Panel de Administración
+                                    </MenuItem>
+                                )}
+                                <MenuItem onClick={() => {
+                                    router.push('/become-admin');
+                                    handleClose();
+                                }}>
+                                    Convertirse en Moderador
                                 </MenuItem>
                                 <MenuItem onClick={handleLogout}>
                                     Cerrar Sesión

@@ -5,6 +5,7 @@ cypress/
 __tests__/
 node_modules
 .next
+scripts
 out
 *.config.js
 public

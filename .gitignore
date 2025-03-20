@@ -41,3 +41,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documentation
+/docs
+
+analysis.md
+
+# Scripts
+/Scripts
