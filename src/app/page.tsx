@@ -41,12 +41,12 @@ export default function HomePage() {
           </Typography>
           <Box sx={{ mt: 3 }}>
             <Link href="/auth/signin" passHref>
-              <Button variant="contained" color="primary" size="large" sx={{ mr: 2 }}>
+              <Button variant="contained" color="primary" size="large" sx={{ mr: 2, textTransform: "none" }}>
                 Iniciar Sesión
               </Button>
             </Link>
             <Link href="/auth/signup" passHref>
-              <Button variant="outlined" color="primary" size="large">
+              <Button variant="outlined" color="primary" size="large" sx={{ textTransform: "none" }}>
                 Registrarse
               </Button>
             </Link>
