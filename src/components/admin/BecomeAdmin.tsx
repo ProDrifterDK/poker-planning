@@ -14,9 +14,9 @@ import { useAuth } from '@/context/authContext';
 import { setUserRole } from '@/lib/roleService';
 import { UserRole } from '@/types/roles';
 
-// Esta clave debería estar en una variable de entorno en un entorno de producción
-// Para este ejemplo, usamos una clave simple
-const ADMIN_SECRET_KEY = 'admin123';
+// Obtener la clave secreta de las variables de entorno o usar un valor por defecto
+// En producción, asegúrate de configurar esta variable de entorno
+const ADMIN_SECRET_KEY = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || 'admin123';
 
 const BecomeAdmin: React.FC = () => {
   const { currentUser, userRole } = useAuth();
