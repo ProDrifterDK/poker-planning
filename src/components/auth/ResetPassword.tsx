@@ -59,7 +59,7 @@ const ResetPassword: React.FC = () => {
       setResetSent(true);
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
-      console.error('Error al restablecer contraseña:', error);
+      // No registramos el error en la consola por razones de seguridad
     } finally {
       setIsSubmitting(false);
     }

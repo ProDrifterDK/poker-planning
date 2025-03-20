@@ -73,7 +73,7 @@ const SignIn: React.FC = () => {
       setSuccess(true); // Establecer estado de éxito
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
-      console.error('Error al iniciar sesión:', error);
+      // No registramos el error en la consola por razones de seguridad
       setSuccess(false);
     } finally {
       setIsSubmitting(false);

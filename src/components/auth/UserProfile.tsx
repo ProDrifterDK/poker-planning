@@ -47,7 +47,7 @@ const UserProfile: React.FC = () => {
       setIsSuccess(true);
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
-      console.error('Error al actualizar perfil:', error);
+      // No registramos el error en la consola por razones de seguridad
     } finally {
       setIsSubmitting(false);
     }
@@ -58,7 +58,7 @@ const UserProfile: React.FC = () => {
       await logout();
       // La redirección se manejará automáticamente por el ProtectedRoute
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      // No registramos el error en la consola por razones de seguridad
     }
   };
 

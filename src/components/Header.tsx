@@ -58,7 +58,7 @@ export default function Header() {
                     onClick={() => router.push('/')}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
                 >
-                    Planning Poker
+                    Poker Planning Pro
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <OnboardingButton variant="icon" color="inherit" />
