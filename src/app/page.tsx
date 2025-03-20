@@ -31,7 +31,7 @@ export default function HomePage() {
           }}
         >
           <Typography variant="h4" component="h1" gutterBottom>
-            Bienvenido a Planning Poker Pro
+            Bienvenido a Poker Planning Pro
           </Typography>
           <Typography variant="body1" paragraph>
             La herramienta perfecta para estimar tareas en equipo de forma ágil y efectiva.

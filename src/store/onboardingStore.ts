@@ -58,7 +58,7 @@ export const useOnboardingStore = create<OnboardingState>()(
             // Configuración de los pasos del tutorial
             steps: {
                 [OnboardingStep.WELCOME]: {
-                    title: "¡Bienvenido a Planning Poker Pro!",
+                    title: "¡Bienvenido a Poker Planning Pro!",
                     description:
                         "Este tutorial te guiará a través de las principales funcionalidades de la aplicación. Puedes saltarlo en cualquier momento y retomarlo después desde el menú de ayuda.",
                     position: "bottom",
@@ -106,7 +106,7 @@ export const useOnboardingStore = create<OnboardingState>()(
                 [OnboardingStep.COMPLETED]: {
                     title: "¡Tutorial completado!",
                     description:
-                        "Has completado el tutorial básico. Ahora puedes comenzar a utilizar Planning Poker Pro para tus estimaciones ágiles. Si necesitas ayuda adicional, consulta la documentación o contacta con soporte.",
+                        "Has completado el tutorial básico. Ahora puedes comenzar a utilizar Poker Planning Pro para tus estimaciones ágiles. Si necesitas ayuda adicional, consulta la documentación o contacta con soporte.",
                     position: "bottom",
                 },
             },

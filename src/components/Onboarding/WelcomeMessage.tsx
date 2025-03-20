@@ -112,7 +112,7 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
                 color: theme.palette.primary.main
               }}
             >
-              ¡Bienvenido a Planning Poker Pro!
+              ¡Bienvenido a Poker Planning Pro!
             </Typography>
           </motion.div>
           <motion.div

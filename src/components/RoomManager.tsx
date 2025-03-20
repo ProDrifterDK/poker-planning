@@ -57,7 +57,7 @@ export default function RoomManager() {
       router.push(`/room/${roomId}`);
     } catch (error) {
       // Los errores ya son manejados por el store
-      console.error("Error al crear sala:", error);
+      // No registramos el error en la consola por razones de seguridad
     }
   };
 
@@ -83,7 +83,7 @@ export default function RoomManager() {
       router.push(`/room/${roomCode}`);
     } catch (error) {
       // Los errores ya son manejados por el store
-      console.error("Error al unirse a la sala:", error);
+      // No registramos el error en la consola por razones de seguridad
     }
   };
 
@@ -99,9 +99,8 @@ export default function RoomManager() {
     >
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
         <Typography variant="h3" marginBottom={1}>
-          Planning Poker
+          Poker Planning Pro
         </Typography>
-        
         <Box display="flex" alignItems="center" gap={2}>
           <OnboardingButton variant="text" />
           <Divider orientation="vertical" flexItem />
