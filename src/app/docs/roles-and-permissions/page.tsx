@@ -6,7 +6,7 @@ import path from 'path';
 import { marked } from 'marked';
 
 // Función para leer y convertir el archivo Markdown a HTML
-export async function generateMarkdownContent() {
+async function generateMarkdownContent() {
   try {
     const markdownPath = path.join(process.cwd(), 'docs', 'roles-and-permissions.md');
     const markdownContent = fs.readFileSync(markdownPath, 'utf8');
