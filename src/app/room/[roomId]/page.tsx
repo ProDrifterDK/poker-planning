@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
     Box,
     Typography,
@@ -121,7 +122,8 @@ export default function RoomPage() {
     }, [error, setError]);
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+        <ProtectedRoute>
+            <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
             <Box flex="1" display="flex" flexDirection="column" alignItems="center" padding={2}>
                 <Typography
@@ -499,5 +501,6 @@ export default function RoomPage() {
                 </Box>
             )}
         </Box>
+        </ProtectedRoute>
     );
 }

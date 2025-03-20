@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -17,6 +17,7 @@ import {
 import { useRoomStore } from "@/store/roomStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
 import { OnboardingButton } from "./Onboarding";
+import { useAuth } from "@/context/authContext";
 
 export default function RoomManager() {
   const router = useRouter();
@@ -29,6 +30,16 @@ export default function RoomManager() {
 
   // Usar el store de errores
   const errorStore = useErrorStore.getState();
+
+  // Obtener el usuario autenticado
+  const { currentUser } = useAuth();
+
+  // Usar el nombre del usuario autenticado si está disponible
+  useEffect(() => {
+    if (currentUser && currentUser.displayName) {
+      setName(currentUser.displayName);
+    }
+  }, [currentUser]);
 
   const handleCreateRoom = async () => {
     if (!name.trim()) {
@@ -129,6 +140,8 @@ export default function RoomManager() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          disabled={!!(currentUser && currentUser.displayName)}
+          helperText={currentUser && currentUser.displayName ? "Usando tu nombre de perfil" : ""}
         />
 
         <FormControl fullWidth>
@@ -198,6 +211,8 @@ export default function RoomManager() {
           fullWidth
           value={name}
           onChange={(e) => setName(e.target.value)}
+          disabled={!!(currentUser && currentUser.displayName)}
+          helperText={currentUser && currentUser.displayName ? "Usando tu nombre de perfil" : ""}
         />
 
         <Button

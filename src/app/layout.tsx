@@ -16,15 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <div
-            style={{
-              margin: 0,
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
-            }}
-          >
+          <>
             <Header />
             <main style={{ flex: 1 }}>
               {children}
@@ -32,7 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <OnboardingTooltip />
             </main>
             <Footer />
-          </div>
+          </>
         </Providers>
       </body>
     </html>
