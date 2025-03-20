@@ -17,6 +17,7 @@ import {
 import { useRoomStore } from "@/store/roomStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
 import { OnboardingButton } from "./Onboarding";
+import SessionPersistence from "./SessionPersistence";
 import { useAuth } from "@/context/authContext";
 
 export default function RoomManager() {
@@ -111,6 +112,9 @@ export default function RoomManager() {
           </Typography>
         </Box>
       </Box>
+
+      {/* Componente de persistencia de sesión */}
+      <SessionPersistence />
 
       {/* Sección para CREAR SALA */}
       <Box

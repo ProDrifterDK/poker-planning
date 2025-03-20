@@ -6,6 +6,7 @@ export interface Participant {
   estimation?: number | string;
   role: UserRole;
   userId?: string; // ID del usuario autenticado (si está disponible)
+  active?: boolean; // Indica si el participante está activo en la sala
 }
 
 export interface Room {
