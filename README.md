@@ -1,125 +1,111 @@
-# Planning Poker Pro
+# Poker Planning Pro
 
-Una aplicación de Planning Poker para estimación ágil de tareas, desarrollada con Next.js, TypeScript, Material-UI y Firebase.
+Una aplicación de planificación ágil para equipos de desarrollo que permite realizar sesiones de Planning Poker de forma colaborativa.
 
 ## Características
 
-- Creación de salas con código único
-- Diferentes series de estimación (Fibonacci, T-Shirt, Powers of 2, Days)
-- Votación en tiempo real
-- Revelación sincronizada de votos
+- Creación de salas de planificación con diferentes series de estimación (Fibonacci, T-shirt, Powers of 2, Days)
+- Votación en tiempo real con múltiples participantes
+- Revelación sincronizada de estimaciones
 - Cálculo automático de promedios
-- Gestión de issues
-- Soporte para temas claro/oscuro
+- Sistema de roles (Moderador, Participante)
+- Soporte para modo oscuro/claro
+- Interfaz responsive para dispositivos móviles y de escritorio
 
-## Tecnologías
+## Tecnologías Utilizadas
 
-- **Frontend**: Next.js 15 con TypeScript
-- **UI**: Material-UI (MUI)
-- **Estado**: Zustand para gestión de estado global
+- **Frontend**: Next.js, React, TypeScript, Material UI
 - **Backend**: Firebase Realtime Database
-- **Testing**: Jest, React Testing Library, Cypress
+- **Autenticación**: Firebase Authentication
+- **Despliegue**: Vercel
 
-## Comenzando
+## Instalación y Ejecución Local
 
-### Requisitos previos
+### Requisitos Previos
 
-- Node.js 18.0 o superior
-- npm 9.0 o superior
+- Node.js (versión 18 o superior)
+- npm o yarn
+- Cuenta de Firebase (para la base de datos en tiempo real)
 
-### Instalación
+### Pasos de Instalación
 
-1. Clona el repositorio:
+1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/planning-poker-pro.git
-   cd planning-poker-pro
+   git clone https://github.com/tu-usuario/poker-planning-pro.git
+   cd poker-planning-pro
    ```
 
-2. Instala las dependencias:
+2. Instalar dependencias:
    ```bash
    npm install
+   # o
+   yarn install
    ```
 
-3. Configura las variables de entorno:
-   Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables:
-   ```
-   NEXT_PUBLIC_FIREBASE_API_KEY=tu-api-key
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-auth-domain
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu-project-id
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-storage-bucket
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu-messaging-sender-id
-   NEXT_PUBLIC_FIREBASE_APP_ID=tu-app-id
-   NEXT_PUBLIC_FIREBASE_DATABASE_URL=tu-database-url
-   ```
+3. Configurar variables de entorno:
+   - Copia el archivo `.env.local.example` a `.env.local`
+   - Completa las variables con tus credenciales de Firebase
 
-4. Inicia el servidor de desarrollo:
+4. Iniciar el servidor de desarrollo:
    ```bash
    npm run dev
+   # o
+   yarn dev
    ```
 
-5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+5. Abrir [http://localhost:3000](http://localhost:3000) en tu navegador
 
-## Testing
+## Uso de la Aplicación
 
-El proyecto incluye tests unitarios, de integración y end-to-end.
+### Crear una Sala
 
-### Tests unitarios y de integración
+1. En la página principal, haz clic en "Crear Sala"
+2. Selecciona la serie de estimación que deseas usar (Fibonacci, T-shirt, etc.)
+3. Comparte el enlace generado con los miembros de tu equipo
 
-Ejecutar todos los tests:
-```bash
-npm test
-```
+### Unirse a una Sala
 
-Ejecutar tests en modo watch:
-```bash
-npm run test:watch
-```
+1. Utiliza el enlace compartido o ingresa el código de la sala en la página principal
+2. Ingresa tu nombre para identificarte en la sesión
 
-Generar informe de cobertura:
-```bash
-npm run test:coverage
-```
+### Estimación
 
-### Tests end-to-end
+1. El moderador selecciona un issue para estimar
+2. Cada participante selecciona una carta con su estimación
+3. El moderador revela todas las estimaciones cuando todos han votado
+4. Se muestra el promedio de las estimaciones
+5. El moderador puede iniciar una nueva ronda de votación
 
-Abrir Cypress en modo interactivo:
-```bash
-npm run cypress
-```
+## Roles y Permisos
 
-Ejecutar tests de Cypress en modo headless:
-```bash
-npm run cypress:headless
-```
+- **Moderador**: Puede crear salas, añadir issues, revelar estimaciones e iniciar nuevas votaciones
+- **Participante**: Puede unirse a salas y votar en las estimaciones
 
-Ejecutar tests de Cypress con servidor de desarrollo:
-```bash
-npm run cypress:ci
-```
+Para convertirse en moderador, consulta la [documentación de roles y permisos](docs/roles-and-permissions.md).
 
-## Estructura del proyecto
+## Solución de Problemas
 
-```
-├── __tests__/              # Tests unitarios y de integración
-│   ├── unit/               # Tests unitarios
-│   ├── integration/        # Tests de integración
-│   └── mocks/              # Mocks para testing
-├── cypress/                # Tests end-to-end
-├── public/                 # Archivos estáticos
-├── src/
-│   ├── app/                # Rutas y páginas (Next.js App Router)
-│   ├── components/         # Componentes React
-│   ├── context/            # Contextos de React
-│   ├── lib/                # Utilidades y configuraciones
-│   ├── store/              # Stores de Zustand
-│   ├── styles/             # Estilos globales
-│   └── types/              # Definiciones de TypeScript
-├── .env.local              # Variables de entorno locales
-├── jest.config.js          # Configuración de Jest
-├── jest.setup.js           # Configuración de setup para Jest
-└── cypress.config.js       # Configuración de Cypress
-```
+Si encuentras algún problema al usar la aplicación, consulta nuestra [guía de solución de problemas](docs/troubleshooting.md).
+
+## Actualizaciones Recientes
+
+### Versión 1.1.0
+
+- **Identificación de Usuario Mejorada**: Implementación de un sistema robusto para identificar correctamente a los usuarios entre sesiones
+- **Corrección de Series de Estimación**: Ahora todos los participantes ven la misma serie de estimación seleccionada al crear la sala
+- **Manejo Mejorado de Errores**: Mejor gestión de errores de red y problemas con bloqueadores de anuncios
+- **Experiencia Offline Parcial**: La aplicación ahora funciona parcialmente incluso cuando hay problemas de conexión
+
+## Contribuir
+
+Las contribuciones son bienvenidas. Por favor, sigue estos pasos:
+
+1. Haz fork del repositorio
+2. Crea una rama para tu característica (`git checkout -b feature/amazing-feature`)
+3. Haz commit de tus cambios (`git commit -m 'Add some amazing feature'`)
+4. Haz push a la rama (`git push origin feature/amazing-feature`)
+5. Abre un Pull Request
 
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para más detalles.
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.

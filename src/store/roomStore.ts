@@ -35,6 +35,7 @@ interface RoomState {
   participants: Participant[];
   issues: Issue[];
   votes: Record<string, Record<string, number | string>>; // issueId -> participantId -> value
+  currentParticipantId: string | null; // ID del participante actual
   
   // Estado de la UI
   currentIssueId: string | null;
@@ -72,6 +73,7 @@ const initialState: RoomState = {
   participants: [],
   issues: [],
   votes: {},
+  currentParticipantId: null,
   currentIssueId: null,
   reveal: false,
   estimationOptions: [1, 2, 3, 5, 8, 13, 21, "?", "∞", "☕"],
@@ -102,6 +104,10 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       const sessionId = Math.random().toString(36).substring(7);
       const timestamp = Date.now();
       
+      // Generar un ID de participante para el creador de la sala
+      const participantId = Math.random().toString(36).substring(7);
+      localStorage.setItem(`participant_id_${roomId}`, participantId);
+      
       // Crear metadatos de la sala
       await update(ref(realtimeDb, `rooms/${roomId}/metadata`), {
         createdAt: timestamp,
@@ -117,11 +123,22 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
         startedAt: timestamp,
       });
       
+      // Añadir al creador como primer participante
+      const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+      await update(participantRef, {
+        name: "Moderador", // Nombre por defecto para el creador
+        joinedAt: timestamp,
+        active: true,
+        role: UserRole.MODERATOR, // El creador es moderador por defecto
+        participantId
+      });
+      
       // Limpiar el estado anterior y establecer el nuevo estado
       set({
         ...initialState,
         roomId,
         sessionId,
+        currentParticipantId: participantId,
         seriesKey,
         estimationOptions: seriesList[seriesKey],
         reveal: false,
@@ -170,6 +187,11 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
         throw new Error(appError.message);
       }
       
+      // Obtener metadatos de la sala
+      const roomMetadata = roomSnapshot.val();
+      const seriesKey = roomMetadata.seriesKey || 'fibonacci';
+      const seriesValues = roomMetadata.seriesValues || seriesList[seriesKey];
+      
       // Obtener la sesión activa o crear una nueva
       const sessionsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/sessions`));
       let sessionId = null;
@@ -197,14 +219,43 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
         });
       }
       
-      // Añadir participante
-      const participantsRef = ref(realtimeDb, `rooms/${roomId}/participants`);
-      const newParticipantRef = push(participantsRef);
-      await update(newParticipantRef, {
-        name,
-        joinedAt: Date.now(),
-        active: true,
-        role: UserRole.PARTICIPANT // Asignar rol de participante por defecto
+      // Generar un ID de participante único y guardarlo en localStorage
+      let participantId = localStorage.getItem(`participant_id_${roomId}`);
+      let isNewParticipant = false;
+      
+      if (!participantId) {
+        participantId = Math.random().toString(36).substring(7);
+        localStorage.setItem(`participant_id_${roomId}`, participantId);
+        isNewParticipant = true;
+      }
+      
+      // Verificar si el participante ya existe en la sala
+      const participantsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`));
+      
+      // Añadir o actualizar participante
+      const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+      
+      if (isNewParticipant || !participantsSnapshot.exists()) {
+        await update(participantRef, {
+          name,
+          joinedAt: Date.now(),
+          active: true,
+          role: UserRole.PARTICIPANT, // Asignar rol de participante por defecto
+          participantId // Guardar el ID para referencia
+        });
+      } else {
+        // Si el participante ya existe, solo actualizar su estado a activo
+        await update(participantRef, {
+          active: true,
+          lastActive: Date.now()
+        });
+      }
+      
+      // Guardar el ID del participante en el estado local
+      set({
+        currentParticipantId: participantId,
+        seriesKey,
+        estimationOptions: seriesValues
       });
 
       // Configurar listeners para la sala
@@ -349,7 +400,7 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
   // Seleccionar una estimación
   selectEstimation: async (value: number | string) => {
     const errorStore = useErrorStore.getState();
-    const { roomId, sessionId, reveal, participants, currentIssueId } = get();
+    const { roomId, sessionId, reveal, participants, currentIssueId, currentParticipantId } = get();
     
     if (!roomId || !sessionId) {
       const appError = createError(
@@ -371,10 +422,8 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       return;
     }
 
-    // Encontrar al participante actual (asumimos que es el último que se unió)
-    // En una implementación real, deberíamos tener un ID de usuario
-    const myParticipant = participants[participants.length - 1];
-    if (!myParticipant) {
+    // Verificar que tenemos un ID de participante
+    if (!currentParticipantId) {
       const appError = createError(
         ErrorType.VALIDATION_ERROR,
         "No se pudo identificar tu participante. Vuelve a unirte a la sala."
@@ -383,41 +432,101 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       set({ error: appError.message });
       return;
     }
+
+    // Encontrar al participante actual usando el ID almacenado
+    const myParticipant = participants.find(p => p.id === currentParticipantId);
+    if (!myParticipant) {
+      const appError = createError(
+        ErrorType.VALIDATION_ERROR,
+        "No se pudo encontrar tu participante en la sala. Vuelve a unirte a la sala."
+      );
+      errorStore.setError(appError);
+      set({ error: appError.message });
+      return;
+    }
+    
+    // Actualizar el estado local inmediatamente para mejorar la experiencia del usuario
+    // Esto permite que la UI responda incluso si las operaciones de Firebase fallan
+    const updatedParticipants = participants.map(p =>
+      p.id === myParticipant.id ? { ...p, estimation: value } : p
+    );
+    set({ participants: updatedParticipants });
+    
+    // Si hay un issue seleccionado, actualizar los votos locales
+    if (currentIssueId) {
+      const votes = { ...get().votes };
+      if (!votes[currentIssueId]) {
+        votes[currentIssueId] = {};
+      }
+      votes[currentIssueId][myParticipant.id] = value;
+      set({ votes });
+    }
     
     try {
-      // Guardar la estimación en el participante para compatibilidad
-      const participantRef = ref(
-        realtimeDb,
-        `rooms/${roomId}/participants/${myParticipant.id}`
-      );
-      await update(participantRef, { estimation: value });
+      // Crear un array de promesas para todas las operaciones de Firebase
+      const updatePromises = [];
       
-      // Si hay un issue seleccionado, guardar el voto en la nueva estructura
-      if (currentIssueId) {
-        const voteRef = ref(
+      // 1. Guardar la estimación en el participante para compatibilidad
+      try {
+        const participantRef = ref(
           realtimeDb,
-          `votes/${roomId}/${sessionId}/${currentIssueId}/${myParticipant.id}`
+          `rooms/${roomId}/participants/${myParticipant.id}`
         );
-        await update(voteRef, {
-          value,
-          timestamp: Date.now()
-        });
-        
-        // Actualizar el estado local de votos
-        const votes = { ...get().votes };
-        if (!votes[currentIssueId]) {
-          votes[currentIssueId] = {};
-        }
-        votes[currentIssueId][myParticipant.id] = value;
-        set({ votes });
+        const participantPromise = update(participantRef, { estimation: value })
+          .catch(err => {
+            console.warn(`No se pudo actualizar la estimación del participante ${myParticipant.id}:`, err);
+          });
+        updatePromises.push(participantPromise);
+      } catch (err) {
+        console.warn("Error al preparar actualización de participante:", err);
       }
+      
+      // 2. Si hay un issue seleccionado, guardar el voto en la nueva estructura
+      if (currentIssueId) {
+        try {
+          const voteRef = ref(
+            realtimeDb,
+            `votes/${roomId}/${sessionId}/${currentIssueId}/${myParticipant.id}`
+          );
+          const votePromise = update(voteRef, {
+            value,
+            timestamp: Date.now()
+          }).catch(err => {
+            console.warn(`No se pudo guardar el voto para el issue ${currentIssueId}:`, err);
+          });
+          updatePromises.push(votePromise);
+        } catch (err) {
+          console.warn("Error al preparar guardado de voto:", err);
+        }
+      }
+      
+      // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
+      await Promise.allSettled(updatePromises);
+      
+      console.log("Estimación seleccionada correctamente");
     } catch (error) {
+      console.error("Error al seleccionar estimación:", error);
+      
+      // Crear un mensaje de error más descriptivo basado en el tipo de error
+      let errorMessage = "No se pudo registrar tu voto. Intenta nuevamente.";
+      
+      // Detectar si el error es por un bloqueador de anuncios
+      if (error instanceof Error &&
+          (error.message.includes("ERR_BLOCKED_BY") ||
+           error.message.includes("network error") ||
+           error.message.includes("failed to fetch"))) {
+        errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
+                      "Tu voto se ha registrado localmente, pero no se sincronizará con otros usuarios. " +
+                      "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+      }
+      
       const appError = createError(
         ErrorType.VOTE_FAILED,
-        "No se pudo registrar tu voto. Intenta nuevamente.",
+        errorMessage,
         { originalError: error, value },
         () => get().selectEstimation(value) // Acción de recuperación: reintentar
       );
+      
       errorStore.setError(appError);
       set({ error: appError.message });
     }
@@ -426,7 +535,7 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
   // Revelar estimaciones
   revealEstimations: async () => {
     const errorStore = useErrorStore.getState();
-    const { roomId, sessionId, participants, currentIssueId } = get();
+    const { roomId, sessionId, participants, currentIssueId, issues } = get();
     
     if (!roomId || !sessionId) {
       const appError = createError(
@@ -438,47 +547,104 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       return;
     }
 
+    // Actualizar estado local inmediatamente para mejorar la experiencia del usuario
+    set({ reveal: true });
+
+    // Calcular promedio
+    const numericEstimations = participants
+      .map((p) => p.estimation)
+      .filter((val): val is number => typeof val === "number");
+
+    let avg = "N/A";
+    if (numericEstimations.length > 0) {
+      const total = numericEstimations.reduce((sum, value) => sum + value, 0);
+      avg = (total / numericEstimations.length).toFixed(2);
+    }
+
+    // Actualizar el issue localmente si existe
+    if (currentIssueId) {
+      const updatedIssues = issues.map(issue =>
+        issue.id === currentIssueId
+          ? { ...issue, average: avg, status: 'estimated' as const }
+          : issue
+      );
+      set({ issues: updatedIssues });
+    }
+
     try {
-      // Cambiar estado de revelación en la sesión
-      const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
-      await update(sessionRef, { reveal: true });
+      // Crear un array de promesas para todas las operaciones de Firebase
+      const updatePromises = [];
       
-      // Mantener compatibilidad con la estructura anterior
-      const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-      await update(roomRef, { reveal: true });
-
-      // Calcular promedio
-      const numericEstimations = participants
-        .map((p) => p.estimation)
-        .filter((val): val is number => typeof val === "number");
-
-      let avg = "N/A";
-      if (numericEstimations.length > 0) {
-        const total = numericEstimations.reduce((sum, value) => sum + value, 0);
-        avg = (total / numericEstimations.length).toFixed(2);
+      // 1. Cambiar estado de revelación en la sesión
+      try {
+        const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+        const sessionPromise = update(sessionRef, { reveal: true })
+          .catch(err => {
+            console.warn("No se pudo actualizar la sesión:", err);
+          });
+        updatePromises.push(sessionPromise);
+      } catch (err) {
+        console.warn("Error al preparar actualización de sesión:", err);
+      }
+      
+      // 2. Mantener compatibilidad con la estructura anterior
+      try {
+        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+        const roomPromise = update(roomRef, { reveal: true })
+          .catch(err => {
+            console.warn("No se pudo actualizar la sala:", err);
+          });
+        updatePromises.push(roomPromise);
+      } catch (err) {
+        console.warn("Error al preparar actualización de sala:", err);
       }
 
-      // Si hay un issue seleccionado, actualizar su promedio y estado
+      // 3. Si hay un issue seleccionado, actualizar su promedio y estado
       if (currentIssueId) {
-        const issueRef = ref(
-          realtimeDb,
-          `rooms/${roomId}/issues/${currentIssueId}`
-        );
-        await update(issueRef, {
-          average: avg,
-          status: 'estimated'
-        });
+        try {
+          const issueRef = ref(
+            realtimeDb,
+            `rooms/${roomId}/issues/${currentIssueId}`
+          );
+          const issuePromise = update(issueRef, {
+            average: avg,
+            status: 'estimated'
+          }).catch(err => {
+            console.warn(`No se pudo actualizar el issue ${currentIssueId}:`, err);
+          });
+          updatePromises.push(issuePromise);
+        } catch (err) {
+          console.warn(`Error al preparar actualización de issue ${currentIssueId}:`, err);
+        }
       }
       
-      // Actualizar estado local
-      set({ reveal: true });
+      // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
+      await Promise.allSettled(updatePromises);
+      
+      console.log("Estimaciones reveladas correctamente");
     } catch (error) {
+      console.error("Error al revelar estimaciones:", error);
+      
+      // Crear un mensaje de error más descriptivo basado en el tipo de error
+      let errorMessage = "Error al revelar estimaciones. Intenta nuevamente.";
+      
+      // Detectar si el error es por un bloqueador de anuncios
+      if (error instanceof Error &&
+          (error.message.includes("ERR_BLOCKED_BY") ||
+           error.message.includes("network error") ||
+           error.message.includes("failed to fetch"))) {
+        errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
+                      "Las estimaciones se han revelado localmente, pero no se sincronizarán con otros usuarios. " +
+                      "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+      }
+      
       const appError = createError(
         ErrorType.UNKNOWN_ERROR,
-        "Error al revelar estimaciones. Intenta nuevamente.",
+        errorMessage,
         { originalError: error },
         () => get().revealEstimations() // Acción de recuperación: reintentar
       );
+      
       errorStore.setError(appError);
       set({ error: appError.message });
     }
@@ -499,27 +665,58 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
       return;
     }
 
+    // Actualizar estado local inmediatamente para mejorar la experiencia del usuario
+    // Esto permite que la UI responda incluso si las operaciones de Firebase fallan
+    set({ reveal: false });
+
     try {
-      // Resetear estimaciones de participantes (para compatibilidad)
-      await Promise.all(
-        participants.map(async (participant) => {
+      // Crear un array de promesas para todas las operaciones de Firebase
+      const updatePromises = [];
+      
+      // 1. Resetear estimaciones de participantes (para compatibilidad)
+      // Modificamos para manejar cada participante individualmente y no fallar si uno falla
+      for (const participant of participants) {
+        try {
           const participantRef = ref(
             realtimeDb,
             `rooms/${roomId}/participants/${participant.id}`
           );
-          await update(participantRef, { estimation: null });
-        })
-      );
+          const updatePromise = update(participantRef, { estimation: null })
+            .catch(err => {
+              console.warn(`No se pudo actualizar el participante ${participant.id}:`, err);
+              // No propagamos el error para que otras operaciones puedan continuar
+            });
+          updatePromises.push(updatePromise);
+        } catch (err) {
+          console.warn(`Error al preparar actualización para participante ${participant.id}:`, err);
+        }
+      }
 
-      // Cambiar estado de revelación en la sesión
-      const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
-      await update(sessionRef, { reveal: false });
+      // 2. Cambiar estado de revelación en la sesión
+      try {
+        const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+        const sessionPromise = update(sessionRef, { reveal: false })
+          .catch(err => {
+            console.warn("No se pudo actualizar la sesión:", err);
+          });
+        updatePromises.push(sessionPromise);
+      } catch (err) {
+        console.warn("Error al preparar actualización de sesión:", err);
+      }
       
-      // Mantener compatibilidad con la estructura anterior
-      const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-      await update(roomRef, { reveal: false });
+      // 3. Mantener compatibilidad con la estructura anterior
+      try {
+        const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+        const roomPromise = update(roomRef, { reveal: false })
+          .catch(err => {
+            console.warn("No se pudo actualizar la sala:", err);
+          });
+        updatePromises.push(roomPromise);
+      } catch (err) {
+        console.warn("Error al preparar actualización de sala:", err);
+      }
       
-      // Si hay un issue seleccionado, limpiar sus votos y promedio
+      // 4. Si hay un issue seleccionado, limpiar sus votos y promedio
       if (currentIssueId) {
         // Limpiar votos locales para el issue actual
         const newVotes = { ...votes };
@@ -529,22 +726,55 @@ export const useRoomStore = create<RoomState & RoomActions>((set, get) => ({
         }
         
         // Limpiar promedio del issue actual
-        const issueRef = ref(
-          realtimeDb,
-          `rooms/${roomId}/issues/${currentIssueId}`
-        );
-        await update(issueRef, { average: null });
+        try {
+          const issueRef = ref(
+            realtimeDb,
+            `rooms/${roomId}/issues/${currentIssueId}`
+          );
+          const issuePromise = update(issueRef, { average: null })
+            .catch(err => {
+              console.warn(`No se pudo actualizar el issue ${currentIssueId}:`, err);
+            });
+          updatePromises.push(issuePromise);
+        } catch (err) {
+          console.warn(`Error al preparar actualización de issue ${currentIssueId}:`, err);
+        }
       }
       
-      // Actualizar estado local
-      set({ reveal: false });
+      // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
+      await Promise.allSettled(updatePromises);
+      
+      // Actualizar los participantes localmente para asegurarnos de que las estimaciones se resetean
+      // incluso si las operaciones de Firebase fallaron
+      const updatedParticipants = participants.map(p => ({
+        ...p,
+        estimation: undefined // Usar undefined en lugar de null para cumplir con el tipo Participant
+      }));
+      set({ participants: updatedParticipants });
+      
+      console.log("Nueva votación iniciada correctamente");
     } catch (error) {
+      console.error("Error al iniciar nueva votación:", error);
+      
+      // Crear un mensaje de error más descriptivo basado en el tipo de error
+      let errorMessage = "Error al iniciar nueva votación. Intenta nuevamente.";
+      
+      // Detectar si el error es por un bloqueador de anuncios
+      if (error instanceof Error &&
+          (error.message.includes("ERR_BLOCKED_BY") ||
+           error.message.includes("network error") ||
+           error.message.includes("failed to fetch"))) {
+        errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
+                      "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+      }
+      
       const appError = createError(
         ErrorType.UNKNOWN_ERROR,
-        "Error al iniciar nueva votación. Intenta nuevamente.",
+        errorMessage,
         { originalError: error },
         () => get().startNewVote() // Acción de recuperación: reintentar
       );
+      
       errorStore.setError(appError);
       set({ error: appError.message });
     }

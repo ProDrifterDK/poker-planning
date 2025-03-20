@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ErrorDisplay from '../components/ErrorDisplay';
 import { OnboardingTooltip } from '../components/Onboarding';
+import AdBlockerWarning from '../components/AdBlockerWarning';
 
 export const metadata = {
   title: 'Poker Planning',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               {children}
               <ErrorDisplay />
               <OnboardingTooltip />
+              <AdBlockerWarning />
             </main>
             <Footer />
           </>
