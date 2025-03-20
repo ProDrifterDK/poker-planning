@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
+import { useAuth } from "@/context/authContext";
 
 export default function ClientJoin() {
   const searchParams = useSearchParams();
@@ -19,8 +20,39 @@ export default function ClientJoin() {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Obtener información del usuario autenticado
+  const { currentUser } = useAuth();
+
   // Usar el store de Zustand
   const { joinRoomWithName, isLoading, error, setError } = useRoomStore();
+
+  // Usar el nombre del usuario autenticado si está disponible
+  useEffect(() => {
+    if (currentUser?.displayName) {
+      setName(currentUser.displayName);
+    }
+  }, [currentUser]);
+
+  // Unirse automáticamente a la sala si el usuario está autenticado y tenemos su nombre
+  useEffect(() => {
+    const autoJoin = async () => {
+      if (currentUser?.displayName && roomCode && !isSubmitting && !isLoading && !error) {
+        setIsSubmitting(true);
+        try {
+          await joinRoomWithName(roomCode, currentUser.displayName);
+          router.push(`/room/${roomCode}`);
+        } catch (error) {
+          console.error("Error al unirse automáticamente a la sala:", error);
+          setIsSubmitting(false);
+        }
+      }
+    };
+
+    // Intentar unirse automáticamente solo si tenemos el nombre del usuario
+    if (currentUser?.displayName) {
+      autoJoin();
+    }
+  }, [currentUser, roomCode, joinRoomWithName, router, isSubmitting, isLoading, error]);
 
   const handleJoinRoom = async () => {
     if (!roomCode) {
@@ -42,6 +74,9 @@ export default function ClientJoin() {
       setIsSubmitting(false);
     }
   };
+
+  // Si el usuario está autenticado y estamos intentando unirlo automáticamente
+  const isAutoJoining = currentUser?.displayName && isSubmitting;
 
   return (
     <Box
@@ -71,42 +106,64 @@ export default function ClientJoin() {
         </Alert>
       )}
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: 400,
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          p: 3,
-          borderRadius: 2,
-          boxShadow: 3,
-          bgcolor: "background.paper",
-        }}
-      >
-        <TextField
-          label="Tu nombre"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isLoading || isSubmitting}
-        />
-
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          onClick={handleJoinRoom}
-          disabled={isLoading || isSubmitting}
-          sx={{ mt: 2 }}
+      {isAutoJoining ? (
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 400,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            p: 3,
+            borderRadius: 2,
+            boxShadow: 3,
+            bgcolor: "background.paper",
+          }}
         >
-          {isLoading || isSubmitting ? (
-            <CircularProgress size={24} />
-          ) : (
-            "Unirse a la Sala"
-          )}
-        </Button>
-      </Box>
+          <Typography variant="body1">
+            Uniéndote automáticamente como <strong>{currentUser.displayName}</strong>...
+          </Typography>
+          <CircularProgress size={40} />
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 400,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            p: 3,
+            borderRadius: 2,
+            boxShadow: 3,
+            bgcolor: "background.paper",
+          }}
+        >
+          <TextField
+            label="Tu nombre"
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isLoading || isSubmitting}
+          />
+
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={handleJoinRoom}
+            disabled={isLoading || isSubmitting}
+            sx={{ mt: 2 }}
+          >
+            {isLoading || isSubmitting ? (
+              <CircularProgress size={24} />
+            ) : (
+              "Unirse a la Sala"
+            )}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

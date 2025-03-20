@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Alert, Snackbar, Button, Box, Typography } from "@mui/material";
+import { Alert, Snackbar, Button, Box, Typography, Link } from "@mui/material";
 import { useErrorStore, ErrorType } from "@/store/errorStore";
+import NextLink from 'next/link';
 
 interface ErrorDisplayProps {
   // Si se proporciona, solo mostrará errores de estos tipos
@@ -40,6 +41,32 @@ export default function ErrorDisplay({
   if (!currentError) return null;
   if (filterTypes && !filterTypes.includes(currentError.type)) return null;
 
+  // Función para detectar si el error está relacionado con bloqueadores de anuncios
+  const isAdBlockerRelatedError = () => {
+    if (!currentError) return false;
+    
+    // Verificar el mensaje de error
+    if (currentError.message.includes('bloqueador de anuncios') ||
+        currentError.message.includes('ERR_BLOCKED_BY')) {
+      return true;
+    }
+    
+    // Verificar los detalles del error
+    if (currentError.details) {
+      const detailsStr = typeof currentError.details === 'object'
+        ? JSON.stringify(currentError.details)
+        : String(currentError.details);
+      
+      if (detailsStr.includes('ERR_BLOCKED_BY') ||
+          detailsStr.includes('network error') ||
+          detailsStr.includes('failed to fetch')) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   // Contenido del error
   const errorContent = (
     <React.Fragment>
@@ -53,6 +80,19 @@ export default function ErrorDisplay({
             ? JSON.stringify(currentError.details)
             : String(currentError.details)}
         </Typography>
+      )}
+
+      {/* Mostrar enlace a la documentación si el error está relacionado con bloqueadores de anuncios */}
+      {isAdBlockerRelatedError() && (
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="body2">
+            Consulta nuestra{' '}
+            <Link component={NextLink} href="/docs/troubleshooting" color="primary" underline="always">
+              guía de solución de problemas
+            </Link>
+            {' '}para resolver este problema.
+          </Typography>
+        </Box>
       )}
 
       {showRecoveryButton && currentError.recoveryAction && (
