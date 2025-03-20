@@ -33,8 +33,58 @@ export default function ClientJoin() {
     }
   }, [currentUser]);
 
-  // Unirse automáticamente a la sala si el usuario está autenticado y tenemos su nombre
+  // Verificar si ya hay una sesión persistente para esta sala
   useEffect(() => {
+    const checkPersistedSession = async () => {
+      try {
+        // Verificar si estamos en el cliente
+        if (typeof window === 'undefined') return false;
+        
+        // Verificar si hay una sesión persistente en localStorage
+        const storageData = localStorage.getItem('poker-planning-storage');
+        if (storageData) {
+          const sessionData = JSON.parse(storageData);
+          const state = sessionData.state;
+          
+          // Si hay una sesión para esta sala, verificar si la sala sigue activa
+          if (state && state.roomId === roomCode) {
+            try {
+              // Verificar si la sala está marcada para eliminación
+              const { ref, get } = await import('firebase/database');
+              const { realtimeDb } = await import('@/lib/firebaseConfig');
+              
+              const roomRef = ref(realtimeDb, `rooms/${roomCode}/metadata`);
+              const roomSnapshot = await get(roomRef);
+              
+              // Si la sala no existe o está marcada para eliminación, limpiar la sesión
+              if (!roomSnapshot.exists() || 
+                  roomSnapshot.val().markedForDeletion === true || 
+                  roomSnapshot.val().active === false) {
+                console.log(`La sala ${roomCode} ya no está disponible. Limpiando sesión.`);
+                localStorage.removeItem('poker-planning-storage');
+                setError("Esta sala ha sido cerrada porque todos los participantes la abandonaron.");
+                return false;
+              }
+              
+              // Si la sala sigue activa, redirigir automáticamente
+              console.log("Sesión persistente encontrada para la sala:", roomCode);
+              router.push(`/room/${roomCode}`);
+              return true;
+            } catch (fbError) {
+              console.error("Error al verificar estado de la sala:", fbError);
+              // En caso de error, intentamos unirse normalmente
+              return false;
+            }
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error("Error al verificar sesión persistente:", error);
+        return false;
+      }
+    };
+
+    // Función para intentar unirse automáticamente
     const autoJoin = async () => {
       if (currentUser?.displayName && roomCode && !isSubmitting && !isLoading && !error) {
         setIsSubmitting(true);
@@ -48,11 +98,18 @@ export default function ClientJoin() {
       }
     };
 
-    // Intentar unirse automáticamente solo si tenemos el nombre del usuario
-    if (currentUser?.displayName) {
-      autoJoin();
-    }
-  }, [currentUser, roomCode, joinRoomWithName, router, isSubmitting, isLoading, error]);
+    // Primero verificar si hay una sesión persistente, luego intentar unirse automáticamente
+    const checkAndJoin = async () => {
+      const hasPersistedSession = await checkPersistedSession();
+      
+      // Si no hay sesión persistente, intentar unirse automáticamente con el usuario autenticado
+      if (!hasPersistedSession && currentUser?.displayName) {
+        autoJoin();
+      }
+    };
+
+    checkAndJoin();
+  }, [currentUser, roomCode, joinRoomWithName, router, isSubmitting, isLoading, error, setError]);
 
   const handleJoinRoom = async () => {
     if (!roomCode) {

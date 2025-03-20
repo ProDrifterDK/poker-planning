@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
     Box,
@@ -19,7 +19,7 @@ import MenuCloseIcon from '@mui/icons-material/Menu';
 import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
 import { useRoomStore } from '@/store/roomStore';
-
+import { useAuth } from '@/context/authContext';
 export default function RoomPage() {
     const theme = useTheme();
     const params = useParams();
@@ -28,6 +28,12 @@ export default function RoomPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
+    // Obtener el usuario autenticado
+    const { currentUser } = useAuth();
+    
+
+    // Usar el router para la navegación
+    const router = useRouter();
 
     // Usar el store de Zustand
     const {
@@ -44,6 +50,7 @@ export default function RoomPage() {
         revealEstimations,
         startNewVote,
         setError,
+        leaveRoom,
     } = useRoomStore();
 
     // Estado local para la estimación seleccionada
@@ -51,6 +58,58 @@ export default function RoomPage() {
 
     // Verificar si el usuario ya está en la sala
     const isJoined = storeRoomId === roomId && participants.length > 0;
+
+    // Función para verificar si hay una sesión persistente
+    const checkPersistedSession = useCallback(async () => {
+        try {
+            // Verificar si estamos en el cliente
+            if (typeof window === 'undefined') return false;
+            
+            // Verificar si ya estamos unidos a la sala
+            if (isJoined) return true;
+            
+            // Verificar si hay una sesión persistente en localStorage
+            const storageData = localStorage.getItem('poker-planning-storage');
+            if (storageData) {
+                const sessionData = JSON.parse(storageData);
+                const state = sessionData.state;
+                
+                // Si hay una sesión para esta sala, unirse automáticamente
+                if (state && state.roomId === roomId && state.currentParticipantId) {
+                    console.log("Sesión persistente encontrada para la sala:", roomId);
+                    
+                    // Si tenemos un nombre de usuario, unirse automáticamente
+                    if (name) {
+                        try {
+                            await joinRoomWithName(roomId, name);
+                            return true;
+                        } catch (error) {
+                            console.error("Error al unirse automáticamente a la sala:", error);
+                            return false;
+                        }
+                    }
+                    
+                    return false;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error("Error al verificar sesión persistente:", error);
+            return false;
+        }
+    }, [roomId, isJoined, name, joinRoomWithName]);
+
+    // Usar el nombre del usuario autenticado
+    useEffect(() => {
+        if (currentUser?.displayName) {
+            setName(currentUser.displayName);
+        }
+    }, [currentUser]);
+
+    // Verificar sesión persistente al cargar el componente
+    useEffect(() => {
+        checkPersistedSession();
+    }, [checkPersistedSession]);
 
     // Unirse a la sala
     const handleJoinRoom = async () => {
@@ -78,9 +137,11 @@ export default function RoomPage() {
         await selectEstimation(value);
     };
 
-    // Calcular conteo y promedio
+    // Calcular conteo y promedio (solo de participantes activos)
     const calculateSummary = () => {
-        const allEstimations = participants.map((p) => p.estimation);
+        // Filtrar solo participantes activos
+        const activeParticipants = participants.filter(p => p.active !== false);
+        const allEstimations = activeParticipants.map((p) => p.estimation);
         const numericEstimations = allEstimations.filter((val) => typeof val === 'number') as number[];
 
         const counts: Record<string, number> = {};
@@ -100,9 +161,21 @@ export default function RoomPage() {
 
     const { counts, avg } = calculateSummary();
 
-    const allParticipantsHaveEstimated = participants.every(
-        (p) => p.estimation !== null && p.estimation !== undefined
-    );
+    // Verificar si todos los participantes activos han estimado
+    const allParticipantsHaveEstimated = participants
+        .filter(p => p.active !== false) // Solo considerar participantes activos
+        .every(p => p.estimation !== null && p.estimation !== undefined);
+
+    // Función para salir de la sala
+    const handleLeaveRoom = async () => {
+        try {
+            await leaveRoom();
+            router.push('/');
+        } catch (error) {
+            console.error('Error al salir de la sala:', error);
+            setErrorMessage('Error al salir de la sala. Intenta nuevamente.');
+        }
+    };
 
     // Toggle sidebar
     const handleToggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -127,18 +200,44 @@ export default function RoomPage() {
             <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
             <Box flex="1" display="flex" flexDirection="column" alignItems="center" padding={2}>
-                <Typography
-                    variant="h4"
-                    gutterBottom
-                    sx={{
-                        fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
-                    }}
-                    role="heading"
-                    aria-level={1}
-                    aria-label={`Sala de Planning Poker con código ${roomId}`}
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    width="100%"
                 >
-                    Sala: {roomId}
-                </Typography>
+                    <Typography
+                        variant="h4"
+                        gutterBottom
+                        sx={{
+                            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                        }}
+                        role="heading"
+                        aria-level={1}
+                        aria-label={`Sala de Planning Poker con código ${roomId}`}
+                    >
+                        Sala: {roomId}
+                    </Typography>
+                    
+                    {isJoined && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={handleLeaveRoom}
+                            sx={{
+                                mt: 1,
+                                mb: 2,
+                                textTransform: 'none',
+                                borderRadius: '20px',
+                                px: 3
+                            }}
+                            startIcon={<span role="img" aria-label="Salir">🚪</span>}
+                            aria-label="Salir de la sala"
+                        >
+                            Salir de la sala
+                        </Button>
+                    )}
+                </Box>
 
                 {!isJoined ? (
                     <Box
@@ -247,7 +346,10 @@ export default function RoomPage() {
                                 position: 'relative', // Para el posicionamiento correcto de los elementos animados
                             }}
                         >
-                            {participants.map((participant) => {
+                            {/* Filtrar solo participantes activos - asegurarse de que no se muestren los inactivos */}
+                            {participants
+                                .filter(p => p.active !== false)
+                                .map((participant) => {
                                 const noSelection =
                                     participant.estimation === null ||
                                     participant.estimation === undefined;

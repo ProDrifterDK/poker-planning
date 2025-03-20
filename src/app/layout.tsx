@@ -8,7 +8,7 @@ import { OnboardingTooltip } from '../components/Onboarding';
 import AdBlockerWarning from '../components/AdBlockerWarning';
 
 export const metadata = {
-  title: 'Poker Planning',
+  title: 'Poker Planning Pro',
   description: 'Planificación ágil con Poker Planning',
 };
 

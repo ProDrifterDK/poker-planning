@@ -3,6 +3,7 @@
 import RoomManager from "@/components/RoomManager";
 import { WelcomeMessage } from "@/components/Onboarding";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SessionPersistence from "@/components/SessionPersistence";
 import { useAuth } from "@/context/authContext";
 import { Box, Typography, Button } from "@mui/material";
 import Link from "next/link";
@@ -30,6 +31,9 @@ export default function HomePage() {
             mt: 4
           }}
         >
+          {/* Componente de persistencia de sesión */}
+          <SessionPersistence />
+          
           <Typography variant="h4" component="h1" gutterBottom>
             Bienvenido a Poker Planning Pro
           </Typography>
