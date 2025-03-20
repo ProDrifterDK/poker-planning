@@ -27,6 +27,7 @@ export default function RoomPage() {
     const [name, setName] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    
 
     // Usar el store de Zustand
     const {

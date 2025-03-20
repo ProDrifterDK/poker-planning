@@ -55,6 +55,7 @@ export default function RoomManager() {
       // Después de crear la sala, unirse a ella con el nombre
       await joinRoomWithName(roomId, name);
       router.push(`/room/${roomId}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // Los errores ya son manejados por el store
       // No registramos el error en la consola por razones de seguridad
@@ -81,6 +82,7 @@ export default function RoomManager() {
     try {
       await joinRoomWithName(roomCode, name);
       router.push(`/room/${roomCode}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // Los errores ya son manejados por el store
       // No registramos el error en la consola por razones de seguridad

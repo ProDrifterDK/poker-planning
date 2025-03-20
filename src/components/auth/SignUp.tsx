@@ -80,6 +80,7 @@ const SignUp: React.FC = () => {
     try {
       await signUp(email, password, name);
       setSuccess(true); // Establecer estado de éxito
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
       // No registramos el error en la consola por razones de seguridad
