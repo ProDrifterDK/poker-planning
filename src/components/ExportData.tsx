@@ -257,11 +257,18 @@ export default function ExportData({ roomId, participants, issues, estimations }
             <Button
               variant="contained"
               color="primary"
-              startIcon={<DownloadIcon />}
+              startIcon={<DownloadIcon fontSize="small" />}
               onClick={handleClick}
               aria-controls="export-menu"
               aria-haspopup="true"
-              sx={{ textTransform: 'none' }}
+              size="medium"
+              sx={{
+                textTransform: 'none',
+                width: '200px',
+                height: '36px',
+                justifyContent: 'center',
+                fontSize: '0.875rem'
+              }}
             >
               Exportar Datos
             </Button>
@@ -282,8 +289,15 @@ export default function ExportData({ roomId, participants, issues, estimations }
             variant="outlined"
             color="primary"
             disabled
-            startIcon={<DownloadIcon />}
-            sx={{ textTransform: 'none', cursor: 'not-allowed' }}
+            startIcon={<DownloadIcon fontSize="small" />}
+            sx={{
+              textTransform: 'none',
+              cursor: 'not-allowed',
+              width: '200px',
+              height: '36px',
+              justifyContent: 'center',
+              fontSize: '0.875rem'
+            }}
             title="No hay datos para exportar. Completa la estimación de al menos un issue."
           >
             Exportar Datos

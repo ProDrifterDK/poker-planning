@@ -118,6 +118,18 @@ export default function Header() {
                                 <MenuItem onClick={handleProfile}>
                                     Mi Perfil
                                 </MenuItem>
+                                <MenuItem onClick={() => {
+                                    router.push('/settings');
+                                    handleClose();
+                                }}>
+                                    Configuración
+                                </MenuItem>
+                                <MenuItem onClick={() => {
+                                    router.push('/settings/integrations');
+                                    handleClose();
+                                }}>
+                                    Integraciones
+                                </MenuItem>
                                 {isModerator() && (
                                     <MenuItem onClick={() => {
                                         router.push('/admin');
