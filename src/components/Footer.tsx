@@ -14,7 +14,7 @@ export default function Footer() {
             }}
         >
             <Typography variant="body1">
-                © {new Date().getFullYear()} Planning Poker. Todos los derechos reservados.
+                © {new Date().getFullYear()} Poker Planning Pro. Todos los derechos reservados.
             </Typography>
             <Typography variant="body2">
                 <Link href="https://example.com" color="inherit" underline="hover">

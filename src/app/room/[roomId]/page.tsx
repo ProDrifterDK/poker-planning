@@ -19,6 +19,7 @@ import MenuCloseIcon from '@mui/icons-material/Menu';
 import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
 import ExportData from '@/components/ExportData';
+import { SendToIntegration } from '@/components/integrations';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
 export default function RoomPage() {
@@ -561,14 +562,29 @@ export default function RoomPage() {
                             </Box>
                         )}
 
-                        {/* Componente de exportación de datos */}
+                        {/* Componentes de exportación e integración */}
                         {reveal && (
-                            <Box marginTop={4} display="flex" justifyContent="center">
+                            <Box marginTop={4} display="flex" justifyContent="center" gap={2} flexWrap="wrap">
                                 <ExportData
                                     roomId={roomId}
                                     participants={participants}
                                     issues={issues || []}
                                     estimations={votes || {}}
+                                />
+                                
+                                <SendToIntegration
+                                    issueData={{
+                                        key: currentIssueId || 'unknown',
+                                        summary: issues?.find(i => i.id === currentIssueId)?.summary || 'Sin título',
+                                        description: `Estimación realizada en la sala ${roomId}`,
+                                        average: avg,
+                                        estimations: participants.reduce((acc, participant) => {
+                                            if (participant.estimation !== undefined && participant.estimation !== null) {
+                                                acc[participant.name] = participant.estimation;
+                                            }
+                                            return acc;
+                                        }, {} as Record<string, string | number>)
+                                    }}
                                 />
                             </Box>
                         )}
