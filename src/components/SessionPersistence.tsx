@@ -53,7 +53,6 @@ export default function SessionPersistence() {
               if (!roomSnapshot.exists() ||
                   roomSnapshot.val().markedForDeletion === true ||
                   roomSnapshot.val().active === false) {
-                console.log(`La sala ${state.roomId} ya no está disponible. Limpiando sesión.`);
                 localStorage.removeItem('poker-planning-storage');
                 return;
               }
@@ -118,7 +117,6 @@ export default function SessionPersistence() {
               lastActive: Date.now(),
               estimation: null
             });
-            console.log(`Participante ${participantId} marcado como inactivo desde SessionPersistence`);
             
             // 2. Verificar si hay otros participantes activos
             try {
@@ -135,7 +133,6 @@ export default function SessionPersistence() {
                 
                 // Si no quedan participantes activos, marcar la sala para eliminación
                 if (activeParticipants.length === 0) {
-                  console.log(`No quedan participantes activos en la sala ${roomId}. Marcando para eliminación.`);
                   
                   const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
                   await update(roomRef, {

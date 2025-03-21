@@ -60,14 +60,12 @@ export default function ClientJoin() {
               if (!roomSnapshot.exists() || 
                   roomSnapshot.val().markedForDeletion === true || 
                   roomSnapshot.val().active === false) {
-                console.log(`La sala ${roomCode} ya no está disponible. Limpiando sesión.`);
                 localStorage.removeItem('poker-planning-storage');
                 setError("Esta sala ha sido cerrada porque todos los participantes la abandonaron.");
                 return false;
               }
               
               // Si la sala sigue activa, redirigir automáticamente
-              console.log("Sesión persistente encontrada para la sala:", roomCode);
               router.push(`/room/${roomCode}`);
               return true;
             } catch (fbError) {

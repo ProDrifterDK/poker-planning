@@ -22,6 +22,8 @@ export interface RoomSettings {
   autoReveal: boolean; // Revelar automáticamente cuando todos hayan votado
   allowSpectators: boolean; // Permitir espectadores (sin voto)
   showAverage: boolean; // Mostrar promedio de estimaciones
+  timerEnabled: boolean; // Habilitar temporizador para votaciones
+  timerDuration: number; // Duración del temporizador en segundos
 }
 
 export interface Issue {
