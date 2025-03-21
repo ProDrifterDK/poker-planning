@@ -18,6 +18,7 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import MenuCloseIcon from '@mui/icons-material/Menu';
 import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
+import ExportData from '@/components/ExportData';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
 export default function RoomPage() {
@@ -39,6 +40,8 @@ export default function RoomPage() {
     const {
         roomId: storeRoomId,
         participants,
+        issues,
+        votes,
         currentIssueId,
         reveal,
         estimationOptions,
@@ -555,6 +558,18 @@ export default function RoomPage() {
                                         Promedio de estimaciones: <span aria-label={`${avg} puntos`}>{avg}</span>
                                     </Typography>
                                 </Box>
+                            </Box>
+                        )}
+
+                        {/* Componente de exportación de datos */}
+                        {reveal && (
+                            <Box marginTop={4} display="flex" justifyContent="center">
+                                <ExportData
+                                    roomId={roomId}
+                                    participants={participants}
+                                    issues={issues || []}
+                                    estimations={votes || {}}
+                                />
                             </Box>
                         )}
 
