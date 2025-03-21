@@ -20,6 +20,7 @@ export enum Permission {
   KICK_USER = 'kick_user',
   CHANGE_ROOM_SETTINGS = 'change_room_settings',
   END_SESSION = 'end_session',
+  MANAGE_TIMER = 'manage_timer',
   
   // Permisos de participante
   VOTE = 'vote',
@@ -38,6 +39,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.KICK_USER,
     Permission.CHANGE_ROOM_SETTINGS,
     Permission.END_SESSION,
+    Permission.MANAGE_TIMER,
     Permission.VOTE,
     Permission.CHANGE_OWN_NAME,
   ],

@@ -135,11 +135,8 @@ export const useOnboardingStore = create<OnboardingState>()(
             nextStep: () => {
                 const { currentStep, steps, markStepAsCompleted } = get();
                 if (!currentStep) {
-                    console.log('nextStep: No hay paso actual');
                     return;
                 }
-
-                console.log('nextStep: Paso actual', currentStep);
 
                 // Marcar el paso actual como completado
                 markStepAsCompleted(currentStep);
@@ -149,21 +146,16 @@ export const useOnboardingStore = create<OnboardingState>()(
                 const currentIndex = stepsOrder.indexOf(currentStep);
                 const nextIndex = currentIndex + 1;
 
-                console.log('nextStep: Índices', { currentIndex, nextIndex, totalSteps: stepsOrder.length });
-
                 if (nextIndex < stepsOrder.length) {
                     // Ir al siguiente paso
                     const nextStep = stepsOrder[nextIndex];
-                    console.log('nextStep: Avanzando al paso', nextStep);
                     
                     // Usar setTimeout para asegurar que el cambio de estado se procese correctamente
                     setTimeout(() => {
                         set({ currentStep: nextStep });
-                        console.log('nextStep: Estado actualizado', { nextStep, isActive: true });
                     }, 50);
                 } else {
                     // Completar el tutorial si no hay más pasos
-                    console.log('nextStep: Completando tutorial');
                     set({
                         isActive: false,
                         currentStep: null,

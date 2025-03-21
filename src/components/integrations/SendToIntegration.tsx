@@ -17,6 +17,7 @@ import {
   Alert,
   Divider,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -103,7 +104,7 @@ export default function SendToIntegration({ issueData, disabled = false }: SendT
       const enabledIndices = integrations
         .map((integration, idx) => integration.enabled ? idx : -1)
         .filter(idx => idx !== -1);
-      
+
       const integrationIndex = enabledIndices[index];
       if (integrationIndex !== undefined) {
         const result = await sendIssueToIntegration(integrationIndex, issueData);
@@ -140,25 +141,28 @@ export default function SendToIntegration({ issueData, disabled = false }: SendT
   };
 
   return (
-    <>
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<SendIcon fontSize="small" />}
-        onClick={handleOpen}
-        aria-controls="send-to-integrations"
-        size="medium"
-        disabled={disabled || enabledIntegrations.length === 0 || isLoading}
-        sx={{
-          textTransform: 'none',
-          width: '200px',
-          height: '36px',
-          justifyContent: 'center',
-          fontSize: '0.875rem'
-        }}
-      >
-        Sincronizar Issues
-      </Button>
+    <><Tooltip title={enabledIntegrations.length === 0 ? 'Debes conectar tus integraciones antes de sincronizar issues' : 'Sincronizar con tus integraciones'}>
+      <span>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<SendIcon fontSize="small" />}
+          onClick={handleOpen}
+          aria-controls="send-to-integrations"
+          size="medium"
+          disabled={disabled || enabledIntegrations.length === 0 || isLoading}
+          sx={{
+            textTransform: 'none',
+            width: '200px',
+            height: '36px',
+            justifyContent: 'center',
+            fontSize: '0.875rem'
+          }}
+        >
+          Sincronizar Issues
+        </Button>
+      </span>
+    </Tooltip>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Enviar a Integraciones</DialogTitle>

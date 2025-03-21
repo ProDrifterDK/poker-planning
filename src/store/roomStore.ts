@@ -15,6 +15,9 @@ interface SessionData {
   reveal: boolean;
   currentIssueId: string | null;
   startedAt: number;
+  timerEnabled?: boolean;
+  timerDuration?: number;
+  timerStartedAt?: number;
 }
 
 /**
@@ -37,7 +40,7 @@ interface RoomState {
   issues: Issue[];
   votes: Record<string, Record<string, number | string>>; // issueId -> participantId -> value
   currentParticipantId: string | null; // ID del participante actual
-  
+
   // Estado de la UI
   currentIssueId: string | null;
   reveal: boolean;
@@ -45,6 +48,12 @@ interface RoomState {
   seriesKey: string;
   isLoading: boolean;
   error: string | null;
+
+  // Estado del temporizador
+  timerEnabled: boolean;
+  timerDuration: number;
+  timerStartedAt: number | null;
+  timerRemaining: number | null;
 }
 
 interface RoomActions {
@@ -61,6 +70,13 @@ interface RoomActions {
   // Acciones para issues
   addIssue: (key: string, summary: string) => Promise<void>;
   selectCurrentIssue: (issueId: string) => Promise<void>;
+
+  // Acciones para temporizador
+  setTimerEnabled: (enabled: boolean) => Promise<void>;
+  setTimerDuration: (duration: number) => Promise<void>;
+  startTimer: () => Promise<void>;
+  stopTimer: () => Promise<void>;
+  resetTimer: () => Promise<void>;
 
   // Acciones para estado
   setError: (error: string | null) => void;
@@ -81,6 +97,10 @@ const initialState: RoomState = {
   seriesKey: "fibonacci",
   isLoading: false,
   error: null,
+  timerEnabled: false,
+  timerDuration: 60, // 60 segundos por defecto
+  timerStartedAt: null,
+  timerRemaining: null,
 };
 
 // Definición de series de estimación
@@ -101,23 +121,23 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       createRoom: async (seriesKey: string) => {
         const errorStore = useErrorStore.getState();
         set({ isLoading: true, error: null });
-        
+
         try {
           const roomId = Math.random().toString(36).substring(7);
           const sessionId = Math.random().toString(36).substring(7);
           const timestamp = Date.now();
-          
+
           // Generar un ID de participante para el creador de la sala
           const participantId = Math.random().toString(36).substring(7);
           localStorage.setItem(`participant_id_${roomId}`, participantId);
-          
+
           // Crear metadatos de la sala
           await update(ref(realtimeDb, `rooms/${roomId}/metadata`), {
             createdAt: timestamp,
             seriesKey,
             seriesValues: seriesList[seriesKey],
           });
-          
+
           // Crear sesión inicial
           await update(ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`), {
             active: true,
@@ -125,7 +145,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             currentIssueId: null,
             startedAt: timestamp,
           });
-          
+
           // Añadir al creador como primer participante
           const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
           await update(participantRef, {
@@ -135,7 +155,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             role: UserRole.MODERATOR, // El creador es moderador por defecto
             participantId
           });
-          
+
           // Limpiar el estado anterior y establecer el nuevo estado
           set({
             ...initialState,
@@ -147,7 +167,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             reveal: false,
             currentIssueId: null,
           });
-          
+
           return roomId;
         } catch (error) {
           // Usar el sistema centralizado de errores
@@ -157,14 +177,14 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             { originalError: error },
             () => get().createRoom(seriesKey) // Acción de recuperación: reintentar
           );
-          
+
           errorStore.setError(appError);
-          
+
           // Mantener el error en el estado local para compatibilidad
           set({
             error: appError.message,
           });
-          
+
           throw error;
         } finally {
           set({ isLoading: false });
@@ -175,7 +195,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       joinRoomWithName: async (roomId: string, name: string) => {
         const errorStore = useErrorStore.getState();
         set({ isLoading: true, error: null });
-        
+
         try {
           // Verificar si la sala existe
           const roomSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/metadata`));
@@ -189,10 +209,10 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             set({ error: appError.message });
             throw new Error(appError.message);
           }
-          
+
           // Obtener metadatos de la sala
           const roomMetadata = roomSnapshot.val();
-          
+
           // Verificar si la sala está marcada para eliminación o inactiva
           if (roomMetadata.markedForDeletion === true || roomMetadata.active === false) {
             const appError = createError(
@@ -206,11 +226,11 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           }
           const seriesKey = roomMetadata.seriesKey || 'fibonacci';
           const seriesValues = roomMetadata.seriesValues || seriesList[seriesKey];
-          
+
           // Obtener la sesión activa o crear una nueva
           const sessionsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/sessions`));
           let sessionId = null;
-          
+
           if (sessionsSnapshot.exists()) {
             // Buscar una sesión activa
             const sessions = sessionsSnapshot.val();
@@ -222,7 +242,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               }
             }
           }
-          
+
           // Si no hay sesión activa, crear una nueva
           if (!sessionId) {
             sessionId = Math.random().toString(36).substring(7);
@@ -233,23 +253,23 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               startedAt: Date.now(),
             });
           }
-          
+
           // Generar un ID de participante único y guardarlo en localStorage
           let participantId = localStorage.getItem(`participant_id_${roomId}`);
           let isNewParticipant = false;
-          
+
           if (!participantId) {
             participantId = Math.random().toString(36).substring(7);
             localStorage.setItem(`participant_id_${roomId}`, participantId);
             isNewParticipant = true;
           }
-          
+
           // Verificar si el participante ya existe en la sala
           const participantsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`));
-          
+
           // Añadir o actualizar participante
           const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
-          
+
           if (isNewParticipant || !participantsSnapshot.exists()) {
             await update(participantRef, {
               name,
@@ -265,7 +285,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               lastActive: Date.now()
             });
           }
-          
+
           // Guardar el ID del participante en el estado local
           set({
             currentParticipantId: participantId,
@@ -362,6 +382,38 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             if (typeof data.seriesKey === "string") {
               set({ seriesKey: data.seriesKey });
             }
+
+            // Actualizar datos del temporizador desde la sesión activa
+            if (data.sessions && sessionId && data.sessions[sessionId]) {
+              const activeSession = data.sessions[sessionId];
+
+              // Actualizar timerEnabled
+              if (typeof activeSession.timerEnabled === "boolean") {
+                set({ timerEnabled: activeSession.timerEnabled });
+              }
+
+              // Actualizar timerDuration
+              if (typeof activeSession.timerDuration === "number") {
+                set({ timerDuration: activeSession.timerDuration });
+              }
+
+              // Actualizar timerStartedAt - siempre actualizar, incluso si es undefined
+              set({ timerStartedAt: activeSession.timerStartedAt || null });
+            }
+
+            // También actualizar datos del temporizador desde la estructura antigua para compatibilidad
+
+            if (typeof data.timerStartedAt === "number" || data.timerStartedAt === null) {
+              set({ timerStartedAt: data.timerStartedAt });
+            }
+
+            if (typeof data.timerEnabled === "boolean") {
+              set({ timerEnabled: data.timerEnabled });
+            }
+
+            if (typeof data.timerDuration === "number") {
+              set({ timerDuration: data.timerDuration });
+            }
           });
 
           // Guardar ID de sala
@@ -383,7 +435,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             errorStore.setError(appError);
             set({ error: appError.message });
           }
-          
+
           throw error;
         } finally {
           set({ isLoading: false });
@@ -394,7 +446,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       leaveRoom: async () => {
         const errorStore = useErrorStore.getState();
         const { roomId, currentParticipantId, participants } = get();
-        
+
         if (!roomId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -403,7 +455,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           errorStore.setError(appError);
           return;
         }
-        
+
         try {
           // Marcar al participante como inactivo en Firebase
           if (currentParticipantId) {
@@ -413,19 +465,16 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               lastActive: Date.now(),
               estimation: null // Limpiar la estimación para que no afecte a la votación
             });
-            
-            console.log(`Participante ${currentParticipantId} marcado como inactivo`);
-            
+
             // Verificar si este era el último participante activo
             // Filtrar los participantes activos, excluyendo al que acaba de salir
             const activeParticipants = participants.filter(
               p => p.active !== false && p.id !== currentParticipantId
             );
-            
+
             // Si no quedan participantes activos, eliminar la sala
             if (activeParticipants.length === 0) {
-              console.log(`No quedan participantes activos en la sala ${roomId}. Marcando para eliminación.`);
-              
+
               // Marcar la sala como inactiva para que pueda ser eliminada por un proceso de limpieza
               const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
               await update(roomRef, {
@@ -433,13 +482,13 @@ export const useRoomStore = create<RoomState & RoomActions>()(
                 lastActive: Date.now(),
                 markedForDeletion: true
               });
-              
+
               // También podríamos eliminar la sala directamente, pero es más seguro
               // marcarla para eliminación y tener un proceso separado que las elimine
               // después de un cierto tiempo (por ejemplo, 24 horas)
             }
           }
-          
+
           // Limpiar el estado local
           set({ ...initialState });
         } catch (error) {
@@ -457,7 +506,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       selectEstimation: async (value: number | string) => {
         const errorStore = useErrorStore.getState();
         const { roomId, sessionId, reveal, participants, currentIssueId, currentParticipantId } = get();
-        
+
         if (!roomId || !sessionId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -500,14 +549,14 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           set({ error: appError.message });
           return;
         }
-        
+
         // Actualizar el estado local inmediatamente para mejorar la experiencia del usuario
         // Esto permite que la UI responda incluso si las operaciones de Firebase fallan
         const updatedParticipants = participants.map(p =>
           p.id === myParticipant.id ? { ...p, estimation: value } : p
         );
         set({ participants: updatedParticipants });
-        
+
         // Si hay un issue seleccionado, actualizar los votos locales
         if (currentIssueId) {
           const votes = { ...get().votes };
@@ -517,11 +566,11 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           votes[currentIssueId][myParticipant.id] = value;
           set({ votes });
         }
-        
+
         try {
           // Crear un array de promesas para todas las operaciones de Firebase
           const updatePromises = [];
-          
+
           // 1. Guardar la estimación en el participante para compatibilidad
           try {
             const participantRef = ref(
@@ -536,7 +585,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           } catch (err) {
             console.warn("Error al preparar actualización de participante:", err);
           }
-          
+
           // 2. Si hay un issue seleccionado, guardar el voto en la nueva estructura
           if (currentIssueId) {
             try {
@@ -555,34 +604,32 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               console.warn("Error al preparar guardado de voto:", err);
             }
           }
-          
+
           // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
           await Promise.allSettled(updatePromises);
-          
-          console.log("Estimación seleccionada correctamente");
         } catch (error) {
           console.error("Error al seleccionar estimación:", error);
-          
+
           // Crear un mensaje de error más descriptivo basado en el tipo de error
           let errorMessage = "No se pudo registrar tu voto. Intenta nuevamente.";
-          
+
           // Detectar si el error es por un bloqueador de anuncios
           if (error instanceof Error &&
-              (error.message.includes("ERR_BLOCKED_BY") ||
-               error.message.includes("network error") ||
-               error.message.includes("failed to fetch"))) {
+            (error.message.includes("ERR_BLOCKED_BY") ||
+              error.message.includes("network error") ||
+              error.message.includes("failed to fetch"))) {
             errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
-                          "Tu voto se ha registrado localmente, pero no se sincronizará con otros usuarios. " +
-                          "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+              "Tu voto se ha registrado localmente, pero no se sincronizará con otros usuarios. " +
+              "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
           }
-          
+
           const appError = createError(
             ErrorType.VOTE_FAILED,
             errorMessage,
             { originalError: error, value },
             () => get().selectEstimation(value) // Acción de recuperación: reintentar
           );
-          
+
           errorStore.setError(appError);
           set({ error: appError.message });
         }
@@ -592,7 +639,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       revealEstimations: async () => {
         const errorStore = useErrorStore.getState();
         const { roomId, sessionId, participants, currentIssueId, issues } = get();
-        
+
         if (!roomId || !sessionId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -602,9 +649,11 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           set({ error: appError.message });
           return;
         }
-
         // Actualizar estado local inmediatamente para mejorar la experiencia del usuario
-        set({ reveal: true });
+        set({
+          reveal: true,
+          timerStartedAt: null // Detener el temporizador localmente cuando se revelan las estimaciones
+        });
 
         // Calcular promedio
         const numericEstimations = participants
@@ -630,11 +679,14 @@ export const useRoomStore = create<RoomState & RoomActions>()(
         try {
           // Crear un array de promesas para todas las operaciones de Firebase
           const updatePromises = [];
-          
+
           // 1. Cambiar estado de revelación en la sesión
           try {
             const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
-            const sessionPromise = update(sessionRef, { reveal: true })
+            const sessionPromise = update(sessionRef, {
+              reveal: true,
+              timerStartedAt: null // Detener el temporizador en Firebase cuando se revelan las estimaciones
+            })
               .catch(err => {
                 console.warn("No se pudo actualizar la sesión:", err);
               });
@@ -642,11 +694,14 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           } catch (err) {
             console.warn("Error al preparar actualización de sesión:", err);
           }
-          
+
           // 2. Mantener compatibilidad con la estructura anterior
           try {
             const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-            const roomPromise = update(roomRef, { reveal: true })
+            const roomPromise = update(roomRef, {
+              reveal: true,
+              timerStartedAt: null // Detener el temporizador en la estructura antigua
+            })
               .catch(err => {
                 console.warn("No se pudo actualizar la sala:", err);
               });
@@ -673,34 +728,33 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               console.warn(`Error al preparar actualización de issue ${currentIssueId}:`, err);
             }
           }
-          
+
           // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
           await Promise.allSettled(updatePromises);
-          
-          console.log("Estimaciones reveladas correctamente");
+
         } catch (error) {
           console.error("Error al revelar estimaciones:", error);
-          
+
           // Crear un mensaje de error más descriptivo basado en el tipo de error
           let errorMessage = "Error al revelar estimaciones. Intenta nuevamente.";
-          
+
           // Detectar si el error es por un bloqueador de anuncios
           if (error instanceof Error &&
-              (error.message.includes("ERR_BLOCKED_BY") ||
-               error.message.includes("network error") ||
-               error.message.includes("failed to fetch"))) {
+            (error.message.includes("ERR_BLOCKED_BY") ||
+              error.message.includes("network error") ||
+              error.message.includes("failed to fetch"))) {
             errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
-                          "Las estimaciones se han revelado localmente, pero no se sincronizarán con otros usuarios. " +
-                          "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+              "Las estimaciones se han revelado localmente, pero no se sincronizarán con otros usuarios. " +
+              "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
           }
-          
+
           const appError = createError(
             ErrorType.UNKNOWN_ERROR,
             errorMessage,
             { originalError: error },
             () => get().revealEstimations() // Acción de recuperación: reintentar
           );
-          
+
           errorStore.setError(appError);
           set({ error: appError.message });
         }
@@ -710,7 +764,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       startNewVote: async () => {
         const errorStore = useErrorStore.getState();
         const { roomId, sessionId, participants, currentIssueId, votes } = get();
-        
+
         if (!roomId || !sessionId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -723,12 +777,16 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
         // Actualizar estado local inmediatamente para mejorar la experiencia del usuario
         // Esto permite que la UI responda incluso si las operaciones de Firebase fallan
-        set({ reveal: false });
+        set({
+          reveal: false,
+          timerStartedAt: null, // Resetear el temporizador
+          timerRemaining: null
+        });
 
         try {
           // Crear un array de promesas para todas las operaciones de Firebase
           const updatePromises = [];
-          
+
           // 1. Resetear estimaciones de participantes (para compatibilidad)
           // Modificamos para manejar cada participante individualmente y no fallar si uno falla
           for (const participant of participants) {
@@ -751,7 +809,10 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           // 2. Cambiar estado de revelación en la sesión
           try {
             const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
-            const sessionPromise = update(sessionRef, { reveal: false })
+            const sessionPromise = update(sessionRef, {
+              reveal: false,
+              timerStartedAt: null // Resetear el temporizador en Firebase
+            })
               .catch(err => {
                 console.warn("No se pudo actualizar la sesión:", err);
               });
@@ -759,11 +820,14 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           } catch (err) {
             console.warn("Error al preparar actualización de sesión:", err);
           }
-          
+
           // 3. Mantener compatibilidad con la estructura anterior
           try {
             const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-            const roomPromise = update(roomRef, { reveal: false })
+            const roomPromise = update(roomRef, {
+              reveal: false,
+              timerStartedAt: null // Resetear el temporizador en la estructura antigua
+            })
               .catch(err => {
                 console.warn("No se pudo actualizar la sala:", err);
               });
@@ -771,7 +835,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           } catch (err) {
             console.warn("Error al preparar actualización de sala:", err);
           }
-          
+
           // 4. Si hay un issue seleccionado, limpiar sus votos y promedio
           if (currentIssueId) {
             // Limpiar votos locales para el issue actual
@@ -780,7 +844,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               delete newVotes[currentIssueId];
               set({ votes: newVotes });
             }
-            
+
             // Limpiar promedio del issue actual
             try {
               const issueRef = ref(
@@ -796,10 +860,10 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               console.warn(`Error al preparar actualización de issue ${currentIssueId}:`, err);
             }
           }
-          
+
           // Esperar a que todas las promesas se resuelvan, pero no fallar si alguna falla
           await Promise.allSettled(updatePromises);
-          
+
           // Actualizar los participantes localmente para asegurarnos de que las estimaciones se resetean
           // incluso si las operaciones de Firebase fallaron
           const updatedParticipants = participants.map(p => ({
@@ -807,30 +871,29 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             estimation: undefined // Usar undefined en lugar de null para cumplir con el tipo Participant
           }));
           set({ participants: updatedParticipants });
-          
-          console.log("Nueva votación iniciada correctamente");
+
         } catch (error) {
           console.error("Error al iniciar nueva votación:", error);
-          
+
           // Crear un mensaje de error más descriptivo basado en el tipo de error
           let errorMessage = "Error al iniciar nueva votación. Intenta nuevamente.";
-          
+
           // Detectar si el error es por un bloqueador de anuncios
           if (error instanceof Error &&
-              (error.message.includes("ERR_BLOCKED_BY") ||
-               error.message.includes("network error") ||
-               error.message.includes("failed to fetch"))) {
+            (error.message.includes("ERR_BLOCKED_BY") ||
+              error.message.includes("network error") ||
+              error.message.includes("failed to fetch"))) {
             errorMessage = "Parece que un bloqueador de anuncios está impidiendo la comunicación con el servidor. " +
-                          "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
+              "Desactiva el bloqueador de anuncios para esta página o añade una excepción.";
           }
-          
+
           const appError = createError(
             ErrorType.UNKNOWN_ERROR,
             errorMessage,
             { originalError: error },
             () => get().startNewVote() // Acción de recuperación: reintentar
           );
-          
+
           errorStore.setError(appError);
           set({ error: appError.message });
         }
@@ -840,7 +903,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       addIssue: async (key: string, summary: string) => {
         const errorStore = useErrorStore.getState();
         const { roomId } = get();
-        
+
         if (!roomId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -850,7 +913,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           set({ error: appError.message });
           return;
         }
-        
+
         if (!key.trim() || !summary.trim()) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -888,7 +951,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       selectCurrentIssue: async (issueId: string) => {
         const errorStore = useErrorStore.getState();
         const { roomId, sessionId } = get();
-        
+
         if (!roomId || !sessionId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,
@@ -903,11 +966,11 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           // Actualizar el issue actual en la sesión
           const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
           await update(sessionRef, { currentIssueId: issueId });
-          
+
           // Mantener compatibilidad con la estructura anterior
           const roomRef = ref(realtimeDb, `rooms/${roomId}`);
           await update(roomRef, { currentIssueId: issueId });
-          
+
           // Actualizar estado local
           set({ currentIssueId: issueId });
         } catch (error) {
@@ -918,6 +981,226 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             () => get().selectCurrentIssue(issueId) // Acción de recuperación: reintentar
           );
           errorStore.setError(appError);
+          set({ error: appError.message });
+        }
+      },
+
+      // Acciones para temporizador
+      setTimerEnabled: async (enabled) => {
+        const { roomId, sessionId } = get();
+
+        if (!roomId || !sessionId) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "No estás en una sala activa. Vuelve a unirte a la sala."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        // Actualizar estado local
+        set({ timerEnabled: enabled });
+
+        try {
+          // Actualizar en Firebase
+          const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+          await update(sessionRef, { timerEnabled: enabled });
+
+        } catch (error) {
+          console.error("Error al actualizar estado del temporizador:", error);
+          const appError = createError(
+            ErrorType.UNKNOWN_ERROR,
+            "Error al actualizar estado del temporizador.",
+            { originalError: error },
+            () => get().setTimerEnabled(enabled) // Acción de recuperación: reintentar
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+        }
+      },
+
+      setTimerDuration: async (duration) => {
+        const { roomId, sessionId } = get();
+
+        if (!roomId || !sessionId) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "No estás en una sala activa. Vuelve a unirte a la sala."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        if (duration < 10 || duration > 600) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "La duración del temporizador debe estar entre 10 y 600 segundos."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        // Actualizar estado local
+        set({ timerDuration: duration });
+
+        try {
+          // Actualizar en Firebase
+          const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+          await update(sessionRef, { timerDuration: duration });
+
+        } catch (error) {
+          console.error("Error al actualizar duración del temporizador:", error);
+          const appError = createError(
+            ErrorType.UNKNOWN_ERROR,
+            "Error al actualizar duración del temporizador.",
+            { originalError: error },
+            () => get().setTimerDuration(duration) // Acción de recuperación: reintentar
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+        }
+      },
+
+      startTimer: async () => {
+        const { roomId, sessionId, timerDuration, timerEnabled } = get();
+
+        if (!roomId || !sessionId) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "No estás en una sala activa. Vuelve a unirte a la sala."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        if (!timerEnabled) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "El temporizador está deshabilitado."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        const now = Date.now();
+
+        // Actualizar estado local
+        set({
+          timerStartedAt: now,
+          timerRemaining: timerDuration * 1000 // Convertir a milisegundos
+        });
+
+        try {
+          // Actualizar en Firebase
+          const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+          await update(sessionRef, {
+            timerStartedAt: now,
+            reveal: false // Asegurarse de que las cartas no estén reveladas al iniciar el temporizador
+          });
+
+          // También actualizar el estado de revelación en la estructura antigua
+          const roomRef = ref(realtimeDb, `rooms/${roomId}`);
+          await update(roomRef, { reveal: false });
+
+          // Resetear estimaciones de participantes
+          const { participants } = get();
+          for (const participant of participants) {
+            const participantRef = ref(
+              realtimeDb,
+              `rooms/${roomId}/participants/${participant.id}`
+            );
+            await update(participantRef, { estimation: null });
+          }
+
+          // Actualizar los participantes localmente
+          const updatedParticipants = participants.map(p => ({
+            ...p,
+            estimation: undefined
+          }));
+          set({ participants: updatedParticipants, reveal: false });
+
+        } catch (error) {
+          console.error("Error al iniciar temporizador:", error);
+          const appError = createError(
+            ErrorType.UNKNOWN_ERROR,
+            "Error al iniciar temporizador.",
+            { originalError: error },
+            () => get().startTimer() // Acción de recuperación: reintentar
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+        }
+      },
+
+      stopTimer: async () => {
+        const { roomId, sessionId } = get();
+
+        if (!roomId || !sessionId) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "No estás en una sala activa. Vuelve a unirte a la sala."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        // Actualizar estado local
+        set({ timerStartedAt: null, timerRemaining: null });
+
+        try {
+          // Actualizar en Firebase
+          const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+          await update(sessionRef, { timerStartedAt: null });
+
+        } catch (error) {
+          console.error("Error al detener temporizador:", error);
+          const appError = createError(
+            ErrorType.UNKNOWN_ERROR,
+            "Error al detener temporizador.",
+            { originalError: error },
+            () => get().stopTimer() // Acción de recuperación: reintentar
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+        }
+      },
+
+      resetTimer: async () => {
+        const { roomId, sessionId } = get();
+
+        if (!roomId || !sessionId) {
+          const appError = createError(
+            ErrorType.VALIDATION_ERROR,
+            "No estás en una sala activa. Vuelve a unirte a la sala."
+          );
+          useErrorStore.getState().setError(appError);
+          set({ error: appError.message });
+          return;
+        }
+
+        // Actualizar estado local
+        set({ timerStartedAt: null, timerRemaining: null });
+
+        try {
+          // Actualizar en Firebase
+          const sessionRef = ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`);
+          await update(sessionRef, { timerStartedAt: null });
+
+        } catch (error) {
+          console.error("Error al reiniciar temporizador:", error);
+          const appError = createError(
+            ErrorType.UNKNOWN_ERROR,
+            "Error al reiniciar temporizador.",
+            { originalError: error },
+            () => get().resetTimer() // Acción de recuperación: reintentar
+          );
+          useErrorStore.getState().setError(appError);
           set({ error: appError.message });
         }
       },
@@ -937,6 +1220,10 @@ export const useRoomStore = create<RoomState & RoomActions>()(
         estimationOptions: state.estimationOptions,
         currentIssueId: state.currentIssueId,
         reveal: state.reveal,
+        timerEnabled: state.timerEnabled,
+        timerDuration: state.timerDuration,
+        timerStartedAt: state.timerStartedAt,
+        timerRemaining: state.timerRemaining,
       }),
     }
   )

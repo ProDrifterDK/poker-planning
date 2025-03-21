@@ -19,6 +19,7 @@ import MenuCloseIcon from '@mui/icons-material/Menu';
 import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
 import ExportData from '@/components/ExportData';
+import VotingTimer from '@/components/VotingTimer';
 import { SendToIntegration } from '@/components/integrations';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
@@ -37,7 +38,7 @@ export default function RoomPage() {
     // Usar el router para la navegación
     const router = useRouter();
 
-    // Usar el store de Zustand
+    // Usar el store de Zustand (solo los campos necesarios)
     const {
         roomId: storeRoomId,
         participants,
@@ -80,7 +81,6 @@ export default function RoomPage() {
                 
                 // Si hay una sesión para esta sala, unirse automáticamente
                 if (state && state.roomId === roomId && state.currentParticipantId) {
-                    console.log("Sesión persistente encontrada para la sala:", roomId);
                     
                     // Si tenemos un nombre de usuario, unirse automáticamente
                     if (name) {
@@ -457,6 +457,11 @@ export default function RoomPage() {
                                 </Button>
                             )}
                         </Box>
+                        
+                        {/* Temporizador de votación */}
+                        {!reveal && (
+                            <VotingTimer />
+                        )}
 
                         {/* Detalle de estimaciones y promedio */}
                         {reveal && (
