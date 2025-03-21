@@ -23,6 +23,8 @@
     "dotenv": "^16.4.7",
     "firebase": "^11.0.2",
     "framer-motion": "^12.5.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "marked": "^15.0.7",
     "next": "^15.2.3",
     "react": "^18.3.1",

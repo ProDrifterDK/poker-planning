@@ -23,3 +23,12 @@ export interface RoomSettings {
   allowSpectators: boolean; // Permitir espectadores (sin voto)
   showAverage: boolean; // Mostrar promedio de estimaciones
 }
+
+export interface Issue {
+  id: string;
+  key: string;
+  summary: string;
+  createdAt: number;
+  status: 'pending' | 'estimated' | 'skipped';
+  average?: string | null;
+}
