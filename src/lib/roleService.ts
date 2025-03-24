@@ -3,6 +3,7 @@ import { firestore } from './firebaseConfig';
 import { UserRole } from '@/types/roles';
 import { User } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
+import { createDefaultFreeSubscription } from './subscriptionService';
 
 // Colección de usuarios en Firestore
 const USERS_COLLECTION = 'users';
@@ -98,6 +99,14 @@ export async function initializeUserProfile(user: User): Promise<void> {
           role: UserRole.PARTICIPANT,
           createdAt: new Date().toISOString(),
         });
+        
+        // Crear una suscripción gratuita por defecto para el nuevo usuario
+        try {
+          await createDefaultFreeSubscription(user.uid);
+        } catch (subscriptionError) {
+          console.warn('No se pudo crear la suscripción gratuita por defecto:', subscriptionError);
+          // No propagamos el error para evitar interrumpir el flujo de registro
+        }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (setError) {
         // Ignorar errores de permisos al crear
