@@ -1,17 +1,47 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+// Función para obtener la clave privada correctamente formateada
+function getPrivateKey(): string {
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  
+  if (!privateKey) {
+    console.error('FIREBASE_ADMIN_PRIVATE_KEY no está definida en las variables de entorno');
+    return '';
+  }
+  
+  // La clave ya está correctamente formateada en .env.local, no necesitamos reemplazar nada
+  return privateKey;
+}
+
 // Inicializar Firebase Admin SDK solo si no hay aplicaciones ya inicializadas
-const adminApp = getApps().length === 0 
-  ? initializeApp({
+let adminApp;
+
+try {
+  if (getApps().length === 0) {
+    const privateKey = getPrivateKey();
+    
+    if (!privateKey) {
+      throw new Error('No se pudo obtener la clave privada para Firebase Admin SDK');
+    }
+    
+    console.log('Inicializando Firebase Admin SDK...');
+    
+    adminApp = initializeApp({
       credential: cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL || '',
+        privateKey: privateKey,
       }),
       databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-    })
-  : getApps()[0];
+    });
+  } else {
+    adminApp = getApps()[0];
+  }
+} catch (error) {
+  console.error('Error al inicializar Firebase Admin SDK:', error);
+  throw error;
+}
 
 // Exportar Firestore Admin
 export const firestoreAdmin = getFirestore(adminApp);
@@ -33,6 +63,17 @@ export async function updateSubscriptionStatusAdmin(
   reason?: string
 ): Promise<boolean> {
   try {
+    console.log(`Actualizando suscripción ${subscriptionId} a estado ${status}...`);
+    
+    // Verificar primero si el documento existe
+    const docRef = firestoreAdmin.collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId);
+    const docSnapshot = await docRef.get();
+    
+    if (!docSnapshot.exists) {
+      console.error(`Error: La suscripción ${subscriptionId} no existe`);
+      return false;
+    }
+    
     const updateData: Record<string, unknown> = {
       status,
       updatedAt: new Date().toISOString()
@@ -43,11 +84,18 @@ export async function updateSubscriptionStatusAdmin(
       updateData.cancelDate = new Date().toISOString();
     }
     
-    await firestoreAdmin.collection(SUBSCRIPTIONS_COLLECTION).doc(subscriptionId).update(updateData);
+    await docRef.update(updateData);
     console.log(`Suscripción ${subscriptionId} actualizada a estado ${status} usando Admin SDK`);
     return true;
   } catch (error) {
     console.error('Error al actualizar estado de suscripción con Admin SDK:', error);
+    
+    // Registrar más detalles sobre el error
+    if (error instanceof Error) {
+      console.error('Mensaje de error:', error.message);
+      console.error('Stack trace:', error.stack);
+    }
+    
     return false;
   }
 }
@@ -59,6 +107,8 @@ export async function updateSubscriptionStatusAdmin(
  */
 export async function findSubscriptionByPayPalIdAdmin(paypalSubscriptionId: string): Promise<{id: string, data: Record<string, unknown>} | null> {
   try {
+    console.log(`Buscando suscripción con ID de PayPal: ${paypalSubscriptionId}`);
+    
     const snapshot = await firestoreAdmin
       .collection(SUBSCRIPTIONS_COLLECTION)
       .where('subscriptionId', '==', paypalSubscriptionId)
@@ -67,16 +117,43 @@ export async function findSubscriptionByPayPalIdAdmin(paypalSubscriptionId: stri
     
     if (snapshot.empty) {
       console.warn(`No se encontró suscripción con ID de PayPal: ${paypalSubscriptionId}`);
-      return null;
+      
+      // Intentar buscar por otros campos como alternativa
+      console.log('Intentando buscar por paymentId como alternativa...');
+      const altSnapshot = await firestoreAdmin
+        .collection(SUBSCRIPTIONS_COLLECTION)
+        .where('paymentId', '==', paypalSubscriptionId)
+        .limit(1)
+        .get();
+      
+      if (altSnapshot.empty) {
+        console.warn('No se encontró suscripción por paymentId tampoco');
+        return null;
+      }
+      
+      const altDoc = altSnapshot.docs[0];
+      console.log(`Suscripción encontrada por paymentId: ${altDoc.id}`);
+      return {
+        id: altDoc.id,
+        data: altDoc.data() as Record<string, unknown>
+      };
     }
     
     const doc = snapshot.docs[0];
+    console.log(`Suscripción encontrada: ${doc.id}`);
     return {
       id: doc.id,
-      data: doc.data()
+      data: doc.data() as Record<string, unknown>
     };
   } catch (error) {
     console.error('Error al buscar suscripción por ID de PayPal:', error);
+    
+    // Registrar más detalles sobre el error
+    if (error instanceof Error) {
+      console.error('Mensaje de error:', error.message);
+      console.error('Stack trace:', error.stack);
+    }
+    
     return null;
   }
 }
