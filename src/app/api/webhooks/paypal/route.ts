@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateSubscriptionStatus } from '@/lib/subscriptionService';
+import { findSubscriptionByPayPalIdAdmin, updateSubscriptionStatusAdmin } from '@/lib/firebaseAdmin';
 
 /**
  * Endpoint para recibir webhooks de PayPal
@@ -20,29 +20,48 @@ export async function POST(request: NextRequest) {
       case 'BILLING.SUBSCRIPTION.CREATED':
         // Manejar creación de suscripción
         console.log('Suscripción creada:', event.resource.id);
+        // Nota: La creación de suscripciones generalmente se maneja en el flujo de checkout,
+        // pero podemos verificar y actualizar si es necesario
+        const createdSubscription = await findSubscriptionByPayPalIdAdmin(event.resource.id);
+        if (createdSubscription) {
+          await updateSubscriptionStatusAdmin(createdSubscription.id, 'active', 'Created by PayPal webhook');
+        }
         break;
         
       case 'BILLING.SUBSCRIPTION.UPDATED':
         // Manejar actualización de suscripción
         console.log('Suscripción actualizada:', event.resource.id);
+        const updatedSubscription = await findSubscriptionByPayPalIdAdmin(event.resource.id);
+        if (updatedSubscription) {
+          await updateSubscriptionStatusAdmin(updatedSubscription.id, 'active', 'Updated by PayPal webhook');
+        }
         break;
         
       case 'BILLING.SUBSCRIPTION.CANCELLED':
         // Manejar cancelación de suscripción
         console.log('Suscripción cancelada:', event.resource.id);
-        await updateSubscriptionStatus(event.resource.id, 'cancelled');
+        const cancelledSubscription = await findSubscriptionByPayPalIdAdmin(event.resource.id);
+        if (cancelledSubscription) {
+          await updateSubscriptionStatusAdmin(cancelledSubscription.id, 'cancelled', 'Cancelled by PayPal webhook');
+        }
         break;
         
       case 'BILLING.SUBSCRIPTION.SUSPENDED':
         // Manejar suspensión de suscripción
         console.log('Suscripción suspendida:', event.resource.id);
-        await updateSubscriptionStatus(event.resource.id, 'expired'); // Usamos 'expired' como equivalente a 'suspended'
+        const suspendedSubscription = await findSubscriptionByPayPalIdAdmin(event.resource.id);
+        if (suspendedSubscription) {
+          await updateSubscriptionStatusAdmin(suspendedSubscription.id, 'expired', 'Suspended by PayPal webhook');
+        }
         break;
         
       case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED':
         // Manejar fallo de pago
         console.log('Pago fallido para suscripción:', event.resource.id);
-        await updateSubscriptionStatus(event.resource.id, 'failed');
+        const failedSubscription = await findSubscriptionByPayPalIdAdmin(event.resource.id);
+        if (failedSubscription) {
+          await updateSubscriptionStatusAdmin(failedSubscription.id, 'failed', 'Payment failed');
+        }
         break;
         
       case 'PAYMENT.SALE.COMPLETED':
