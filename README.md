@@ -11,6 +11,9 @@ Una aplicación de planificación ágil para equipos de desarrollo que permite r
 - Sistema de roles (Moderador, Participante)
 - Soporte para modo oscuro/claro
 - Interfaz responsive para dispositivos móviles y de escritorio
+- Temporizador para votaciones
+- Sistema de suscripciones con planes Free, Pro y Enterprise
+- Integración con PayPal para pagos
 
 ## Tecnologías Utilizadas
 
@@ -42,18 +45,51 @@ Una aplicación de planificación ágil para equipos de desarrollo que permite r
    yarn install
    ```
 
-3. Configurar variables de entorno:
-   - Copia el archivo `.env.local.example` a `.env.local`
-   - Completa las variables con tus credenciales de Firebase
+3. Instalar dependencias para el sistema de suscripciones:
+   ```bash
+   # Dar permisos de ejecución al script
+   chmod +x install-dependencies.sh
+   
+   # Ejecutar el script
+   ./install-dependencies.sh
+   ```
 
-4. Iniciar el servidor de desarrollo:
+4. Configurar variables de entorno:
+   - Copia el archivo `.env.local.example` a `.env.local`
+   - Completa las variables con tus credenciales de Firebase y PayPal
+   
+   ```
+   # Firebase
+   NEXT_PUBLIC_FIREBASE_API_KEY=tu-api-key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://tu-proyecto.firebaseio.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu-proyecto
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu-sender-id
+   NEXT_PUBLIC_FIREBASE_APP_ID=tu-app-id
+   
+   # PayPal (para sistema de suscripciones)
+   NEXT_PUBLIC_PAYPAL_CLIENT_ID=tu-client-id-de-paypal
+   PAYPAL_CLIENT_SECRET=tu-client-secret-de-paypal
+   NEXT_PUBLIC_PAYPAL_RETURN_URL=http://localhost:3000/settings/subscription/success
+   NEXT_PUBLIC_PAYPAL_CANCEL_URL=http://localhost:3000/settings/subscription/cancel
+   PAYPAL_WEBHOOK_ID=tu-webhook-id-de-paypal
+   ```
+   
+   Para obtener las credenciales de PayPal:
+   1. Crea una cuenta en [PayPal Developer](https://developer.paypal.com/)
+   2. Crea una aplicación en el [Dashboard de desarrollador](https://developer.paypal.com/dashboard/applications/sandbox)
+   3. Obtén el Client ID y Client Secret de tu aplicación
+   4. Configura los webhooks para recibir notificaciones de eventos de suscripción
+
+5. Iniciar el servidor de desarrollo:
    ```bash
    npm run dev
    # o
    yarn dev
    ```
 
-5. Abrir [http://localhost:3000](http://localhost:3000) en tu navegador
+6. Abrir [http://localhost:3000](http://localhost:3000) en tu navegador
 
 ## Uso de la Aplicación
 
@@ -88,6 +124,13 @@ Para convertirse en moderador, consulta la [documentación de roles y permisos](
 Si encuentras algún problema al usar la aplicación, consulta nuestra [guía de solución de problemas](docs/troubleshooting.md).
 
 ## Actualizaciones Recientes
+
+### Versión 2.0.0
+
+- **Sistema de Suscripciones**: Implementación de planes Free, Pro y Enterprise con diferentes características
+- **Integración con PayPal**: Procesamiento seguro de pagos para suscripciones
+- **Temporizador para Votaciones**: Añadido temporizador configurable para limitar el tiempo de votación
+- **Mejoras en la Sincronización**: Optimización de la sincronización en tiempo real entre participantes
 
 ### Versión 1.1.0
 

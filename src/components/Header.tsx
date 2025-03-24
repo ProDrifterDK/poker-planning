@@ -16,15 +16,34 @@ import { useRouter } from 'next/navigation';
 import ThemeToggleButton from './ThemeToggleButton';
 import { OnboardingButton } from './Onboarding';
 import { useAuth } from '@/context/authContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PersonIcon from '@mui/icons-material/Person';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 
 export default function Header() {
     const router = useRouter();
     const { currentUser, logout, isModerator } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    
+    // Obtener el plan actual del usuario
+    const { fetchUserSubscription, getCurrentPlan } = useSubscriptionStore();
+    const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan>(SubscriptionPlan.FREE);
+    
+    useEffect(() => {
+        if (currentUser) {
+            // Cargar la suscripción del usuario
+            fetchUserSubscription(currentUser.uid)
+                .then(() => {
+                    setCurrentPlan(getCurrentPlan());
+                })
+                .catch(error => {
+                    console.error('Error al cargar la suscripción:', error);
+                });
+        }
+    }, [currentUser, fetchUserSubscription, getCurrentPlan]);
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -110,9 +129,14 @@ export default function Header() {
                                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                             >
                                 <MenuItem sx={{ pointerEvents: 'none', opacity: 0.7 }}>
-                                    <Typography variant="body2" noWrap>
-                                        {currentUser.displayName || currentUser.email}
-                                    </Typography>
+                                    <Box>
+                                        <Typography variant="body2" noWrap>
+                                            {currentUser.displayName || currentUser.email}
+                                        </Typography>
+                                        <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
+                                            Plan {SUBSCRIPTION_PLANS[currentPlan].name}
+                                        </Typography>
+                                    </Box>
                                 </MenuItem>
                                 <Divider />
                                 <MenuItem onClick={handleProfile}>
@@ -123,6 +147,12 @@ export default function Header() {
                                     handleClose();
                                 }}>
                                     Configuración
+                                </MenuItem>
+                                <MenuItem onClick={() => {
+                                    router.push('/settings/subscription');
+                                    handleClose();
+                                }}>
+                                    Suscripción
                                 </MenuItem>
                                 <MenuItem onClick={() => {
                                     router.push('/settings/integrations');
