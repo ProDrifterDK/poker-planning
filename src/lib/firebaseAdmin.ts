@@ -69,9 +69,6 @@ try {
     }
     
     console.log('Inicializando Firebase Admin SDK...');
-    console.log(`Project ID: ${projectId}`);
-    console.log(`Client Email: ${clientEmail}`);
-    console.log(`Private Key (primeros 20 caracteres): ${privateKey.substring(0, 20)}...`);
     
     // Crear las credenciales
     const credentials = {
