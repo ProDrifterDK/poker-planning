@@ -364,10 +364,12 @@ export async function createDefaultFreeSubscription(userId: string): Promise<Use
  * Actualizar el estado de una suscripción basado en eventos de webhook de PayPal
  * @param paypalSubscriptionId ID de la suscripción de PayPal
  * @param status Nuevo estado de la suscripción
+ * @param isWebhook Indica si la actualización proviene de un webhook (por defecto true)
  */
 export async function updateSubscriptionStatus(
   paypalSubscriptionId: string,
-  status: 'active' | 'cancelled' | 'expired' | 'pending' | 'failed'
+  status: 'active' | 'cancelled' | 'expired' | 'pending' | 'failed',
+  isWebhook: boolean = true
 ): Promise<boolean> {
   try {
     // Buscar la suscripción por el ID de PayPal
@@ -389,8 +391,21 @@ export async function updateSubscriptionStatus(
     const subscriptionRef = doc(firestore, SUBSCRIPTIONS_COLLECTION, subscriptionId);
     
     if (status === 'cancelled') {
-      // Si se cancela, usar la función existente
-      return await cancelSubscription(subscriptionId, 'Cancelled by PayPal webhook');
+      if (isWebhook) {
+        // Si es un webhook, solo actualizar el documento de la suscripción
+        // para evitar problemas de permisos al intentar actualizar el documento del usuario
+        await updateDoc(subscriptionRef, {
+          status: SubscriptionStatus.CANCELLED,
+          cancelReason: 'Cancelled by PayPal webhook',
+          cancelDate: new Date().toISOString()
+        });
+        
+        console.log(`Suscripción ${subscriptionId} cancelada por webhook de PayPal`);
+        return true;
+      } else {
+        // Si no es un webhook, usar la función existente que también actualiza el documento del usuario
+        return await cancelSubscription(subscriptionId, 'Cancelled by PayPal webhook');
+      }
     } else {
       // Para otros estados, actualizar directamente
       let newStatus: SubscriptionStatus;
