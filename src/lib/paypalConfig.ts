@@ -6,13 +6,35 @@
 export const PAYPAL_CONFIG = {
   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
   clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
-  environment: process.env.NODE_ENV === 'production' ? 'live' : 'sandbox',
+  // Usar una variable de entorno específica para el entorno de PayPal
+  // Si no está definida, usar NODE_ENV como fallback
+  environment: process.env.PAYPAL_ENVIRONMENT || (process.env.NODE_ENV === 'production' ? 'live' : 'sandbox'),
   currency: 'USD',
   locale: 'es_CL', // Español (Chile)
   returnUrl: process.env.NEXT_PUBLIC_PAYPAL_RETURN_URL || 'http://localhost:3000/settings/subscription/success',
   cancelUrl: process.env.NEXT_PUBLIC_PAYPAL_CANCEL_URL || 'http://localhost:3000/settings/subscription/cancel',
   webhookId: process.env.PAYPAL_WEBHOOK_ID || '',
 };
+
+// Función para verificar y registrar la configuración de PayPal
+export function logPayPalConfig() {
+  console.log('PayPal Config:');
+  console.log(`- Environment: ${PAYPAL_CONFIG.environment}`);
+  console.log(`- Client ID: ${PAYPAL_CONFIG.clientId ? PAYPAL_CONFIG.clientId.substring(0, 10) + '...' : 'Not set'}`);
+  console.log(`- Client Secret: ${PAYPAL_CONFIG.clientSecret ? 'Set (hidden)' : 'Not set'}`);
+  console.log(`- Return URL: ${PAYPAL_CONFIG.returnUrl}`);
+  console.log(`- Cancel URL: ${PAYPAL_CONFIG.cancelUrl}`);
+  
+  // Advertencia si estamos en producción pero usando sandbox
+  if (process.env.NODE_ENV === 'production' && PAYPAL_CONFIG.environment === 'sandbox') {
+    console.warn('⚠️ WARNING: Application is in production mode but using PayPal Sandbox environment');
+  }
+  
+  // Advertencia si estamos en desarrollo pero usando live
+  if (process.env.NODE_ENV !== 'production' && PAYPAL_CONFIG.environment === 'live') {
+    console.warn('⚠️ WARNING: Application is in development mode but using PayPal Live environment');
+  }
+}
 
 // Verificar que la configuración de PayPal es válida
 export const isPaypalConfigValid = (): boolean => {
