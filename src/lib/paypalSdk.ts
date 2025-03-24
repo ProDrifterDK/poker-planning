@@ -4,7 +4,13 @@
  * sin depender del SDK oficial, que puede tener problemas de compatibilidad
  */
 
-import { PAYPAL_CONFIG } from './paypalConfig';
+import { PAYPAL_CONFIG, logPayPalConfig } from './paypalConfig';
+
+// Registrar la configuración de PayPal al cargar el módulo
+if (typeof window !== 'undefined') {
+  // Solo ejecutar en el cliente para evitar problemas con SSR
+  logPayPalConfig();
+}
 
 // Interfaces para los tipos de respuesta de PayPal
 export interface PayPalLink {

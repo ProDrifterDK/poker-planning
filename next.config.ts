@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
     NEXT_PUBLIC_PAYPAL_RETURN_URL: process.env.NEXT_PUBLIC_PAYPAL_RETURN_URL,
     NEXT_PUBLIC_PAYPAL_CANCEL_URL: process.env.NEXT_PUBLIC_PAYPAL_CANCEL_URL,
+    PAYPAL_ENVIRONMENT: process.env.PAYPAL_ENVIRONMENT || 'sandbox', // Forzar sandbox por defecto
   },
   // Configuración para API routes que manejan webhooks de PayPal
   async headers() {
