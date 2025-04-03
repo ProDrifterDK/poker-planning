@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ref, onValue, update, push, get as firebaseGet } from "firebase/database";
-import { realtimeDb } from "@/lib/firebaseConfig";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { realtimeDb, firestore } from "@/lib/firebaseConfig";
 import { Participant } from "@/types/room";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { UserRole } from "@/types/roles";
 
 // Interfaces para el store
@@ -35,6 +37,7 @@ interface Issue {
 interface RoomState {
   // Datos de la sala actual
   roomId: string | null;
+  roomTitle: string | null; // Título de la sala
   sessionId: string | null;
   participants: Participant[];
   issues: Issue[];
@@ -58,7 +61,7 @@ interface RoomState {
 
 interface RoomActions {
   // Acciones para la sala
-  createRoom: (seriesKey: string) => Promise<string>;
+  createRoom: (seriesKey: string, title?: string) => Promise<string>;
   joinRoomWithName: (roomId: string, name: string) => Promise<void>;
   leaveRoom: () => void;
 
@@ -86,6 +89,7 @@ interface RoomActions {
 // Valores iniciales
 const initialState: RoomState = {
   roomId: null,
+  roomTitle: null,
   sessionId: null,
   participants: [],
   issues: [],
@@ -118,8 +122,9 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       ...initialState,
 
       // Crear una nueva sala
-      createRoom: async (seriesKey: string) => {
+      createRoom: async (seriesKey: string, title?: string) => {
         const errorStore = useErrorStore.getState();
+        const subscriptionStore = useSubscriptionStore.getState();
         set({ isLoading: true, error: null });
 
         try {
@@ -127,16 +132,59 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           const sessionId = Math.random().toString(36).substring(7);
           const timestamp = Date.now();
 
+          // Obtener el plan de suscripción del creador
+          const creatorPlan = subscriptionStore.getCurrentPlan();
+          
+          // Obtener el ID del usuario actual
+          let creatorId = 'anonymous';
+          try {
+            const authData = localStorage.getItem('poker-planning-auth');
+            if (authData) {
+              const { currentUser } = JSON.parse(authData);
+              if (currentUser && currentUser.uid) {
+                creatorId = currentUser.uid;
+                console.log(`Creating room with creator ID: ${creatorId}`);
+              }
+            }
+          } catch (error) {
+            console.error('Error getting current user ID:', error);
+          }
+
           // Generar un ID de participante para el creador de la sala
           const participantId = Math.random().toString(36).substring(7);
           localStorage.setItem(`participant_id_${roomId}`, participantId);
 
-          // Crear metadatos de la sala
-          await update(ref(realtimeDb, `rooms/${roomId}/metadata`), {
+          // Crear metadatos de la sala en Realtime Database
+          const roomMetadata = {
             createdAt: timestamp,
             seriesKey,
             seriesValues: seriesList[seriesKey],
-          });
+            creatorId: creatorId,
+            creatorPlan: creatorPlan, // Guardar el plan del creador
+            title: title || `Sala ${roomId}` // Usar el título proporcionado o uno por defecto
+          };
+          
+          console.log(`Storing room ${roomId} metadata in RTDB:`, roomMetadata);
+          await update(ref(realtimeDb, `rooms/${roomId}/metadata`), roomMetadata);
+          
+          // También guardar en Firestore para asegurar consistencia
+          try {
+            const firestoreRoomData = {
+              createdAt: timestamp,
+              createdBy: creatorId,
+              creatorId: creatorId, // Añadir también como creatorId para consistencia
+              creatorPlan: creatorPlan, // Guardar el plan del creador
+              title: title || `Sala ${roomId}`, // Usar el título proporcionado o uno por defecto
+              active: true
+            };
+            
+            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+            await setDoc(firestoreRoomRef, firestoreRoomData);
+            console.log(`Room ${roomId} metadata stored in Firestore:`, firestoreRoomData);
+          } catch (firestoreError) {
+            console.error('Error storing room metadata in Firestore:', firestoreError);
+            // No propagamos el error para no interrumpir la creación de la sala
+          }
 
           // Crear sesión inicial
           await update(ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`), {
@@ -212,6 +260,9 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
           // Obtener metadatos de la sala
           const roomMetadata = roomSnapshot.val();
+          
+          // Obtener el título de la sala
+          const roomTitle = roomMetadata.title || `Sala ${roomId}`;
 
           // Verificar si la sala está marcada para eliminación o inactiva
           if (roomMetadata.markedForDeletion === true || roomMetadata.active === false) {
@@ -296,8 +347,8 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
           // Configurar listeners para la sala
           const roomRef = ref(realtimeDb, `rooms/${roomId}`);
-          // Guardar IDs
-          set({ roomId, sessionId });
+          // Guardar IDs y título
+          set({ roomId, sessionId, roomTitle });
           const unsubscribe = onValue(roomRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
@@ -491,6 +542,23 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
           // Limpiar el estado local
           set({ ...initialState });
+          
+          // Intentar marcar la sala como inactiva en Firestore
+          // Nota: Esto puede fallar debido a permisos, pero no es crítico
+          // ya que la sala se marca como inactiva en Realtime Database
+          try {
+            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+            await updateDoc(firestoreRoomRef, {
+              active: false,
+              lastActive: Date.now()
+            });
+            console.log(`Room ${roomId} marked as inactive in Firestore`);
+          } catch (firestoreError) {
+            // No mostrar el error en consola para evitar ruido
+            // Este error es esperado debido a las reglas de seguridad
+            // y no afecta la funcionalidad principal
+            console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
+          }
         } catch (error) {
           console.error("Error al salir de la sala:", error);
           const appError = createError(

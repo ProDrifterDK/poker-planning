@@ -29,9 +29,28 @@ const SignIn: React.FC = () => {
   // Redireccionar si el usuario está autenticado o si el inicio de sesión fue exitoso
   useEffect(() => {
     if (currentUser || success) {
+      // Verificar si hay una suscripción pendiente en localStorage
+      const pendingSubscription = typeof window !== 'undefined' ? localStorage.getItem('pendingSubscription') : null;
+      
       // Pequeño retraso para mostrar el mensaje de éxito
       const timer = setTimeout(() => {
-        router.push('/');
+        if (pendingSubscription) {
+          console.log('Encontrada suscripción pendiente, redirigiendo a página de éxito');
+          // Obtener la URL de retorno de los parámetros de la URL si existe
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnUrl = urlParams.get('returnUrl');
+          
+          if (returnUrl) {
+            // Redirigir a la URL de retorno (página de éxito de suscripción)
+            router.push(returnUrl);
+          } else {
+            // Si no hay URL de retorno, redirigir a la página de suscripciones
+            router.push('/settings/subscription');
+          }
+        } else {
+          // Si no hay suscripción pendiente, redirigir a la página de inicio
+          router.push('/');
+        }
       }, 1500);
 
       return () => clearTimeout(timer);

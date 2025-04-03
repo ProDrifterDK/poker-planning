@@ -30,7 +30,17 @@ export default function SubscriptionPage() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setUserId(user.uid);
-        await fetchUserSubscription(user.uid);
+        
+        // Forzar una recarga completa de los datos
+        console.log('SubscriptionPage: Cargando datos de suscripción');
+        
+        // Limpiar el localStorage para forzar una recarga fresca
+        localStorage.removeItem('poker-planning-subscription');
+        
+        // Cargar la suscripción y el historial de pagos
+        const subscription = await fetchUserSubscription(user.uid);
+        console.log('SubscriptionPage: Suscripción cargada', subscription);
+        
         await fetchPaymentHistory(user.uid);
       } else {
         // Redirigir a login si no está autenticado

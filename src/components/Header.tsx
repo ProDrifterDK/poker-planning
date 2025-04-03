@@ -29,7 +29,7 @@ export default function Header() {
     const open = Boolean(anchorEl);
     
     // Obtener el plan actual del usuario
-    const { fetchUserSubscription, getCurrentPlan } = useSubscriptionStore();
+    const { fetchUserSubscription, getCurrentPlan, currentSubscription } = useSubscriptionStore();
     const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan>(SubscriptionPlan.FREE);
     
     useEffect(() => {
@@ -44,6 +44,31 @@ export default function Header() {
                 });
         }
     }, [currentUser, fetchUserSubscription, getCurrentPlan]);
+    
+    // Actualizar el plan cuando cambie la suscripción
+    useEffect(() => {
+        if (currentSubscription) {
+            console.log('Header: Actualizando plan a', currentSubscription.plan);
+            setCurrentPlan(currentSubscription.plan);
+        }
+    }, [currentSubscription]);
+
+    // Forzar una recarga de la suscripción cada vez que se renderiza el componente
+    useEffect(() => {
+        if (currentUser) {
+            console.log('Header: Forzando recarga de suscripción');
+            fetchUserSubscription(currentUser.uid)
+                .then((subscription) => {
+                    if (subscription) {
+                        console.log('Header: Suscripción recargada', subscription.plan);
+                        setCurrentPlan(subscription.plan);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al recargar la suscripción:', error);
+                });
+        }
+    }, [currentUser, fetchUserSubscription]);
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -168,12 +193,6 @@ export default function Header() {
                                         Panel de Administración
                                     </MenuItem>
                                 )}
-                                <MenuItem onClick={() => {
-                                    router.push('/become-admin');
-                                    handleClose();
-                                }}>
-                                    Convertirse en Moderador
-                                </MenuItem>
                                 <MenuItem onClick={handleLogout}>
                                     Cerrar Sesión
                                 </MenuItem>

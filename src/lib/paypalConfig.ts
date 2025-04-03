@@ -10,7 +10,7 @@ export const PAYPAL_CONFIG = {
   // Si no está definida, usar NODE_ENV como fallback
   environment: process.env.PAYPAL_ENVIRONMENT || (process.env.NODE_ENV === 'production' ? 'live' : 'sandbox'),
   currency: 'USD',
-  locale: 'es_CL', // Español (Chile)
+  locale: 'es-CL', // Español (Chile) - Formato BCP 47 requerido por PayPal
   returnUrl: process.env.NEXT_PUBLIC_PAYPAL_RETURN_URL || 'http://localhost:3000/settings/subscription/success',
   cancelUrl: process.env.NEXT_PUBLIC_PAYPAL_CANCEL_URL || 'http://localhost:3000/settings/subscription/cancel',
   webhookId: process.env.PAYPAL_WEBHOOK_ID || '',

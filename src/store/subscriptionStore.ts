@@ -3,11 +3,12 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { 
-  SubscriptionPlan, 
-  UserSubscription, 
+import {
+  SubscriptionPlan,
+  UserSubscription,
   PaymentHistory,
-  SUBSCRIPTION_PLANS
+  SUBSCRIPTION_PLANS,
+  SubscriptionStatus
 } from '@/types/subscription';
 import { 
   getUserSubscription, 
@@ -19,7 +20,7 @@ import {
   canAddParticipant
 } from '@/lib/subscriptionService';
 import {
-  createSubscriptionPlan,
+  getPayPalPlanId,
   createSubscription as createPaypalSubscription,
   executeSubscription as executePaypalSubscription,
   cancelSubscription as cancelPaypalSubscription
@@ -36,11 +37,11 @@ interface SubscriptionState {
   paymentUrl: string | null;
   
   // Acciones
-  fetchUserSubscription: (userId: string) => Promise<void>;
+  fetchUserSubscription: (userId: string) => Promise<UserSubscription | null>;
   fetchPaymentHistory: (userId: string) => Promise<void>;
-  subscribeToPlan: (userId: string, plan: SubscriptionPlan) => Promise<string>;
+  subscribeToPlan: (userId: string, plan: SubscriptionPlan, subscriptionId?: string) => Promise<string>;
   cancelCurrentSubscription: (reason?: string) => Promise<boolean>;
-  executeSubscription: (token: string, userId: string) => Promise<void>;
+  executeSubscription: (token: string, userId: string, plan?: SubscriptionPlan) => Promise<void>;
   clearError: () => void;
   
   // Utilidades
@@ -65,14 +66,27 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       fetchUserSubscription: async (userId: string) => {
         try {
           set({ loading: true, error: null });
+          
+          // Forzar una consulta fresca a la base de datos
+          console.log(`Obteniendo suscripción para usuario: ${userId}`);
           const subscription = await getUserSubscription(userId);
+          
+          console.log(`Suscripción obtenida:`, subscription);
+          
+          // Actualizar el estado con la suscripción obtenida
           set({ currentSubscription: subscription, loading: false });
+          
+          // Forzar una actualización del localStorage
+          localStorage.removeItem('poker-planning-subscription');
+          
+          return subscription;
         } catch (error) {
           console.error('Error al obtener suscripción:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'Error desconocido al obtener suscripción', 
-            loading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Error desconocido al obtener suscripción',
+            loading: false
           });
+          return null;
         }
       },
       
@@ -90,9 +104,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           });
         }
       },
-      
       // Suscribirse a un plan
-      subscribeToPlan: async (userId: string, plan: SubscriptionPlan) => {
+      subscribeToPlan: async (userId: string, plan: SubscriptionPlan, subscriptionId?: string) => {
         try {
           set({ loading: true, error: null, paymentUrl: null });
           
@@ -103,18 +116,34 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             return '';
           }
           
-          // Para planes de pago, crear plan en PayPal
+          // Si se proporciona un ID de suscripción (desde PayPal JS SDK)
+          if (subscriptionId) {
+            console.log(`Creando suscripción con ID de PayPal: ${subscriptionId}`);
+            // Crear suscripción en nuestra base de datos con el ID proporcionado
+            await createSubscription(
+              userId,
+              plan,
+              PaymentMethod.PAYPAL,
+              subscriptionId, // ID de pago
+              subscriptionId  // ID de suscripción
+            );
+            set({ loading: false });
+            return '';
+          }
+          
+          // Para planes de pago sin ID de suscripción, obtener el ID del plan en PayPal
           const planDetails = SUBSCRIPTION_PLANS[plan];
-          const paypalPlanId = await createSubscriptionPlan(
-            planDetails.name,
-            planDetails.description,
-            planDetails.price
+          const interval = 'MONTH'; // Por defecto mensual, podría ser un parámetro adicional
+          const paypalPlanId = await getPayPalPlanId(
+            plan, // Usar el enum del plan directamente
+            interval
           );
           
           // Crear suscripción en PayPal
           const approvalUrl = await createPaypalSubscription(paypalPlanId);
           
           set({ paymentUrl: approvalUrl, loading: false });
+          return approvalUrl;
           return approvalUrl;
         } catch (error) {
           console.error('Error al suscribirse al plan:', error);
@@ -145,17 +174,31 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               reason || 'Cancelado por el usuario'
             );
           }
-          
           // Cancelar en nuestra base de datos
           await cancelSubscription(
             currentSubscription.id,
             reason || 'Cancelado por el usuario'
           );
           
-          set({ 
-            currentSubscription: null, 
-            loading: false 
+          // Obtener el ID del usuario
+          const userId = currentSubscription.userId;
+          
+          // Crear una nueva suscripción gratuita en la base de datos
+          console.log('Creando nueva suscripción gratuita en la base de datos');
+          const newSubscription = await createSubscription(
+            userId,
+            SubscriptionPlan.FREE,
+            PaymentMethod.PAYPAL
+          );
+          
+          // Actualizar el estado local con la nueva suscripción
+          set({
+            currentSubscription: newSubscription,
+            loading: false
           });
+          
+          // Recargar la suscripción del usuario para asegurarnos de tener los datos actualizados
+          await get().fetchUserSubscription(userId);
           
           return true;
         } catch (error) {
@@ -169,37 +212,64 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       },
       
       // Ejecutar suscripción después de aprobación de PayPal
-      executeSubscription: async (token: string, userId: string) => {
+      executeSubscription: async (token: string, userId: string, plan?: SubscriptionPlan) => {
         try {
           set({ loading: true, error: null });
           
           // Ejecutar suscripción en PayPal
-          const subscriptionDetails = await executePaypalSubscription(token);
+          const subscriptionDetails = await executePaypalSubscription(token, userId, plan);
           
-          // Determinar el plan basado en el precio
-          // Esto es una simplificación, en un sistema real deberíamos almacenar
-          // la relación entre el plan de PayPal y nuestro plan
-          const plan = SubscriptionPlan.PRO;
+          // Usar el plan proporcionado o determinar el plan basado en los detalles
+          let subscriptionPlan = plan;
+          
+          // Asegurarse de que el plan sea una enumeración válida
+          if (typeof subscriptionPlan === 'string') {
+            if (subscriptionPlan.toLowerCase() === 'enterprise') {
+              subscriptionPlan = SubscriptionPlan.ENTERPRISE;
+            } else if (subscriptionPlan.toLowerCase() === 'pro') {
+              subscriptionPlan = SubscriptionPlan.PRO;
+            } else if (subscriptionPlan.toLowerCase() === 'free') {
+              subscriptionPlan = SubscriptionPlan.FREE;
+            }
+          }
+          
+          // Si aún no tenemos un plan válido, usar PRO por defecto
+          if (!subscriptionPlan) {
+            subscriptionPlan = SubscriptionPlan.PRO;
+          }
+          
+          console.log(`Ejecutando suscripción con plan: ${subscriptionPlan}`);
           
           // Crear suscripción en nuestra base de datos
           const subscription = await createSubscription(
             userId,
-            plan,
+            subscriptionPlan,
             PaymentMethod.PAYPAL,
             subscriptionDetails.id, // Usar el ID de la suscripción como paymentId
             subscriptionDetails.id  // Usar el ID de la suscripción como subscriptionId
           );
           
-          set({ 
-            currentSubscription: subscription, 
+          console.log(`Suscripción creada en la base de datos:`, subscription);
+          
+          // Actualizar el estado con la nueva suscripción
+          set({
+            currentSubscription: subscription,
             loading: false,
             paymentUrl: null
           });
+          
+          // Forzar una actualización del localStorage
+          localStorage.removeItem('poker-planning-subscription');
+          
+          // Forzar una recarga de la suscripción para asegurarnos de tener los datos actualizados
+          await get().fetchUserSubscription(userId);
+          
+          console.log(`Estado actualizado con la nueva suscripción`);
         } catch (error) {
           console.error('Error al ejecutar suscripción:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'Error desconocido al ejecutar suscripción', 
-            loading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Error desconocido al ejecutar suscripción',
+            loading: false
           });
         }
       },
@@ -227,12 +297,31 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       
       // Verificar si el usuario puede crear una sala
       canUserCreateRoom: () => {
-        // Esta es una versión simplificada que solo verifica el plan
-        // La versión completa debería verificar también el número de salas activas
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        const maxRooms = SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
         
-        return SUBSCRIPTION_PLANS[plan].features.maxActiveRooms > 0;
+        // Si el usuario es Free y tiene una sesión activa en localStorage, no permitir crear más salas
+        if (plan === SubscriptionPlan.FREE) {
+          // Verificar si hay una sesión activa en localStorage
+          const storageData = localStorage.getItem('poker-planning-storage');
+          if (storageData) {
+            try {
+              const sessionData = JSON.parse(storageData);
+              const state = sessionData.state;
+              
+              if (state && state.roomId) {
+                console.log(`Usuario Free con sala activa: ${state.roomId}`);
+                return false; // No permitir crear más salas
+              }
+            } catch (error) {
+              console.error('Error al verificar sesión persistente:', error);
+            }
+          }
+        }
+        
+        // Para usuarios Pro y Enterprise, permitir crear hasta el máximo de salas
+        return maxRooms > 0;
       },
       
       // Verificar si una sala puede añadir más participantes
@@ -249,6 +338,20 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       getCurrentPlan: () => {
         const { currentSubscription } = get();
         return currentSubscription?.plan || SubscriptionPlan.FREE;
+      },
+      
+      // Obtener el número máximo de participantes permitidos para el plan actual
+      getMaxParticipants: () => {
+        const { currentSubscription } = get();
+        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        return SUBSCRIPTION_PLANS[plan].features.maxParticipants;
+      },
+      
+      // Obtener el número máximo de salas activas permitidas para el plan actual
+      getMaxActiveRooms: () => {
+        const { currentSubscription } = get();
+        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        return SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
       }
     }),
     {

@@ -81,6 +81,28 @@ Una aplicación de planificación ágil para equipos de desarrollo que permite r
    2. Crea una aplicación en el [Dashboard de desarrollador](https://developer.paypal.com/dashboard/applications/sandbox)
    3. Obtén el Client ID y Client Secret de tu aplicación
    4. Configura los webhooks para recibir notificaciones de eventos de suscripción
+   
+   ### Configuración de Planes de Suscripción en PayPal
+   
+   Para crear los productos y planes de suscripción en PayPal:
+   
+   1. Configura tus credenciales de PayPal en `scripts/.env`:
+      ```
+      PAYPAL_CLIENT_ID=tu_client_id_aqui
+      PAYPAL_CLIENT_SECRET=tu_client_secret_aqui
+      PAYPAL_ENVIRONMENT=sandbox
+      ```
+   
+   2. Ejecuta el script de creación de planes:
+      ```bash
+      node scripts/create-paypal-plans.js
+      ```
+   
+   3. El script creará los productos y planes en PayPal y mostrará los IDs generados
+   
+   4. Actualiza el objeto `PAYPAL_PLAN_IDS` en `src/lib/paypalSdk.ts` con los IDs generados
+   
+   Para más detalles, consulta la [documentación de creación de planes de PayPal](docs/paypal-create-plans-script.md).
 
 5. Iniciar el servidor de desarrollo:
    ```bash
@@ -124,6 +146,13 @@ Para convertirse en moderador, consulta la [documentación de roles y permisos](
 Si encuentras algún problema al usar la aplicación, consulta nuestra [guía de solución de problemas](docs/troubleshooting.md).
 
 ## Actualizaciones Recientes
+
+### Versión 2.1.0
+
+- **Script de Creación de Planes de PayPal**: Nueva herramienta para crear productos y planes de suscripción en PayPal programáticamente
+- **Documentación Mejorada**: Guías detalladas para la configuración y solución de problemas con PayPal
+- **Corrección de Errores en Suscripciones**: Solución al problema de "INVALID_PARAMETER_SYNTAX" en plan_id de PayPal
+- **Optimización del Proceso de Suscripción**: Mejoras en la experiencia de usuario durante el proceso de suscripción
 
 ### Versión 2.0.0
 

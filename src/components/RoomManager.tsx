@@ -13,21 +13,30 @@ import {
   MenuItem,
   CircularProgress,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
+import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/types/subscription";
 import { OnboardingButton } from "./Onboarding";
 import SessionPersistence from "./SessionPersistence";
+import SubscriptionLimits from "./subscription/SubscriptionLimits";
+import ActiveRoomsList from "./ActiveRoomsList";
 import { useAuth } from "@/context/authContext";
 
 export default function RoomManager() {
   const router = useRouter();
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
+  const [roomTitle, setRoomTitle] = useState("");
   const [selectedSeries, setSelectedSeries] = useState("fibonacci");
 
-  // Usar el store de Zustand
+  // Usar los stores de Zustand
   const { createRoom, joinRoomWithName, isLoading } = useRoomStore();
+  const subscriptionStore = useSubscriptionStore();
+  const currentPlan = subscriptionStore.getCurrentPlan();
+  const canCreateRoom = subscriptionStore.canUserCreateRoom();
 
   // Usar el store de errores
   const errorStore = useErrorStore.getState();
@@ -51,8 +60,30 @@ export default function RoomManager() {
       return;
     }
 
+    // Verificar si el usuario puede crear más salas según su plan
+    const canCreate = subscriptionStore.canUserCreateRoom();
+    if (!canCreate) {
+      // Obtener el plan actual y el límite de salas
+      const currentPlan = subscriptionStore.getCurrentPlan();
+      const maxRooms = SUBSCRIPTION_PLANS[currentPlan].features.maxActiveRooms;
+      
+      // Para usuarios Free, mostrar un mensaje específico indicando que deben abandonar su sala actual
+      if (currentPlan === SubscriptionPlan.FREE) {
+        errorStore.setError(createError(
+          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
+          `Los usuarios del plan Free solo pueden tener una sala activa a la vez. Por favor, abandona tu sala actual antes de crear una nueva.`
+        ));
+      } else {
+        errorStore.setError(createError(
+          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
+          `Has alcanzado el límite de ${maxRooms} ${maxRooms === 1 ? 'sala activa' : 'salas activas'} de tu plan. Actualiza tu suscripción para crear más salas.`
+        ));
+      }
+      return;
+    }
+
     try {
-      const roomId = await createRoom(selectedSeries);
+      const roomId = await createRoom(selectedSeries, roomTitle.trim() || undefined);
       // Después de crear la sala, unirse a ella con el nombre
       await joinRoomWithName(roomId, name);
       router.push(`/room/${roomId}`);
@@ -80,7 +111,17 @@ export default function RoomManager() {
       return;
     }
 
+    // Verificar si la sala puede aceptar más participantes
     try {
+      const canJoin = await subscriptionStore.canRoomAddParticipant(roomCode);
+      if (!canJoin) {
+        errorStore.setError(createError(
+          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
+          "Esta sala ha alcanzado su límite de participantes. El creador de la sala necesita actualizar su plan para permitir más participantes."
+        ));
+        return;
+      }
+
       await joinRoomWithName(roomCode, name);
       router.push(`/room/${roomCode}`);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -115,6 +156,9 @@ export default function RoomManager() {
 
       {/* Componente de persistencia de sesión */}
       <SessionPersistence />
+      
+      {/* Lista de salas activas (solo para usuarios Pro y Enterprise) */}
+      <ActiveRoomsList />
 
       {/* Sección para CREAR SALA */}
       <Box
@@ -148,6 +192,15 @@ export default function RoomManager() {
           disabled={!!(currentUser && currentUser.displayName)}
           helperText={currentUser && currentUser.displayName ? "Usando tu nombre de perfil" : ""}
         />
+        
+        <TextField
+          label="Título de la sala (opcional)"
+          fullWidth
+          value={roomTitle}
+          onChange={(e) => setRoomTitle(e.target.value)}
+          placeholder="Ej: Sprint 5 - Poker Planning Project"
+          helperText="Un nombre descriptivo para identificar la sala"
+        />
 
         <FormControl fullWidth>
           <InputLabel id="series-label">Tipo de Serie</InputLabel>
@@ -164,21 +217,33 @@ export default function RoomManager() {
           </Select>
         </FormControl>
 
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateRoom}
-          disabled={isLoading}
-          sx={{
-            textTransform: "none",
-            transition: "transform 0.2s ease",
-            "&:hover": {
-              transform: "translateY(-2px) scale(1.02)",
-            },
-          }}
+        <Tooltip
+          title={
+            !canCreateRoom && currentPlan === SubscriptionPlan.FREE
+              ? "Los usuarios del plan Free solo pueden tener una sala activa a la vez. Por favor, abandona tu sala actual antes de crear una nueva."
+              : ""
+          }
+          placement="top"
+          disableHoverListener={canCreateRoom}
         >
-          {isLoading ? <CircularProgress size={24} /> : "Crear Sala"}
-        </Button>
+          <span>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCreateRoom}
+              disabled={isLoading || !canCreateRoom}
+              sx={{
+                textTransform: "none",
+                transition: "transform 0.2s ease",
+                "&:hover": {
+                  transform: canCreateRoom ? "translateY(-2px) scale(1.02)" : "none",
+                },
+              }}
+            >
+              {isLoading ? <CircularProgress size={24} /> : "Crear Sala"}
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       {/* Sección para UNIRSE A SALA */}
@@ -235,6 +300,11 @@ export default function RoomManager() {
         >
           {isLoading ? <CircularProgress size={24} /> : "Unirse"}
         </Button>
+      </Box>
+      
+      {/* Mostrar límites de suscripción en una posición menos prominente */}
+      <Box sx={{ mt: 4, opacity: 0.85 }}>
+        <SubscriptionLimits />
       </Box>
     </Box>
   );

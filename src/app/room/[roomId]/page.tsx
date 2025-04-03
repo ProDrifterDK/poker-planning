@@ -20,7 +20,9 @@ import Card from '../../../components/Card';
 import IssueSidebar from '../../../components/IssueSidebar';
 import ExportData from '@/components/ExportData';
 import VotingTimer from '@/components/VotingTimer';
+import ParticipantCounter from '@/components/ParticipantCounter';
 import { SendToIntegration } from '@/components/integrations';
+import FeatureGuard from '@/components/FeatureGuard';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
 export default function RoomPage() {
@@ -41,6 +43,7 @@ export default function RoomPage() {
     // Usar el store de Zustand (solo los campos necesarios)
     const {
         roomId: storeRoomId,
+        roomTitle,
         participants,
         issues,
         votes,
@@ -210,18 +213,33 @@ export default function RoomPage() {
                     alignItems="center"
                     width="100%"
                 >
-                    <Typography
-                        variant="h4"
-                        gutterBottom
-                        sx={{
-                            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
-                        }}
-                        role="heading"
-                        aria-level={1}
-                        aria-label={`Sala de Planning Poker con código ${roomId}`}
-                    >
-                        Sala: {roomId}
-                    </Typography>
+                    <Box textAlign="center" mb={2}>
+                        {roomTitle && (
+                            <Typography
+                                variant="h4"
+                                gutterBottom
+                                sx={{
+                                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+                                    fontWeight: 'bold',
+                                    mb: 1
+                                }}
+                                role="heading"
+                                aria-level={1}
+                            >
+                                {roomTitle}
+                            </Typography>
+                        )}
+                        <Typography
+                            variant="h6"
+                            color="text.secondary"
+                            sx={{
+                                fontSize: { xs: '1rem', sm: '1.25rem' }
+                            }}
+                            aria-label={`Código de sala: ${roomId}`}
+                        >
+                            Código: {roomId}
+                        </Typography>
+                    </Box>
                     
                     {isJoined && (
                         <Button
@@ -311,6 +329,9 @@ export default function RoomPage() {
                     </Box>
                 ) : (
                     <>
+                        {/* Contador de participantes */}
+                        <ParticipantCounter />
+                        
                         {/* Botón toggle sidebar */}
                         <Box
                             position="absolute"
@@ -570,27 +591,31 @@ export default function RoomPage() {
                         {/* Componentes de exportación e integración */}
                         {reveal && (
                             <Box marginTop={4} display="flex" justifyContent="center" gap={2} flexWrap="wrap">
-                                <ExportData
-                                    roomId={roomId}
-                                    participants={participants}
-                                    issues={issues || []}
-                                    estimations={votes || {}}
-                                />
+                                <FeatureGuard feature="exportData">
+                                    <ExportData
+                                        roomId={roomId}
+                                        participants={participants}
+                                        issues={issues || []}
+                                        estimations={votes || {}}
+                                    />
+                                </FeatureGuard>
                                 
-                                <SendToIntegration
-                                    issueData={{
-                                        key: currentIssueId || 'unknown',
-                                        summary: issues?.find(i => i.id === currentIssueId)?.summary || 'Sin título',
-                                        description: `Estimación realizada en la sala ${roomId}`,
-                                        average: avg,
-                                        estimations: participants.reduce((acc, participant) => {
-                                            if (participant.estimation !== undefined && participant.estimation !== null) {
-                                                acc[participant.name] = participant.estimation;
-                                            }
-                                            return acc;
-                                        }, {} as Record<string, string | number>)
-                                    }}
-                                />
+                                <FeatureGuard feature="integrations">
+                                    <SendToIntegration
+                                        issueData={{
+                                            key: currentIssueId || 'unknown',
+                                            summary: issues?.find(i => i.id === currentIssueId)?.summary || 'Sin título',
+                                            description: `Estimación realizada en la sala ${roomId}`,
+                                            average: avg,
+                                            estimations: participants.reduce((acc, participant) => {
+                                                if (participant.estimation !== undefined && participant.estimation !== null) {
+                                                    acc[participant.name] = participant.estimation;
+                                                }
+                                                return acc;
+                                            }, {} as Record<string, string | number>)
+                                        }}
+                                    />
+                                </FeatureGuard>
                             </Box>
                         )}
 
