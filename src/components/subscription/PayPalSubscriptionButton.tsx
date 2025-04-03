@@ -2,50 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { PAYPAL_CONFIG } from '@/lib/paypalConfig';
 import { SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
+// Los tipos ahora están definidos en src/types/paypal.d.ts
 
 interface PayPalSubscriptionButtonProps {
   plan: SubscriptionPlan;
   onSuccess: (subscriptionId: string) => void;
   onError?: (error: Error) => void;
-}
-
-// Definición de tipos para PayPal SDK
-interface PayPalButtonStyle {
-  layout?: 'vertical' | 'horizontal';
-  color?: 'gold' | 'blue' | 'silver' | 'white' | 'black';
-  shape?: 'rect' | 'pill';
-  height?: number;
-  label?: 'paypal' | 'checkout' | 'buynow' | 'pay' | 'installment' | 'subscribe';
-}
-
-interface PayPalSubscriptionData {
-  subscriptionID: string;
-  orderID?: string;
-  facilitatorAccessToken?: string;
-}
-
-interface PayPalSubscriptionActions {
-  subscription: {
-    create: (subscriptionDetails: Record<string, unknown>) => Promise<string>;
-  };
-}
-
-interface PayPalButtons {
-  render: (container: HTMLElement) => void;
-}
-
-declare global {
-  interface Window {
-    paypal?: {
-      Buttons: (options: {
-        style?: PayPalButtonStyle;
-        createSubscription: (data: unknown, actions: PayPalSubscriptionActions) => Promise<string>;
-        onApprove: (data: PayPalSubscriptionData) => void;
-        onError?: (error: Error) => void;
-        onCancel?: () => void;
-      }) => PayPalButtons;
-    };
-  }
 }
 
 const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({ 
@@ -129,7 +91,7 @@ const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({
         console.log('Renderizando botón de PayPal...');
         
         // Renderizar el botón de PayPal
-        window.paypal.Buttons({
+        window.paypal?.Buttons({
           style: {
             shape: 'rect',
             color: 'gold',
@@ -179,7 +141,7 @@ const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({
             console.log('Suscripción cancelada por el usuario');
             setError('La suscripción fue cancelada');
           }
-        }).render(paypalButtonRef.current);
+        } as PayPalSubscriptionButtonOptions).render(paypalButtonRef.current);
       } catch (error) {
         console.error('Error al configurar PayPal:', error);
         setLoading(false);

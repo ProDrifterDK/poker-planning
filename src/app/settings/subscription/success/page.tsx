@@ -60,17 +60,33 @@ export default function SubscriptionSuccessPage() {
           planPrice = searchParams.get('plan_price');
           planInterval = searchParams.get('plan_interval');
           
-          // Determinar el plan basado en el nombre
-          if (planName) {
-            const normalizedName = planName.toLowerCase();
-            if (normalizedName === 'pro') {
+          // Verificar si el plan está explícitamente definido en la URL
+          const planParam = searchParams.get('plan');
+          if (planParam) {
+            // Si el plan está explícitamente definido, usarlo directamente
+            console.log(`Plan explícitamente definido en URL: ${planParam}`);
+            if (planParam === 'pro') {
               plan = SubscriptionPlan.PRO;
-            } else if (normalizedName === 'enterprise') {
+            } else if (planParam === 'enterprise') {
               plan = SubscriptionPlan.ENTERPRISE;
-            } else if (normalizedName === 'free') {
+            } else if (planParam === 'free') {
               plan = SubscriptionPlan.FREE;
             }
+          } else {
+            // Determinar el plan basado en el nombre
+            if (planName) {
+              const normalizedName = planName.toLowerCase();
+              if (normalizedName === 'pro' || normalizedName.includes('pro')) {
+                plan = SubscriptionPlan.PRO;
+              } else if (normalizedName === 'enterprise' || normalizedName.includes('enterprise')) {
+                plan = SubscriptionPlan.ENTERPRISE;
+              } else if (normalizedName === 'free') {
+                plan = SubscriptionPlan.FREE;
+              }
+            }
           }
+          
+          console.log(`Plan determinado: ${plan}`);
         }
         
         if (!subscriptionId) {

@@ -220,7 +220,23 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           const subscriptionDetails = await executePaypalSubscription(token, userId, plan);
           
           // Usar el plan proporcionado o determinar el plan basado en los detalles
-          const subscriptionPlan = plan || SubscriptionPlan.PRO;
+          let subscriptionPlan = plan;
+          
+          // Asegurarse de que el plan sea una enumeración válida
+          if (typeof subscriptionPlan === 'string') {
+            if (subscriptionPlan.toLowerCase() === 'enterprise') {
+              subscriptionPlan = SubscriptionPlan.ENTERPRISE;
+            } else if (subscriptionPlan.toLowerCase() === 'pro') {
+              subscriptionPlan = SubscriptionPlan.PRO;
+            } else if (subscriptionPlan.toLowerCase() === 'free') {
+              subscriptionPlan = SubscriptionPlan.FREE;
+            }
+          }
+          
+          // Si aún no tenemos un plan válido, usar PRO por defecto
+          if (!subscriptionPlan) {
+            subscriptionPlan = SubscriptionPlan.PRO;
+          }
           
           console.log(`Ejecutando suscripción con plan: ${subscriptionPlan}`);
           

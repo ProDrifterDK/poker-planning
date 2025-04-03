@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { PAYPAL_CONFIG } from '@/lib/paypalConfig';
+// Los tipos ahora están definidos en src/types/paypal.d.ts
 
 const PayPalTest: React.FC = () => {
   const paypalButtonRef = useRef<HTMLDivElement>(null);
@@ -58,9 +59,9 @@ const PayPalTest: React.FC = () => {
           
           try {
             // Renderizar un botón de PayPal básico
-            window.paypal.Buttons({
+            window.paypal?.Buttons({
               // Configuración básica para un botón de pago simple
-              createOrder: function(data, actions) {
+              createOrder: function(data: unknown, actions: PayPalOrderActions) {
                 console.log('Creando orden de prueba...');
                 return actions.order.create({
                   purchase_units: [{
@@ -70,18 +71,23 @@ const PayPalTest: React.FC = () => {
                   }]
                 });
               },
-              onApprove: function(data, actions) {
+              onApprove: function(data: PayPalOrderData, actions: PayPalOrderActions) {
                 console.log('Orden aprobada:', data);
-                return actions.order.capture().then(function(details) {
+                return actions.order.capture().then(function(details: Record<string, unknown>) {
                   console.log('Captura completada:', details);
-                  alert('Transacción completada por ' + details.payer.name.given_name);
+                  // Acceder a las propiedades de manera segura con verificación de tipos
+                  const payer = details.payer as Record<string, unknown> | undefined;
+                  const name = payer?.name as Record<string, unknown> | undefined;
+                  const givenName = name?.given_name as string | undefined;
+                  
+                  alert('Transacción completada por ' + (givenName || 'Usuario'));
                 });
               },
-              onError: function(err) {
+              onError: function(err: Error) {
                 console.error('Error en PayPal:', err);
                 setError('Error al procesar el pago con PayPal');
               }
-            }).render(paypalButtonRef.current);
+            } as PayPalOrderButtonOptions).render(paypalButtonRef.current);
           } catch (renderError) {
             console.error('Error al renderizar botón de PayPal:', renderError);
             setError('Error al renderizar botón de PayPal: ' + (renderError instanceof Error ? renderError.message : String(renderError)));

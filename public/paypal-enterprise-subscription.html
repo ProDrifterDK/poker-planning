@@ -157,11 +157,11 @@
                         planName: selectedPlan.name,
                         planPrice: selectedPlan.price,
                         planInterval: 'MONTH',
-                        plan: selectedPlan.id
+                        plan: 'enterprise' // Ensure the plan ID is explicitly set to 'enterprise'
                     }));
                     
-                    // Redirect to success page
-                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=MONTH&from_paypal_sdk=false`;
+                    // Redirect to success page with explicit plan parameter
+                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=MONTH&plan=enterprise&from_paypal_sdk=false`;
                 },
                 onError: function(err) {
                     console.error('PayPal error:', err);

@@ -43,9 +43,14 @@ export async function POST(req: NextRequest) {
     // Simular un retraso para que parezca que estamos haciendo una llamada a la API
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Determinar el plan basado en el ID de suscripción o el parámetro
+    // Determinar el plan basado en el parámetro o el ID de suscripción
     let effectivePlan = plan;
+    
+    console.log(`Plan recibido: ${plan}`);
+    
     if (!effectivePlan) {
+      console.log(`Plan no especificado, determinando por ID de suscripción: ${subscriptionId}`);
+      
       // Si el ID comienza con I-6EFD o I-64B, es un plan Pro
       if (subscriptionId.startsWith('I-6EFD') || subscriptionId.startsWith('I-64B')) {
         effectivePlan = SubscriptionPlan.PRO;
@@ -58,7 +63,15 @@ export async function POST(req: NextRequest) {
       else {
         effectivePlan = SubscriptionPlan.PRO;
       }
+    } else if (effectivePlan.toLowerCase() === 'enterprise') {
+      // Asegurarse de que el plan 'enterprise' se mapee correctamente a la enumeración
+      effectivePlan = SubscriptionPlan.ENTERPRISE;
+    } else if (effectivePlan.toLowerCase() === 'pro') {
+      // Asegurarse de que el plan 'pro' se mapee correctamente a la enumeración
+      effectivePlan = SubscriptionPlan.PRO;
     }
+    
+    console.log(`Plan efectivo determinado: ${effectivePlan}`);
     
     // Crear detalles de suscripción simulados
     const subscriptionDetails = {
