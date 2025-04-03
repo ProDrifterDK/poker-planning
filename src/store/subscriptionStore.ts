@@ -281,12 +281,31 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       
       // Verificar si el usuario puede crear una sala
       canUserCreateRoom: () => {
-        // Esta es una versión simplificada que solo verifica el plan
-        // La versión completa debería verificar también el número de salas activas
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        const maxRooms = SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
         
-        return SUBSCRIPTION_PLANS[plan].features.maxActiveRooms > 0;
+        // Si el usuario es Free y tiene una sesión activa en localStorage, no permitir crear más salas
+        if (plan === SubscriptionPlan.FREE) {
+          // Verificar si hay una sesión activa en localStorage
+          const storageData = localStorage.getItem('poker-planning-storage');
+          if (storageData) {
+            try {
+              const sessionData = JSON.parse(storageData);
+              const state = sessionData.state;
+              
+              if (state && state.roomId) {
+                console.log(`Usuario Free con sala activa: ${state.roomId}`);
+                return false; // No permitir crear más salas
+              }
+            } catch (error) {
+              console.error('Error al verificar sesión persistente:', error);
+            }
+          }
+        }
+        
+        // Para usuarios Pro y Enterprise, permitir crear hasta el máximo de salas
+        return maxRooms > 0;
       },
       
       // Verificar si una sala puede añadir más participantes
@@ -303,6 +322,20 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       getCurrentPlan: () => {
         const { currentSubscription } = get();
         return currentSubscription?.plan || SubscriptionPlan.FREE;
+      },
+      
+      // Obtener el número máximo de participantes permitidos para el plan actual
+      getMaxParticipants: () => {
+        const { currentSubscription } = get();
+        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        return SUBSCRIPTION_PLANS[plan].features.maxParticipants;
+      },
+      
+      // Obtener el número máximo de salas activas permitidas para el plan actual
+      getMaxActiveRooms: () => {
+        const { currentSubscription } = get();
+        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        return SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
       }
     }),
     {

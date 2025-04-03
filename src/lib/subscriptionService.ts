@@ -1,23 +1,24 @@
 /**
  * Servicio para gestionar las suscripciones de los usuarios
  */
-import { firestore } from './firebaseConfig';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  query, 
-  where, 
+import { firestore, realtimeDb } from './firebaseConfig';
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  query,
+  where,
   getDocs,
   Timestamp,
   addDoc
 } from 'firebase/firestore';
-import { 
-  SubscriptionPlan, 
-  SubscriptionStatus, 
-  UserSubscription, 
+import { ref, get } from 'firebase/database';
+import {
+  SubscriptionPlan,
+  SubscriptionStatus,
+  UserSubscription,
   PaymentHistory,
   PaymentMethod,
   SUBSCRIPTION_PLANS
@@ -299,27 +300,72 @@ export async function canCreateRoom(userId: string): Promise<boolean> {
  */
 export async function canAddParticipant(roomId: string): Promise<boolean> {
   try {
-    // Obtener información de la sala
-    const roomRef = doc(firestore, 'rooms', roomId);
-    const roomDoc = await getDoc(roomRef);
+    console.log(`Checking if room ${roomId} can add more participants`);
+    let plan = SubscriptionPlan.FREE;
     
-    if (!roomDoc.exists()) {
-      throw new Error(`Sala no encontrada: ${roomId}`);
+    // Primero intentar obtener el plan del creador desde la Realtime Database
+    try {
+      const rtdbRoomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+      const rtdbSnapshot = await get(rtdbRoomRef);
+      
+      if (rtdbSnapshot.exists()) {
+        const rtdbRoomData = rtdbSnapshot.val();
+        console.log('Room data from RTDB:', rtdbRoomData);
+        
+        if (rtdbRoomData.creatorPlan) {
+          console.log(`Found creator plan in RTDB: ${rtdbRoomData.creatorPlan}`);
+          plan = rtdbRoomData.creatorPlan;
+        }
+      }
+    } catch (rtdbError) {
+      console.error('Error checking RTDB for room data:', rtdbError);
     }
     
-    const roomData = roomDoc.data();
-    const creatorId = roomData.createdBy;
-    
-    // Obtener la suscripción del creador
-    const subscription = await getUserSubscription(creatorId);
-    
-    // Si no tiene suscripción, usar plan FREE
-    const plan = subscription?.plan || SubscriptionPlan.FREE;
+    // Si no se encontró en RTDB, intentar con Firestore
+    if (plan === SubscriptionPlan.FREE) {
+      try {
+        // Obtener información de la sala desde Firestore
+        const roomRef = doc(firestore, 'rooms', roomId);
+        const roomDoc = await getDoc(roomRef);
+        
+        if (roomDoc.exists()) {
+          const roomData = roomDoc.data();
+          console.log('Room data from Firestore:', roomData);
+          
+          // Verificar si el plan del creador está almacenado en los metadatos de la sala
+          if (roomData.creatorPlan) {
+            console.log(`Found creator plan in Firestore: ${roomData.creatorPlan}`);
+            plan = roomData.creatorPlan;
+          } else {
+            // Si no está en los metadatos (para salas antiguas), obtenerlo del usuario creador
+            const creatorId = roomData.createdBy || roomData.creatorId;
+            
+            if (creatorId) {
+              console.log(`Looking up creator (${creatorId}) subscription`);
+              // Obtener la suscripción del creador
+              const subscription = await getUserSubscription(creatorId);
+              
+              // Si no tiene suscripción, usar plan FREE
+              if (subscription) {
+                console.log(`Found creator subscription: ${subscription.plan}`);
+                plan = subscription.plan;
+              } else {
+                console.log('No subscription found for creator, using FREE plan');
+              }
+            }
+          }
+        }
+      } catch (firestoreError) {
+        console.error('Error checking Firestore for room data:', firestoreError);
+      }
+    }
     
     // Contar participantes actuales
     const participantsRef = collection(firestore, `rooms/${roomId}/participants`);
     const querySnapshot = await getDocs(participantsRef);
     const participantsCount = querySnapshot.size;
+    
+    console.log(`Room has ${participantsCount} participants, max allowed for ${plan} plan is ${SUBSCRIPTION_PLANS[plan].features.maxParticipants}`);
     
     // Verificar si puede añadir más participantes según su plan
     return participantsCount < SUBSCRIPTION_PLANS[plan].features.maxParticipants;

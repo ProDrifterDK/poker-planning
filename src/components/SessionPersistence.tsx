@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, Paper, Chip, Divider } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useRoomStore } from '@/store/roomStore';
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { SubscriptionPlan } from '@/types/subscription';
 import { ref, update, get as firebaseGet } from 'firebase/database';
 import { realtimeDb } from '@/lib/firebaseConfig';
 
@@ -20,6 +22,10 @@ export default function SessionPersistence() {
 
   // Obtener la función leaveRoom del store
   const leaveRoom = useRoomStore(state => state.leaveRoom);
+  
+  // Obtener el plan actual del usuario
+  const getCurrentPlan = useSubscriptionStore(state => state.getCurrentPlan);
+  const currentPlan = getCurrentPlan();
 
   // Mapeo de claves de series a nombres legibles
   const seriesNames: Record<string, string> = {
@@ -86,8 +92,9 @@ export default function SessionPersistence() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Si no hay sesión persistente, no mostrar nada
-  if (!hasSession || !roomId) {
+  // No mostrar para usuarios Pro o Enterprise (ellos usan ActiveRoomsList)
+  // o si no hay sesión persistente
+  if (currentPlan !== SubscriptionPlan.FREE || !hasSession || !roomId) {
     return null;
   }
 
@@ -196,8 +203,9 @@ export default function SessionPersistence() {
           />
         </Box>
         
-        <Typography variant="body2" color="text.secondary">
-          Puedes volver a esta sala o iniciar una nueva sesión.
+        <Typography variant="caption" color="text.secondary">
+          Como usuario del plan Free, solo puedes tener una sala activa a la vez.
+          Puedes volver a esta sala o abandonarla para crear una nueva.
         </Typography>
       </Box>
       
@@ -210,12 +218,12 @@ export default function SessionPersistence() {
           Volver a la Sala
         </Button>
         
-        <Button 
-          variant="outlined" 
-          color="secondary" 
+        <Button
+          variant="outlined"
+          color="secondary"
           onClick={clearSession}
         >
-          Olvidar Sesión
+          Abandonar Sala
         </Button>
       </Box>
     </Paper>
