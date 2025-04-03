@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { auth } from '@/lib/firebaseConfig';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { SubscriptionPlan } from '@/types/subscription';
 
 export default function SubscriptionSuccessPage() {
   const router = useRouter();
@@ -13,29 +14,138 @@ export default function SubscriptionSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [planDetails, setPlanDetails] = useState<{
+    name: string;
+    price: string;
+    interval: string;
+  } | null>(null);
   
-  const { executeSubscription } = useSubscriptionStore();
+  const { executeSubscription, fetchUserSubscription } = useSubscriptionStore();
   
   useEffect(() => {
+    // Función para procesar la suscripción
     const processSubscription = async () => {
       try {
-        // Verificar si el usuario está autenticado
-        const user = auth.currentUser;
-        if (!user) {
-          router.push('/auth/signin');
-          return;
+        // Verificar si hay una suscripción pendiente en localStorage
+        const pendingSubscriptionJson = typeof window !== 'undefined' ? localStorage.getItem('pendingSubscription') : null;
+        
+        // Variables para almacenar los detalles de la suscripción
+        let subscriptionId: string | null = null;
+        let planName: string | null = null;
+        let planPrice: string | null = null;
+        let planInterval: string | null = null;
+        let plan = SubscriptionPlan.PRO; // Por defecto
+        
+        // Si hay una suscripción pendiente, usar esos datos
+        if (pendingSubscriptionJson) {
+          console.log('Encontrada suscripción pendiente en localStorage');
+          const pendingSubscription = JSON.parse(pendingSubscriptionJson);
+          subscriptionId = pendingSubscription.subscriptionId;
+          planName = pendingSubscription.planName;
+          planPrice = pendingSubscription.planPrice;
+          planInterval = pendingSubscription.planInterval;
+          
+          // Si el plan está guardado en la suscripción pendiente, usarlo
+          if (pendingSubscription.plan) {
+            plan = pendingSubscription.plan;
+          }
+          
+          // Limpiar la suscripción pendiente de localStorage
+          localStorage.removeItem('pendingSubscription');
+        } else {
+          // Si no hay suscripción pendiente, obtener los datos de la URL
+          console.log('Obteniendo datos de suscripción de la URL');
+          subscriptionId = searchParams.get('subscription_id');
+          planName = searchParams.get('plan_name');
+          planPrice = searchParams.get('plan_price');
+          planInterval = searchParams.get('plan_interval');
+          
+          // Determinar el plan basado en el nombre
+          if (planName) {
+            const normalizedName = planName.toLowerCase();
+            if (normalizedName === 'pro') {
+              plan = SubscriptionPlan.PRO;
+            } else if (normalizedName === 'enterprise') {
+              plan = SubscriptionPlan.ENTERPRISE;
+            } else if (normalizedName === 'free') {
+              plan = SubscriptionPlan.FREE;
+            }
+          }
         }
         
-        // Obtener token de PayPal
-        const token = searchParams.get('token');
-        if (!token) {
-          setError('No se encontró el token de suscripción');
+        if (!subscriptionId) {
+          setError('No se encontró el ID de suscripción');
           setLoading(false);
           return;
         }
         
-        // Ejecutar suscripción
-        await executeSubscription(token, user.uid);
+        // Guardar detalles del plan para mostrarlos
+        if (planName && planPrice) {
+          setPlanDetails({
+            name: planName,
+            price: planPrice,
+            interval: planInterval || 'MONTH'
+          });
+        }
+        
+        // Intentar obtener el usuario actual con un pequeño retraso
+        // para dar tiempo a Firebase a restaurar la sesión
+        let user = auth.currentUser;
+        
+        if (!user) {
+          console.log('Usuario no detectado inmediatamente, esperando...');
+          
+          // Esperar un momento y volver a intentar
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Intentar obtener el usuario nuevamente
+          user = auth.currentUser;
+          
+          if (!user) {
+            console.log('Usuario no autenticado después de esperar, guardando en localStorage');
+            
+            // Guardar los datos de la suscripción en localStorage para procesarlos después
+            localStorage.setItem('pendingSubscription', JSON.stringify({
+              subscriptionId,
+              planName,
+              planPrice,
+              planInterval,
+              plan
+            }));
+            
+            // Redirigir al login con URL de retorno a esta página
+            router.push('/auth/signin?returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search));
+            return;
+          }
+        }
+        
+        // Verificar si la suscripción ya fue procesada por el SDK de PayPal
+        const fromPayPalSdk = searchParams.get('from_paypal_sdk') === 'true';
+        
+        if (fromPayPalSdk) {
+          console.log('Suscripción ya procesada por el SDK de PayPal, omitiendo executeSubscription');
+          // Solo recargar la suscripción para actualizar el estado global
+          await fetchUserSubscription(user.uid);
+        } else {
+          console.log(`Ejecutando suscripción: ${subscriptionId} para plan: ${plan}`);
+          
+          // Ejecutar suscripción con el plan determinado
+          await executeSubscription(subscriptionId, user.uid, plan);
+          
+          // Forzar una recarga de la suscripción para actualizar el estado global
+          // Esto asegura que el Header y otros componentes muestren el plan actualizado
+          await fetchUserSubscription(user.uid);
+        }
+        
+        // Guardar el ID de suscripción en localStorage para que la página de estado pueda acceder a él
+        // Esto es útil para pruebas y desarrollo
+        try {
+          localStorage.setItem('last_subscription_id', subscriptionId);
+          console.log('ID de suscripción guardado en localStorage:', subscriptionId);
+        } catch (e) {
+          console.error('Error al guardar ID de suscripción en localStorage:', e);
+        }
+        
         setSuccess(true);
       } catch (error) {
         console.error('Error al procesar suscripción:', error);
@@ -98,22 +208,28 @@ export default function SubscriptionSuccessPage() {
           Tu suscripción ha sido procesada correctamente. Ya puedes disfrutar de todas las funciones premium.
         </Typography>
         
+        {planDetails && (
+          <Box sx={{ mt: 2, mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+            <Typography variant="h6" gutterBottom>
+              Detalles del plan
+            </Typography>
+            <Typography variant="body1">
+              <strong>Plan:</strong> {planDetails.name}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Precio:</strong> ${planDetails.price}/{planDetails.interval.toLowerCase()}
+            </Typography>
+          </Box>
+        )}
+        
         <Box sx={{ mt: 4 }}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             color="primary"
             onClick={() => router.push('/settings/subscription')}
             sx={{ mx: 1 }}
           >
             Ver detalles de suscripción
-          </Button>
-          
-          <Button 
-            variant="outlined"
-            onClick={() => router.push('/')}
-            sx={{ mx: 1 }}
-          >
-            Ir al inicio
           </Button>
         </Box>
       </Paper>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripción Plan Enterprise - Planning Poker Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2196f3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .plan-details {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #673ab7;
+        }
+        .plan-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #673ab7;
+            margin-bottom: 10px;
+        }
+        .plan-price {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .plan-features {
+            list-style-type: none;
+            padding: 0;
+        }
+        .plan-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+        .plan-features li::before {
+            content: "✓";
+            color: #4caf50;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        #paypal-button-container {
+            margin-top: 30px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #f5f5f5;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .back-button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Suscripción a Planning Poker Pro</h1>
+        
+        <div class="plan-details">
+            <div class="plan-name">Plan Enterprise</div>
+            <div class="plan-price">$29.99/mes</div>
+            <ul class="plan-features">
+                <li>Hasta 100 participantes por sala</li>
+                <li>20 salas activas</li>
+                <li>Exportación de datos</li>
+                <li>Estadísticas avanzadas</li>
+                <li>Temporizador para votaciones</li>
+                <li>Historial completo</li>
+                <li>Integraciones con Jira, Trello, GitHub</li>
+                <li>Personalización de marca</li>
+                <li>Soporte prioritario</li>
+            </ul>
+        </div>
+        
+        <div id="paypal-button-container"></div>
+        
+        <a href="/settings/subscription" class="back-button">Volver a planes</a>
+    </div>
+    
+    <script>
+        // Plan details
+        const selectedPlan = {
+            name: 'Enterprise Plan',
+            id: 'enterprise',
+            price: '29.99'
+        };
+        
+        // Function to render PayPal button
+        function renderPayPalButton() {
+            // Clear container
+            const container = document.getElementById('paypal-button-container');
+            container.innerHTML = '';
+            
+            // Check if PayPal is loaded
+            if (!window.paypal) {
+                console.error('PayPal SDK not loaded');
+                container.innerHTML = '<p style="color: red;">Error: No se pudo cargar PayPal. Por favor, intenta de nuevo más tarde.</p>';
+                return;
+            }
+            
+            console.log('Rendering PayPal button for plan:', selectedPlan);
+            
+            // Render PayPal button
+            window.paypal.Buttons({
+                style: {
+                    shape: 'rect',
+                    color: 'blue',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    console.log('Creating subscription for plan:', selectedPlan);
+                    
+                    return actions.subscription.create({
+                        'plan_id': 'P-0PR63221X9356841PM7RRM4A',  // Enterprise Plan - Monthly - $29.99
+                        'application_context': {
+                            'shipping_preference': 'NO_SHIPPING',
+                            'user_action': 'SUBSCRIBE_NOW',
+                            'return_url': 'http://localhost:3000/settings/subscription/success',
+                            'cancel_url': 'http://localhost:3000/settings/subscription'
+                        }
+                    });
+                },
+                onApprove: function(data, actions) {
+                    console.log('Subscription approved:', data);
+                    
+                    // Save subscription data to localStorage
+                    localStorage.setItem('pendingSubscription', JSON.stringify({
+                        subscriptionId: data.subscriptionID,
+                        planName: selectedPlan.name,
+                        planPrice: selectedPlan.price,
+                        planInterval: 'MONTH',
+                        plan: selectedPlan.id
+                    }));
+                    
+                    // Redirect to success page
+                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=MONTH&from_paypal_sdk=false`;
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    container.innerHTML = `<p style="color: red;">Error: ${err.message || 'Ocurrió un error al procesar el pago.'}</p>`;
+                }
+            }).render('#paypal-button-container');
+        }
+        
+        // Load PayPal SDK
+        function loadPayPalScript() {
+            console.log('Loading PayPal SDK...');
+            
+            // Remove any existing PayPal script
+            const existingScript = document.querySelector('script[src*="paypal.com/sdk/js"]');
+            if (existingScript) {
+                document.body.removeChild(existingScript);
+            }
+            
+            // Create new script element
+            const script = document.createElement('script');
+            script.src = 'https://www.paypal.com/sdk/js?client-id=AapJ2Olw_VRjVaCdAqpa8F4V5SyWcW-T97SXAxwcSH-A4fAvDsUQOKcRzDy5FI_o42GZjv-LIY_xE08V&vault=true&intent=subscription&currency=USD';
+            script.async = true;
+            
+            // Handle script load events
+            script.onload = function() {
+                console.log('PayPal SDK loaded successfully');
+                renderPayPalButton();
+            };
+            
+            script.onerror = function(e) {
+                console.error('Error loading PayPal SDK:', e);
+                const container = document.getElementById('paypal-button-container');
+                container.innerHTML = '<p style="color: red;">Error: No se pudo cargar PayPal. Por favor, intenta de nuevo más tarde.</p>';
+            };
+            
+            // Add script to document
+            document.body.appendChild(script);
+        }
+        
+        // Load PayPal SDK when page loads
+        window.addEventListener('load', loadPayPalScript);
+    </script>
+</body>
+</html>
