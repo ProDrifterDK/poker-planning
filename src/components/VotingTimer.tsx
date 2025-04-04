@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  CircularProgress, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
   SelectChangeEvent,
   Stack,
   Tooltip,
-  IconButton
+  IconButton,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import TimerIcon from '@mui/icons-material/Timer';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -31,12 +33,15 @@ const TIME_OPTIONS = [
 ];
 
 export default function VotingTimer() {
-  const { 
-    participants, 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  const {
+    participants,
     currentParticipantId,
-    timerEnabled, 
-    timerDuration, 
-    timerStartedAt, 
+    timerEnabled,
+    timerDuration,
+    timerStartedAt,
     setTimerEnabled,
     setTimerDuration,
     startTimer,
@@ -165,27 +170,41 @@ export default function VotingTimer() {
     <Box
       sx={{
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
+        justifyContent: isMobile ? 'center' : 'flex-start',
         gap: 1,
-        p: 1,
+        p: isMobile ? 1.5 : 1,
         borderRadius: 1,
         bgcolor: 'background.paper',
         boxShadow: 1,
         width: 'auto',
-        position: 'absolute',
-        top: 16,
-        left: 16,
-        zIndex: 10
+        zIndex: 10,
+        ...(isMobile ? {
+          // Estilos para móvil - posicionamiento relativo en la parte superior
+          position: 'relative',
+          margin: '0 auto',
+          marginBottom: 2,
+          maxWidth: '95%',
+        } : {
+          // Estilos para desktop - posicionamiento absoluto
+          position: 'absolute',
+          top: 16,
+          left: 16,
+        })
       }}
     >
       {/* Controles para moderadores */}
       {isModerator && (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack
+          direction={isMobile ? "column" : "row"}
+          spacing={1}
+          alignItems="center"
+          sx={{ width: isMobile ? '100%' : 'auto' }}
+        >
           {!timerStartedAt ? (
             <>
-              <FormControl size="small" sx={{ minWidth: 70 }}>
+              <FormControl size="small" sx={{ minWidth: 70, width: isMobile ? '100%' : 'auto' }}>
                 <Select
                   value={timerDuration}
                   onChange={handleDurationChange}
@@ -252,7 +271,11 @@ export default function VotingTimer() {
       {/* Visualización minimalista del temporizador - visible para todos */}
       {shouldShowTimer && (
         <>
-          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+          <Box sx={{
+            position: 'relative',
+            display: 'inline-flex',
+            margin: isMobile ? '8px auto' : 0
+          }}>
             <CircularProgress
               variant="determinate"
               value={calculateProgress()}
@@ -295,7 +318,14 @@ export default function VotingTimer() {
           
           {/* Mensaje cuando el temporizador ha expirado pero no todos han votado - visible para todos */}
           {timerExpired && !allParticipantsHaveVoted && (
-            <Box sx={{ ml: 1, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{
+              ml: isMobile ? 0 : 1,
+              mt: isMobile ? 1 : 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: isMobile ? 'center' : 'flex-start',
+              width: isMobile ? '100%' : 'auto'
+            }}>
               <Typography
                 variant="caption"
                 color="error"

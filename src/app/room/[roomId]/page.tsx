@@ -481,7 +481,14 @@ export default function RoomPage() {
                         
                         {/* Temporizador de votación */}
                         {!reveal && (
-                            <VotingTimer />
+                            <Box sx={{
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                mt: { xs: 2, sm: 0 } // Margen superior solo en móviles
+                            }}>
+                                <VotingTimer />
+                            </Box>
                         )}
 
                         {/* Detalle de estimaciones y promedio */}
