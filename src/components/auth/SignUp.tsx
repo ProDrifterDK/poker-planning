@@ -31,9 +31,33 @@ const SignUp: React.FC = () => {
   // Redireccionar si el usuario está autenticado o si el registro fue exitoso
   useEffect(() => {
     if (currentUser || success) {
+      // Verificar si hay una URL de redirección guardada en sessionStorage (para salas)
+      const redirectAfterAuth = typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterAuth') : null;
+      
+      // Obtener la URL de retorno de los parámetros de la URL si existe
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl');
+      
       // Pequeño retraso para mostrar el mensaje de éxito
       const timer = setTimeout(() => {
-        router.push('/');
+        // Prioridad de redirección:
+        // 1. URL de retorno de parámetros
+        // 2. URL guardada en sessionStorage (para salas)
+        // 3. Página de inicio
+        
+        if (returnUrl) {
+          console.log('Redirigiendo a URL de retorno:', returnUrl);
+          router.push(returnUrl);
+        } else if (redirectAfterAuth) {
+          console.log('Redirigiendo a sala:', redirectAfterAuth);
+          router.push(redirectAfterAuth);
+          // Limpiar la URL guardada
+          sessionStorage.removeItem('redirectAfterAuth');
+        } else {
+          // Si no hay ninguna redirección específica, ir a la página de inicio
+          console.log('Redirigiendo a página de inicio');
+          router.push('/');
+        }
       }, 1500);
       
       return () => clearTimeout(timer);

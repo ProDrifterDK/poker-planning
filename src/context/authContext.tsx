@@ -72,6 +72,7 @@ interface AuthContextType {
   clearError: () => void;
   hasPermission: (permission: import('@/types/roles').Permission) => boolean;
   isModerator: () => boolean;
+  isGuestUser: () => boolean;
 }
 
 // Crear el contexto
@@ -147,6 +148,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Verificar si el usuario es moderador
   const isModerator = (): boolean => {
     return userRole === UserRole.MODERATOR;
+  };
+  
+  // Verificar si el usuario es un invitado
+  const isGuestUser = (): boolean => {
+    if (!currentUser) return false;
+    // Verificamos si el usuario tiene photoURL igual a 'guest_user'
+    return currentUser.photoURL === 'guest_user';
   };
 
   // No renderizar nada hasta que el componente esté montado en el cliente
@@ -281,7 +289,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateProfile,
     clearError,
     hasPermission,
-    isModerator
+    isModerator,
+    isGuestUser
   };
 
   return (

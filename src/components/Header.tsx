@@ -19,14 +19,18 @@ import { useAuth } from '@/context/authContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PersonIcon from '@mui/icons-material/Person';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 
 export default function Header() {
     const router = useRouter();
-    const { currentUser, logout, isModerator } = useAuth();
+    const { currentUser, logout, isModerator, isGuestUser } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    
+    // Verificar si el usuario es invitado
+    const isGuest = isGuestUser();
     
     // Obtener el plan actual del usuario
     const { fetchUserSubscription, getCurrentPlan, currentSubscription } = useSubscriptionStore();
@@ -118,12 +122,16 @@ export default function Header() {
                                 aria-expanded={open ? 'true' : undefined}
                                 sx={{ ml: 1 }}
                             >
-                                {currentUser.photoURL ? (
+                                {currentUser.photoURL && currentUser.photoURL !== 'guest_user' ? (
                                     <Avatar
                                         src={currentUser.photoURL}
                                         alt={currentUser.displayName || 'Usuario'}
                                         sx={{ width: 32, height: 32 }}
                                     />
+                                ) : isGuest ? (
+                                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'info.main' }}>
+                                        <AccountCircleIcon fontSize="small" />
+                                    </Avatar>
                                 ) : (
                                     <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
                                         <PersonIcon fontSize="small" />
@@ -158,33 +166,43 @@ export default function Header() {
                                         <Typography variant="body2" noWrap>
                                             {currentUser.displayName || currentUser.email}
                                         </Typography>
-                                        <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
-                                            Plan {SUBSCRIPTION_PLANS[currentPlan].name}
-                                        </Typography>
+                                        {isGuest ? (
+                                            <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
+                                                Usuario invitado
+                                            </Typography>
+                                        ) : (
+                                            <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
+                                                Plan {SUBSCRIPTION_PLANS[currentPlan].name}
+                                            </Typography>
+                                        )}
                                     </Box>
                                 </MenuItem>
                                 <Divider />
-                                <MenuItem onClick={handleProfile}>
-                                    Mi Perfil
-                                </MenuItem>
-                                <MenuItem onClick={() => {
-                                    router.push('/settings');
-                                    handleClose();
-                                }}>
-                                    Configuración
-                                </MenuItem>
-                                <MenuItem onClick={() => {
-                                    router.push('/settings/subscription');
-                                    handleClose();
-                                }}>
-                                    Suscripción
-                                </MenuItem>
-                                <MenuItem onClick={() => {
-                                    router.push('/settings/integrations');
-                                    handleClose();
-                                }}>
-                                    Integraciones
-                                </MenuItem>
+                                {!isGuest && (
+                                    <>
+                                        <MenuItem onClick={handleProfile}>
+                                            Mi Perfil
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            router.push('/settings');
+                                            handleClose();
+                                        }}>
+                                            Configuración
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            router.push('/settings/subscription');
+                                            handleClose();
+                                        }}>
+                                            Suscripción
+                                        </MenuItem>
+                                        <MenuItem onClick={() => {
+                                            router.push('/settings/integrations');
+                                            handleClose();
+                                        }}>
+                                            Integraciones
+                                        </MenuItem>
+                                    </>
+                                )}
                                 {isModerator() && (
                                     <MenuItem onClick={() => {
                                         router.push('/admin');
