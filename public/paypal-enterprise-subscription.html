@@ -138,14 +138,50 @@
                 createSubscription: function(data, actions) {
                     console.log('Creating subscription for plan:', selectedPlan);
                     
-                    return actions.subscription.create({
-                        'plan_id': 'P-0PR63221X9356841PM7RRM4A',  // Enterprise Plan - Monthly - $29.99
-                        'application_context': {
-                            'shipping_preference': 'NO_SHIPPING',
-                            'user_action': 'SUBSCRIBE_NOW',
-                            'return_url': 'https://poker-planning-pro.vercel.app/settings/subscription/success',
-                            'cancel_url': 'https://poker-planning-pro.vercel.app/settings/subscription'
-                        }
+                    // Create the plan dynamically
+                    return actions.plan.create({
+                        name: selectedPlan.name,
+                        description: 'Plan Enterprise mensual para Planning Poker Pro',
+                        type: 'INFINITE',
+                        payment_preferences: {
+                            auto_bill_outstanding: true,
+                            setup_fee: {
+                                value: '0',
+                                currency_code: 'USD'
+                            },
+                            setup_fee_failure_action: 'CONTINUE',
+                            payment_failure_threshold: 3
+                        },
+                        billing_cycles: [
+                            {
+                                frequency: {
+                                    interval_unit: 'MONTH',
+                                    interval_count: 1
+                                },
+                                tenure_type: 'REGULAR',
+                                sequence: 1,
+                                total_cycles: 0,
+                                pricing_scheme: {
+                                    fixed_price: {
+                                        value: selectedPlan.price,
+                                        currency_code: 'USD'
+                                    }
+                                }
+                            }
+                        ]
+                    }).then(function(plan) {
+                        console.log('Plan created with ID:', plan.id);
+                        
+                        // Create the subscription using the newly created plan
+                        return actions.subscription.create({
+                            'plan_id': plan.id,
+                            'application_context': {
+                                'shipping_preference': 'NO_SHIPPING',
+                                'user_action': 'SUBSCRIBE_NOW',
+                                'return_url': 'https://poker-planning-pro.vercel.app/settings/subscription/success',
+                                'cancel_url': 'https://poker-planning-pro.vercel.app/settings/subscription'
+                            }
+                        });
                     });
                 },
                 onApprove: function(data, actions) {
