@@ -103,32 +103,8 @@ export default function RoomManager() {
       return;
     }
 
-    if (!name.trim()) {
-      errorStore.setError(createError(
-        ErrorType.VALIDATION_ERROR,
-        "Debes ingresar tu nombre"
-      ));
-      return;
-    }
-
-    // Verificar si la sala puede aceptar más participantes
-    try {
-      const canJoin = await subscriptionStore.canRoomAddParticipant(roomCode);
-      if (!canJoin) {
-        errorStore.setError(createError(
-          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
-          "Esta sala ha alcanzado su límite de participantes. El creador de la sala necesita actualizar su plan para permitir más participantes."
-        ));
-        return;
-      }
-
-      await joinRoomWithName(roomCode, name);
-      router.push(`/room/${roomCode}`);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // Los errores ya son manejados por el store
-      // No registramos el error en la consola por razones de seguridad
-    }
+    // Redirigir a la página de unión con el código de sala
+    router.push(`/room/join?code=${roomCode.trim()}`);
   };
 
   return (
@@ -276,20 +252,12 @@ export default function RoomManager() {
           onChange={(e) => setRoomCode(e.target.value)}
         />
 
-        <TextField
-          label="Tu nombre"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={!!(currentUser && currentUser.displayName)}
-          helperText={currentUser && currentUser.displayName ? "Usando tu nombre de perfil" : ""}
-        />
-
         <Button
           variant="outlined"
           color="secondary"
           onClick={handleJoinRoom}
           disabled={isLoading}
+          fullWidth
           sx={{
             textTransform: "none",
             transition: "transform 0.2s ease",
@@ -298,7 +266,7 @@ export default function RoomManager() {
             },
           }}
         >
-          {isLoading ? <CircularProgress size={24} /> : "Unirse"}
+          {isLoading ? <CircularProgress size={24} /> : "Unirse a la Sala"}
         </Button>
       </Box>
       

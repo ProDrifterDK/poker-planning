@@ -1,14 +1,14 @@
 'use client';
 
 import { Suspense } from 'react';
-import ClientJoin from './ClientJoin';
+import DirectJoin from './DirectJoin';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function JoinRoomPage() {
     return (
         <ProtectedRoute>
             <Suspense fallback={<p>Loading...</p>}>
-                <ClientJoin />
+                <DirectJoin />
             </Suspense>
         </ProtectedRoute>
     );

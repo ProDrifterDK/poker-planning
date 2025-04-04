@@ -25,6 +25,8 @@ import { SendToIntegration } from '@/components/integrations';
 import FeatureGuard from '@/components/FeatureGuard';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
+import { ref, update } from 'firebase/database';
+import { realtimeDb } from '@/lib/firebaseConfig';
 export default function RoomPage() {
     const theme = useTheme();
     const params = useParams();
@@ -65,7 +67,36 @@ export default function RoomPage() {
     const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
 
     // Verificar si el usuario ya está en la sala
-    const isJoined = storeRoomId === roomId && participants.length > 0;
+    const [isJoined, setIsJoined] = useState(false);
+    
+    // Estado para controlar cuándo intentar la auto-unión
+    const [shouldAttemptJoin, setShouldAttemptJoin] = useState(false);
+    
+    // Actualizar el estado isJoined cuando cambian los datos del store
+    useEffect(() => {
+        const joined = storeRoomId === roomId && participants.length > 0;
+        if (joined) {
+            console.log('Usuario detectado como unido a la sala');
+            setIsJoined(true);
+        }
+    }, [storeRoomId, roomId, participants]);
+    
+    // Verificar si hay un nombre de invitado en localStorage cada 500ms hasta encontrarlo
+    useEffect(() => {
+        if (!isJoined && !shouldAttemptJoin) {
+            const checkInterval = setInterval(() => {
+                const guestName = localStorage.getItem('guestName');
+                if (guestName) {
+                    console.log("Nombre de invitado encontrado en localStorage:", guestName);
+                    setName(guestName);
+                    setShouldAttemptJoin(true);
+                    clearInterval(checkInterval);
+                }
+            }, 500);
+            
+            return () => clearInterval(checkInterval);
+        }
+    }, [isJoined, shouldAttemptJoin]);
 
     // Función para verificar si hay una sesión persistente
     const checkPersistedSession = useCallback(async () => {
@@ -84,16 +115,43 @@ export default function RoomPage() {
                 
                 // Si hay una sesión para esta sala, unirse automáticamente
                 if (state && state.roomId === roomId && state.currentParticipantId) {
+                    console.log('Encontrada sesión persistente para la sala:', roomId);
+                    
+                    // Determinar el nombre a usar
+                    let userName = name;
+                    
+                    // Si no hay nombre en el estado, intentar obtenerlo directamente del localStorage
+                    if (!userName.trim()) {
+                        const guestName = localStorage.getItem('guestName');
+                        if (guestName) {
+                            console.log("Usando nombre de invitado del localStorage para sesión persistente:", guestName);
+                            userName = guestName;
+                            // Actualizar el estado para futuros usos
+                            setName(guestName);
+                        } else if (currentUser?.displayName) {
+                            userName = currentUser.displayName;
+                            // Actualizar el estado para futuros usos
+                            setName(currentUser.displayName);
+                        }
+                    }
                     
                     // Si tenemos un nombre de usuario, unirse automáticamente
-                    if (name) {
+                    if (userName.trim()) {
                         try {
-                            await joinRoomWithName(roomId, name);
+                            console.log(`Intentando unirse a la sala ${roomId} con el nombre ${userName} (sesión persistente)`);
+                            await joinRoomWithName(roomId, userName);
+                            console.log('Unido a la sala exitosamente (sesión persistente)');
+                            // Actualizar el estado isJoined directamente
+                            setIsJoined(true);
+                            // Indicar que se ha intentado la auto-unión
+                            setShouldAttemptJoin(true);
                             return true;
                         } catch (error) {
                             console.error("Error al unirse automáticamente a la sala:", error);
                             return false;
                         }
+                    } else {
+                        console.log('No se pudo determinar el nombre del usuario para la sesión persistente');
                     }
                     
                     return false;
@@ -104,32 +162,167 @@ export default function RoomPage() {
             console.error("Error al verificar sesión persistente:", error);
             return false;
         }
-    }, [roomId, isJoined, name, joinRoomWithName]);
+    }, [roomId, isJoined, name, joinRoomWithName, currentUser]);
 
     // Usar el nombre del usuario autenticado
     useEffect(() => {
+        console.log("Entrando al useEffect de nombre de usuario");
+        
+        // Intentar obtener el nombre del usuario autenticado
         if (currentUser?.displayName) {
+            console.log("Usando displayName del usuario:", currentUser.displayName);
             setName(currentUser.displayName);
+            // Si tenemos un nombre de usuario autenticado, intentar unirse
+            setShouldAttemptJoin(true);
         }
     }, [currentUser]);
+    
+    // Auto-unirse a la sala cuando shouldAttemptJoin cambia a true
+    useEffect(() => {
+        if (!isJoined && roomId && name && shouldAttemptJoin) {
+            console.log("Intentando auto-unirse a la sala con nombre:", name);
+            
+            // Establecer un timeout para intentar unirse manualmente si la auto-unión tarda demasiado
+            const autoJoinTimeout = setTimeout(() => {
+                if (!isJoined) {
+                    console.log('Timeout de auto-unión alcanzado, intentando unirse manualmente');
+                    handleJoinRoom();
+                }
+            }, 3000); // 3 segundos de timeout
+            
+            // Establecer un segundo timeout que forzará el estado isJoined a true si aún no se ha unido
+            const forceJoinTimeout = setTimeout(() => {
+                if (!isJoined) {
+                    console.log('Forzando estado isJoined a true después de timeout extendido');
+                    setIsJoined(true);
+                }
+            }, 8000); // 8 segundos de timeout
+            
+            // Eliminar el ID de participante guardado para esta sala para forzar la creación de un nuevo participante
+            localStorage.removeItem(`participant_id_${roomId}`);
+            console.log(`ID de participante eliminado para la sala ${roomId} (auto-unión)`);
+            
+            joinRoomWithName(roomId, name)
+                .then(() => {
+                    console.log('Auto-unión exitosa');
+                    // Actualizar el estado isJoined directamente
+                    setIsJoined(true);
+                    // Limpiar los timeouts si la unión fue exitosa
+                    clearTimeout(autoJoinTimeout);
+                    clearTimeout(forceJoinTimeout);
+                })
+                .catch(error => {
+                    console.error('Error al unirse automáticamente a la sala:', error);
+                    // Si falla la auto-unión, mostrar un mensaje de error
+                    setErrorMessage('Error al unirse automáticamente. Puedes intentar unirte manualmente.');
+                    // Limpiar los timeouts si hubo un error
+                    clearTimeout(autoJoinTimeout);
+                    clearTimeout(forceJoinTimeout);
+                });
+            
+            // Limpiar los timeouts cuando el componente se desmonte
+            return () => {
+                clearTimeout(autoJoinTimeout);
+                clearTimeout(forceJoinTimeout);
+            };
+        }
+    }, [isJoined, roomId, name, joinRoomWithName, shouldAttemptJoin]);
 
+    // Función para actualizar el nombre del moderador
+    const updateModeratorName = useCallback(async () => {
+        if (!roomId || !currentUser || !participants.length) return;
+        
+        // Buscar el participante con rol de moderador
+        const moderator = participants.find(p => p.role === 'moderator');
+        
+        // Si encontramos un moderador con nombre "Moderador", actualizarlo
+        if (moderator && moderator.name === 'Moderador') {
+            const newName = currentUser.displayName || 'Moderador';
+            console.log(`Actualizando nombre del moderador de "Moderador" a "${newName}"`);
+            
+            try {
+                // Actualizar el nombre en la base de datos
+                const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${moderator.id}`);
+                await update(participantRef, {
+                    name: newName
+                });
+                console.log('Nombre del moderador actualizado exitosamente');
+            } catch (error) {
+                console.error('Error al actualizar el nombre del moderador:', error);
+            }
+        }
+    }, [roomId, currentUser, participants]);
+    
     // Verificar sesión persistente al cargar el componente
     useEffect(() => {
-        checkPersistedSession();
-    }, [checkPersistedSession]);
+        // Solo verificar si no estamos ya unidos a la sala
+        if (!isJoined) {
+            console.log('Verificando sesión persistente...');
+            checkPersistedSession()
+                .then(joined => {
+                    if (joined) {
+                        console.log('Unido a la sala mediante sesión persistente');
+                    } else {
+                        console.log('No se encontró sesión persistente');
+                    }
+                })
+                .catch(error => console.error('Error al verificar sesión persistente:', error));
+        }
+    }, [checkPersistedSession, isJoined]);
+    
+    // Actualizar el nombre del moderador cuando se carga la sala
+    useEffect(() => {
+        if (isJoined && participants.length > 0) {
+            updateModeratorName();
+        }
+    }, [isJoined, participants, updateModeratorName]);
 
     // Unirse a la sala
     const handleJoinRoom = async () => {
         if (!roomId) return;
-        if (!name.trim()) {
-            setErrorMessage('Debes ingresar tu nombre');
+        
+        // Usar el nombre del estado, que debería estar configurado correctamente por los useEffect
+        let userName = name;
+        
+        // Si aún no hay nombre en el estado, intentar obtenerlo directamente del localStorage
+        if (!userName || !userName.trim()) {
+            const guestName = localStorage.getItem('guestName');
+            if (guestName) {
+                console.log("Usando nombre de invitado del localStorage para unirse manualmente:", guestName);
+                userName = guestName;
+                // Actualizar el estado para futuros usos
+                setName(guestName);
+                // Indicar que se debe intentar la auto-unión
+                setShouldAttemptJoin(true);
+            } else if (currentUser?.displayName) {
+                userName = currentUser.displayName;
+                // Actualizar el estado para futuros usos
+                setName(currentUser.displayName);
+                // Indicar que se debe intentar la auto-unión
+                setShouldAttemptJoin(true);
+            }
+        }
+        
+        // Verificar que tengamos un nombre
+        if (!userName || !userName.trim()) {
+            setErrorMessage('No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.');
             return;
         }
 
         try {
-            await joinRoomWithName(roomId, name);
+            console.log(`Intentando unirse manualmente a la sala ${roomId} con el nombre ${userName}`);
+            
+            // Eliminar el ID de participante guardado para esta sala para forzar la creación de un nuevo participante
+            localStorage.removeItem(`participant_id_${roomId}`);
+            console.log(`ID de participante eliminado para la sala ${roomId}`);
+            
+            await joinRoomWithName(roomId, userName);
+            console.log('Unido a la sala exitosamente (unión manual)');
+            // Actualizar el estado isJoined directamente
+            setIsJoined(true);
         } catch (error) {
             console.error('Error al unirse a la sala:', error);
+            setErrorMessage('Error al unirse a la sala. Por favor, intenta nuevamente.');
         }
     };
 
@@ -262,16 +455,14 @@ export default function RoomPage() {
                 </Box>
 
                 {!isJoined ? (
+                    // Mostrar un estado de carga mientras se une automáticamente
                     <Box
-                        component="form"
-                        role="form"
-                        aria-labelledby="join-room-title"
-                        onSubmit={(e) => { e.preventDefault(); handleJoinRoom(); }}
                         sx={{
                             width: '100%',
                             maxWidth: 500,
                             display: 'flex',
                             flexDirection: 'column',
+                            alignItems: 'center',
                             gap: 2,
                             p: 3,
                             borderRadius: 2,
@@ -279,52 +470,27 @@ export default function RoomPage() {
                             bgcolor: 'background.paper',
                         }}
                     >
-                        <Typography
-                            variant="h5"
-                            textAlign="center"
-                            id="join-room-title"
-                            role="heading"
-                            aria-level={2}
-                        >
-                            Unirse a la Sala
+                        <Typography variant="h5" textAlign="center">
+                            Uniéndose a la Sala...
                         </Typography>
                         
-                        <TextField
-                            label="Tu nombre"
-                            variant="outlined"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            fullWidth
-                            disabled={isLoading}
-                            required
-                            aria-required="true"
-                            inputProps={{
-                                'aria-label': 'Tu nombre para unirte a la sala',
-                            }}
-                        />
+                        <CircularProgress size={40} />
+                        
+                        <Typography variant="body1" textAlign="center">
+                            Estás ingresando como <strong>{name || localStorage.getItem('guestName') || 'Usuario invitado'}</strong>
+                        </Typography>
                         
                         <Button
-                            type="submit"
-                            onClick={handleJoinRoom}
-                            disabled={!name.trim() || isLoading}
-                            sx={{
-                                padding: '10px 20px',
-                                fontSize: '16px',
-                                backgroundColor: 'orange',
-                                color: 'white',
-                                fontWeight: 'bold',
-                                borderRadius: '5px',
-                                textTransform: 'none',
-                                '&.Mui-disabled': {
-                                    backgroundColor: '#999',
-                                    color: '#ccc',
-                                    cursor: 'not-allowed',
-                                    opacity: 0.7,
-                                },
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                // Indicar que se debe intentar la auto-unión
+                                setShouldAttemptJoin(true);
+                                handleJoinRoom();
                             }}
-                            aria-label="Unirse a la sala"
+                            sx={{ mt: 2 }}
                         >
-                            {isLoading ? <CircularProgress size={24} color="inherit" aria-label="Cargando..." /> : 'Unirse'}
+                            Unirse Manualmente
                         </Button>
                     </Box>
                 ) : (
@@ -392,7 +558,21 @@ export default function RoomPage() {
                                                 maxWidth: { xs: 70, sm: 100 }
                                             }}
                                         >
-                                            {participant.name}
+                                            {participant.role === 'moderator' ? (
+                                                <>
+                                                    {participant.name === 'Moderador' ? currentUser?.displayName || 'Moderador' : participant.name}
+                                                    <span style={{
+                                                        fontSize: '0.7em',
+                                                        opacity: 0.7,
+                                                        marginLeft: '3px',
+                                                        display: 'block'
+                                                    }}>
+                                                        (moderador)
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                participant.name
+                                            )}
                                         </Typography>
                                         <Card
                                             value={participant.estimation}

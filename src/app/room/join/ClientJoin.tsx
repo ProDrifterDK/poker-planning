@@ -32,6 +32,14 @@ export default function ClientJoin() {
       setName(currentUser.displayName);
     }
   }, [currentUser]);
+  
+  // Verificar si hay un nombre guardado en localStorage para usuarios invitados
+  useEffect(() => {
+    const guestName = localStorage.getItem('guestName');
+    if (guestName && currentUser?.photoURL === 'guest_user') {
+      setName(guestName);
+    }
+  }, [currentUser]);
 
   // Verificar si ya hay una sesión persistente para esta sala
   useEffect(() => {
@@ -84,10 +92,21 @@ export default function ClientJoin() {
 
     // Función para intentar unirse automáticamente
     const autoJoin = async () => {
-      if (currentUser?.displayName && roomCode && !isSubmitting && !isLoading && !error) {
+      // Determinar el nombre a usar
+      let userName = currentUser?.displayName || '';
+      
+      // Para usuarios invitados, intentar obtener el nombre del localStorage
+      if (currentUser?.photoURL === 'guest_user') {
+        const guestName = localStorage.getItem('guestName');
+        if (guestName) {
+          userName = guestName;
+        }
+      }
+      
+      if (userName && roomCode && !isSubmitting && !isLoading && !error) {
         setIsSubmitting(true);
         try {
-          await joinRoomWithName(roomCode, currentUser.displayName);
+          await joinRoomWithName(roomCode, userName);
           router.push(`/room/${roomCode}`);
         } catch (error) {
           console.error("Error al unirse automáticamente a la sala:", error);
@@ -100,9 +119,15 @@ export default function ClientJoin() {
     const checkAndJoin = async () => {
       const hasPersistedSession = await checkPersistedSession();
       
-      // Si no hay sesión persistente, intentar unirse automáticamente con el usuario autenticado
-      if (!hasPersistedSession && currentUser?.displayName) {
-        autoJoin();
+      // Si no hay sesión persistente, intentar unirse automáticamente con el usuario autenticado o invitado
+      if (!hasPersistedSession && currentUser) {
+        // Para usuarios normales, verificar displayName
+        // Para usuarios invitados, verificar si hay un nombre guardado en localStorage
+        const isGuestWithName = currentUser.photoURL === 'guest_user' && localStorage.getItem('guestName');
+        
+        if (currentUser.displayName || isGuestWithName) {
+          autoJoin();
+        }
       }
     };
 
@@ -131,7 +156,8 @@ export default function ClientJoin() {
   };
 
   // Si el usuario está autenticado y estamos intentando unirlo automáticamente
-  const isAutoJoining = currentUser?.displayName && isSubmitting;
+  const isGuestWithName = currentUser?.photoURL === 'guest_user' && localStorage.getItem('guestName');
+  const isAutoJoining = (currentUser?.displayName || isGuestWithName) && isSubmitting;
 
   return (
     <Box
@@ -177,7 +203,11 @@ export default function ClientJoin() {
           }}
         >
           <Typography variant="body1">
-            Uniéndote automáticamente como <strong>{currentUser.displayName}</strong>...
+            Uniéndote automáticamente como <strong>{
+              currentUser.photoURL === 'guest_user'
+                ? localStorage.getItem('guestName')
+                : currentUser.displayName
+            }</strong>...
           </Typography>
           <CircularProgress size={40} />
         </Box>

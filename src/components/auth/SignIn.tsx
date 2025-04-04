@@ -32,23 +32,35 @@ const SignIn: React.FC = () => {
       // Verificar si hay una suscripción pendiente en localStorage
       const pendingSubscription = typeof window !== 'undefined' ? localStorage.getItem('pendingSubscription') : null;
       
+      // Verificar si hay una URL de redirección guardada en sessionStorage (para salas)
+      const redirectAfterAuth = typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterAuth') : null;
+      
+      // Obtener la URL de retorno de los parámetros de la URL si existe
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl');
+      
       // Pequeño retraso para mostrar el mensaje de éxito
       const timer = setTimeout(() => {
-        if (pendingSubscription) {
+        // Prioridad de redirección:
+        // 1. URL de retorno de parámetros
+        // 2. URL guardada en sessionStorage (para salas)
+        // 3. Página de suscripción si hay una pendiente
+        // 4. Página de inicio
+        
+        if (returnUrl) {
+          console.log('Redirigiendo a URL de retorno:', returnUrl);
+          router.push(returnUrl);
+        } else if (redirectAfterAuth) {
+          console.log('Redirigiendo a sala:', redirectAfterAuth);
+          router.push(redirectAfterAuth);
+          // Limpiar la URL guardada
+          sessionStorage.removeItem('redirectAfterAuth');
+        } else if (pendingSubscription) {
           console.log('Encontrada suscripción pendiente, redirigiendo a página de éxito');
-          // Obtener la URL de retorno de los parámetros de la URL si existe
-          const urlParams = new URLSearchParams(window.location.search);
-          const returnUrl = urlParams.get('returnUrl');
-          
-          if (returnUrl) {
-            // Redirigir a la URL de retorno (página de éxito de suscripción)
-            router.push(returnUrl);
-          } else {
-            // Si no hay URL de retorno, redirigir a la página de suscripciones
-            router.push('/settings/subscription');
-          }
+          router.push('/settings/subscription');
         } else {
-          // Si no hay suscripción pendiente, redirigir a la página de inicio
+          // Si no hay ninguna redirección específica, ir a la página de inicio
+          console.log('Redirigiendo a página de inicio');
           router.push('/');
         }
       }, 1500);
