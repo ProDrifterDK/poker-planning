@@ -140,8 +140,8 @@
                         'application_context': {
                             'shipping_preference': 'NO_SHIPPING',
                             'user_action': 'SUBSCRIBE_NOW',
-                            'return_url': 'http://localhost:3000/settings/subscription/success',
-                            'cancel_url': 'http://localhost:3000/settings/subscription'
+                            'return_url': 'https://poker-planning-pro.vercel.app/settings/subscription/success',
+                            'cancel_url': 'https://poker-planning-pro.vercel.app/settings/subscription'
                         }
                     });
                 },
@@ -179,7 +179,7 @@
             
             // Create new script element
             const script = document.createElement('script');
-            script.src = 'https://www.paypal.com/sdk/js?client-id=AapJ2Olw_VRjVaCdAqpa8F4V5SyWcW-T97SXAxwcSH-A4fAvDsUQOKcRzDy5FI_o42GZjv-LIY_xE08V&vault=true&intent=subscription&currency=USD';
+            script.src = 'https://www.paypal.com/sdk/js?client-id=Ad6FjYnXb1rFqI-SkBVRji5cXWe9bBaVyTaBGTrPo5Dlwh_lK4dLsMRJplfL12yoyMcIwK-AWGX4jzXR&vault=true&intent=subscription&currency=USD&environment=live';
             script.async = true;
             
             // Handle script load events
