@@ -17,13 +17,28 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        {/* Google AdSense Script */}
+        {/* Google AdSense Meta Tag Verification */}
+        <meta name="google-adsense-account" content="ca-pub-2748434968594141" />
+        
+        {/* Google AdSense Script - Next.js version */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2748434968594141"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        
+        {/* Google AdSense Script - Raw HTML version for verification */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            `
+          }}
+        />
+        
+        {/* Google AdSense Verification Script - Exact format */}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2748434968594141" crossOrigin="anonymous"></script>
       </head>
       <body>
         <Providers>
