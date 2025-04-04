@@ -22,6 +22,7 @@ export interface PlanFeatures {
   advancedRoles: boolean;
   prioritySupport: boolean;
   api: boolean;
+  adFree: boolean; // Característica para indicar si el plan no muestra anuncios
 }
 
 // Detalles de cada plan
@@ -93,7 +94,8 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       branding: false,
       advancedRoles: false,
       prioritySupport: false,
-      api: false
+      api: false,
+      adFree: false // Los usuarios Free ven anuncios
     }
   },
   [SubscriptionPlan.PRO]: {
@@ -112,7 +114,8 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       branding: false,
       advancedRoles: false,
       prioritySupport: false,
-      api: false
+      api: false,
+      adFree: true // Los usuarios Pro no ven anuncios
     }
   },
   [SubscriptionPlan.ENTERPRISE]: {
@@ -131,7 +134,8 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       branding: true,
       advancedRoles: true,
       prioritySupport: true,
-      api: true
+      api: true,
+      adFree: true // Los usuarios Enterprise no ven anuncios
     }
   }
 };
