@@ -170,11 +170,11 @@ export default function VotingTimer() {
     <Box
       sx={{
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: isMobile ? 'center' : 'flex-start',
         gap: 1,
-        p: isMobile ? 1.5 : 1,
+        p: 1,
         borderRadius: 1,
         bgcolor: 'background.paper',
         boxShadow: 1,
@@ -197,14 +197,15 @@ export default function VotingTimer() {
       {/* Controles para moderadores */}
       {isModerator && (
         <Stack
-          direction={isMobile ? "column" : "row"}
+          direction="row"
           spacing={1}
           alignItems="center"
-          sx={{ width: isMobile ? '100%' : 'auto' }}
+          justifyContent={isMobile ? "center" : "flex-start"}
+          sx={{ width: '100%' }}
         >
           {!timerStartedAt ? (
             <>
-              <FormControl size="small" sx={{ minWidth: 70, width: isMobile ? '100%' : 'auto' }}>
+              <FormControl size="small" sx={{ minWidth: 70, width: 'auto' }}>
                 <Select
                   value={timerDuration}
                   onChange={handleDurationChange}
