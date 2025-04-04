@@ -23,6 +23,8 @@ import VotingTimer from '@/components/VotingTimer';
 import ParticipantCounter from '@/components/ParticipantCounter';
 import { SendToIntegration } from '@/components/integrations';
 import FeatureGuard from '@/components/FeatureGuard';
+import SidebarAdvertisement from '@/components/SidebarAdvertisement';
+import Advertisement from '@/components/Advertisement';
 import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
 import { ref, update } from 'firebase/database';
@@ -400,6 +402,20 @@ export default function RoomPage() {
             <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
             <Box flex="1" display="flex" flexDirection="column" alignItems="center" padding={2}>
+                {/* Anuncio para usuarios free */}
+                <Box sx={{ width: '100%', mb: 2 }}>
+                    <FeatureGuard
+                        feature="adFree"
+                        fallback={
+                            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                <Advertisement slot="1234567890" format="horizontal" position="top" />
+                            </Box>
+                        }
+                    >
+                        {/* No se muestra nada para usuarios premium */}
+                        <></>
+                    </FeatureGuard>
+                </Box>
                 <Box
                     display="flex"
                     flexDirection="column"
@@ -827,31 +843,44 @@ export default function RoomPage() {
 
             {/* SIDEBAR a la derecha, sólo si el usuario ingresó su nombre */}
             {isJoined && (
-                <Box
-                    id="issue-sidebar"
-                    role="complementary"
-                    aria-label="Panel de gestión de issues"
-                    sx={{
-                        width: sidebarOpen ? 300 : 0,
-                        transition: 'width 0.3s ease',
-                        overflow: 'hidden', // para que se oculte cuando width=0
-                        borderLeft: (theme) =>
-                            sidebarOpen ? `1px solid ${theme.palette.divider}` : 'none',
-                        backgroundColor: theme.palette.background.paper,
-                        boxShadow: sidebarOpen
-                            ? '-2px 0px 5px rgba(0,0,0,0.15)'
-                            : 'none',
-                    }}
-                >
-                    <IssueSidebar
-                        data-onboarding="issue-sidebar"
-                        roomId={roomId}
-                        currentIssueId={currentIssueId}
-                        setCurrentIssueId={handleSelectCurrentIssue}
+                <Box sx={{ display: 'flex' }}>
+                    {/* Anuncio lateral para usuarios free */}
+                    <FeatureGuard
+                        feature="adFree"
+                        fallback={
+                            <SidebarAdvertisement slot="9876543210" />
+                        }
+                    >
+                        {/* No se muestra nada para usuarios premium */}
+                        <></>
+                    </FeatureGuard>
+                    
+                    <Box
+                        id="issue-sidebar"
+                        role="complementary"
+                        aria-label="Panel de gestión de issues"
+                        sx={{
+                            width: sidebarOpen ? 300 : 0,
+                            transition: 'width 0.3s ease',
+                            overflow: 'hidden', // para que se oculte cuando width=0
+                            borderLeft: (theme) =>
+                                sidebarOpen ? `1px solid ${theme.palette.divider}` : 'none',
+                            backgroundColor: theme.palette.background.paper,
+                            boxShadow: sidebarOpen
+                                ? '-2px 0px 5px rgba(0,0,0,0.15)'
+                                : 'none',
+                        }}
+                    >
+                        <IssueSidebar
+                            data-onboarding="issue-sidebar"
+                            roomId={roomId}
+                            currentIssueId={currentIssueId}
+                            setCurrentIssueId={handleSelectCurrentIssue}
                     />
+                    </Box>
                 </Box>
             )}
-        </Box>
+            </Box>
         </ProtectedRoute>
     );
 }

@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import ErrorDisplay from '../components/ErrorDisplay';
 import { OnboardingTooltip } from '../components/Onboarding';
 import AdBlockerWarning from '../components/AdBlockerWarning';
+import Script from 'next/script';
 
 export const metadata = {
   title: 'Poker Planning Pro',
@@ -15,6 +16,15 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Google AdSense Script */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2748434968594141"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body>
         <Providers>
           <>
