@@ -17,8 +17,12 @@ export default function Footer() {
                 © {new Date().getFullYear()} Poker Planning Pro. Todos los derechos reservados.
             </Typography>
             <Typography variant="body2">
-                <Link href="https://example.com" color="inherit" underline="hover">
+                <Link href="/privacy-policy" color="inherit" underline="hover">
                     Política de Privacidad
+                </Link>
+                {' | '}
+                <Link href="/terms" color="inherit" underline="hover">
+                    Términos de Servicio
                 </Link>
             </Typography>
             <Typography variant="caption">

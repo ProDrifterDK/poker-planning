@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Box, Typography } from '@mui/material';
 // AdSense types are defined in src/types/adsense.d.ts
@@ -28,13 +28,38 @@ export default function Advertisement({
 }: AdvertisementProps) {
   const { canUserAccessFeature } = useSubscriptionStore();
   const adRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [adLoaded, setAdLoaded] = useState(false);
   
   // Check if user has ad-free feature
   const isAdFree = canUserAccessFeature('adFree');
   
+  // Set up intersection observer for lazy loading
   useEffect(() => {
-    // Only load ads for users without ad-free feature
-    if (!isAdFree && adRef.current) {
+    if (!isAdFree && adRef.current && !adLoaded) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            setIsVisible(true);
+            // Once we've detected visibility, disconnect the observer
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.1 } // Trigger when at least 10% of the ad is visible
+      );
+      
+      observer.observe(adRef.current);
+      
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [isAdFree, adLoaded]);
+  
+  // Load the ad when it becomes visible
+  useEffect(() => {
+    // Only load ads when they're visible and for users without ad-free feature
+    if (isVisible && !isAdFree && adRef.current && !adLoaded) {
       try {
         // Create a new ad unit
         const adsbygoogle = window.adsbygoogle || [];
@@ -43,11 +68,12 @@ export default function Advertisement({
         adsbygoogle.push({});
         
         console.log('Ad loaded for slot:', slot);
+        setAdLoaded(true);
       } catch (error) {
         console.error('Error loading advertisement:', error);
       }
     }
-  }, [isAdFree, slot]);
+  }, [isVisible, isAdFree, slot, adLoaded]);
   
   // Don't render anything for users with ad-free feature
   if (isAdFree) {
@@ -82,7 +108,14 @@ export default function Advertisement({
       className={`ad-container ${className || ''}`}
       sx={{
         ...positionStyles[position],
-        minHeight: format === 'horizontal' ? '90px' : format === 'vertical' ? '600px' : '250px',
+        minHeight: {
+          xs: format === 'horizontal' ? '50px' : format === 'vertical' ? '300px' : '200px',
+          sm: format === 'horizontal' ? '90px' : format === 'vertical' ? '600px' : '250px'
+        },
+        maxHeight: {
+          xs: format === 'horizontal' ? '100px' : format === 'vertical' ? '400px' : '300px',
+          sm: 'none'
+        },
         overflow: 'hidden',
         backgroundColor: 'background.paper',
         borderRadius: 1,

@@ -402,20 +402,7 @@ export default function RoomPage() {
             <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             {/* CONTENIDO PRINCIPAL */}
             <Box flex="1" display="flex" flexDirection="column" alignItems="center" padding={2}>
-                {/* Anuncio para usuarios free */}
-                <Box sx={{ width: '100%', mb: 2 }}>
-                    <FeatureGuard
-                        feature="adFree"
-                        fallback={
-                            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                <Advertisement slot="1234567890" format="horizontal" position="top" />
-                            </Box>
-                        }
-                    >
-                        {/* No se muestra nada para usuarios premium */}
-                        <></>
-                    </FeatureGuard>
-                </Box>
+                {/* No mostrar anuncios aquí - los moveremos después del contenido principal */}
                 <Box
                     display="flex"
                     flexDirection="column"
@@ -837,6 +824,23 @@ export default function RoomPage() {
                                 {errorMessage}
                             </Alert>
                         </Snackbar>
+                        
+                        {/* Anuncio para usuarios free DESPUÉS del contenido principal */}
+                        {isJoined && participants.length > 0 && (
+                            <Box sx={{ width: '100%', mt: 4, mb: 2 }}>
+                                <FeatureGuard
+                                    feature="adFree"
+                                    fallback={
+                                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                            <Advertisement slot="1234567890" format="horizontal" position="bottom" />
+                                        </Box>
+                                    }
+                                >
+                                    {/* No se muestra nada para usuarios premium */}
+                                    <></>
+                                </FeatureGuard>
+                            </Box>
+                        )}
                     </>
                 )}
             </Box>
@@ -844,16 +848,18 @@ export default function RoomPage() {
             {/* SIDEBAR a la derecha, sólo si el usuario ingresó su nombre */}
             {isJoined && (
                 <Box sx={{ display: 'flex' }}>
-                    {/* Anuncio lateral para usuarios free */}
-                    <FeatureGuard
-                        feature="adFree"
-                        fallback={
-                            <SidebarAdvertisement slot="9876543210" />
-                        }
-                    >
-                        {/* No se muestra nada para usuarios premium */}
-                        <></>
-                    </FeatureGuard>
+                    {/* Anuncio lateral para usuarios free - solo si hay suficiente contenido */}
+                    {issues && issues.length > 0 && (
+                        <FeatureGuard
+                            feature="adFree"
+                            fallback={
+                                <SidebarAdvertisement slot="9876543210" />
+                            }
+                        >
+                            {/* No se muestra nada para usuarios premium */}
+                            <></>
+                        </FeatureGuard>
+                    )}
                     
                     <Box
                         id="issue-sidebar"
