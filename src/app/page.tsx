@@ -287,21 +287,23 @@ export default function HomePage() {
           </Box>
           
           {/* Anuncio al final de todo el contenido */}
-          <AdFreeContent adSlot="7890123456" adFormat="horizontal" adPosition="bottom">
-            <Box sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                ¿Listo para mejorar tus sesiones de Planning Poker?
-              </Typography>
-              <Typography variant="body1" paragraph>
-                Regístrate hoy y comienza a disfrutar de todas las ventajas de Poker Planning Pro.
-              </Typography>
-              <Link href="/auth/signup" passHref>
-                <Button variant="contained" color="primary" size="large" sx={{ textTransform: "none", px: 4, py: 1 }}>
-                  Comenzar Ahora
-                </Button>
-              </Link>
-            </Box>
-          </AdFreeContent>
+          <Box sx={{ width: '100%', overflow: 'hidden' }}>
+            <AdFreeContent adSlot="7890123456" adFormat="horizontal" adPosition="bottom">
+              <Box sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
+                <Typography variant="h5" gutterBottom>
+                  ¿Listo para mejorar tus sesiones de Planning Poker?
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  Regístrate hoy y comienza a disfrutar de todas las ventajas de Poker Planning Pro.
+                </Typography>
+                <Link href="/auth/signup" passHref>
+                  <Button variant="contained" color="primary" size="large" sx={{ textTransform: "none", px: 4, py: 1 }}>
+                    Comenzar Ahora
+                  </Button>
+                </Link>
+              </Box>
+            </AdFreeContent>
+          </Box>
         </Box>
       )}
       <WelcomeMessage showDelay={2000} />

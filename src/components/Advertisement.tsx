@@ -116,6 +116,8 @@ export default function Advertisement({
           xs: format === 'horizontal' ? '100px' : format === 'vertical' ? '400px' : '300px',
           sm: 'none'
         },
+        width: '100%', // Ensure it doesn't exceed container width
+        maxWidth: '100vw', // Prevent overflow beyond viewport
         overflow: 'hidden',
         backgroundColor: 'background.paper',
         borderRadius: 1,
@@ -123,6 +125,7 @@ export default function Advertisement({
         borderColor: 'divider',
         padding: 1,
         position: 'relative',
+        boxSizing: 'border-box', // Include padding in width calculation
       }}
     >
       <Typography 

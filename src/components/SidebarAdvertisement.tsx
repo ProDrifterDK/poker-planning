@@ -82,7 +82,8 @@ export default function SidebarAdvertisement({
       className={`sidebar-ad-container ${className || ''}`}
       sx={{
         width: { xs: '100%', md: '300px' },
-        height: '600px',
+        maxWidth: '100vw', // Prevent overflow beyond viewport
+        height: { xs: '300px', md: '600px' }, // Shorter on mobile
         overflow: 'hidden',
         backgroundColor: 'background.paper',
         borderRadius: 1,
@@ -91,7 +92,8 @@ export default function SidebarAdvertisement({
         padding: 1,
         position: 'relative',
         display: { xs: 'none', md: 'block' }, // Hide on mobile
-        marginBottom: 2
+        marginBottom: 2,
+        boxSizing: 'border-box' // Include padding in width calculation
       }}
     >
       <Typography 

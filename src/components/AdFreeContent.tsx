@@ -33,7 +33,7 @@ export default function AdFreeContent({
     <FeatureGuard
       feature="adFree"
       fallback={
-        <Box className={className}>
+        <Box className={className} sx={{ width: '100%', overflow: 'hidden' }}>
           {adPosition === 'top' && (
             <Advertisement
               slot={adSlot}
