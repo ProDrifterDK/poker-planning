@@ -17,6 +17,15 @@ import {
 } from '@/lib/firebaseConfig';
 import { getUserRole, initializeUserProfile } from '@/lib/roleService';
 import { UserRole, Permission, hasPermission as checkPermission } from '@/types/roles';
+import {
+  updateUserProfileData,
+  updateUserDisplayNameAndPhoto,
+  updateUserEmail,
+  updateNotificationPreferences,
+  deleteUserAccount,
+  type NotificationPreferences,
+  type UserProfileData
+} from '@/lib/userProfileService';
 
 // Variable para detectar si estamos en el cliente
 const isClient = typeof window !== 'undefined';
@@ -63,12 +72,24 @@ interface AuthContextType {
   userRole: UserRole | null;
   loading: boolean;
   error: string | null;
+  
+  // Funciones de autenticación
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogleProvider: () => Promise<void>;
   logout: () => Promise<void>;
   resetUserPassword: (email: string) => Promise<void>;
+  
+  // Funciones de perfil básicas
   updateProfile: (displayName: string, photoURL?: string) => Promise<void>;
+  
+  // Funciones de perfil extendidas
+  updateUserData: (data: UserProfileData) => Promise<boolean>;
+  updateUserEmail: (currentPassword: string, newEmail: string) => Promise<boolean>;
+  updateNotificationPreferences: (preferences: NotificationPreferences) => Promise<boolean>;
+  deleteAccount: (currentPassword: string) => Promise<boolean>;
+  
+  // Utilidades
   clearError: () => void;
   hasPermission: (permission: import('@/types/roles').Permission) => boolean;
   isModerator: () => boolean;
@@ -250,13 +271,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Actualizar perfil
+  // Actualizar perfil básico
   const updateProfile = async (displayName: string, photoURL?: string) => {
     try {
       setLoading(true);
       setError(null);
       if (currentUser) {
-        await updateUserProfile(currentUser, displayName, photoURL);
+        await updateUserDisplayNameAndPhoto(currentUser, displayName, photoURL);
       } else {
         throw new Error('No hay usuario autenticado');
       }
@@ -264,6 +285,80 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const errorMessage = err instanceof FirebaseError
         ? getReadableErrorMessage(err)
         : 'Error al actualizar perfil';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Actualizar datos adicionales del perfil
+  const updateUserData = async (data: UserProfileData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (currentUser) {
+        await updateUserProfileData(currentUser.uid, data);
+        return true;
+      } else {
+        throw new Error('No hay usuario autenticado');
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof FirebaseError
+        ? getReadableErrorMessage(err)
+        : err instanceof Error ? err.message : 'Error al actualizar datos del perfil';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Actualizar email del usuario
+  const updateEmail = async (currentPassword: string, newEmail: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await updateUserEmail(currentPassword, newEmail);
+      return true;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar email';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Actualizar preferencias de notificación
+  const updateNotificationPrefs = async (preferences: NotificationPreferences) => {
+    try {
+      setLoading(true);
+      setError(null);
+      if (currentUser) {
+        await updateNotificationPreferences(currentUser.uid, preferences);
+        return true;
+      } else {
+        throw new Error('No hay usuario autenticado');
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar preferencias';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Eliminar cuenta de usuario
+  const deleteAccount = async (currentPassword: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteUserAccount(currentPassword);
+      return true;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al eliminar cuenta';
       setError(errorMessage);
       throw err;
     } finally {
@@ -287,6 +382,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     resetUserPassword,
     updateProfile,
+    updateUserData,
+    updateUserEmail: updateEmail,
+    updateNotificationPreferences: updateNotificationPrefs,
+    deleteAccount,
     clearError,
     hasPermission,
     isModerator,

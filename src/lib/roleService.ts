@@ -75,16 +75,26 @@ export async function initializeUserProfile(user: User): Promise<void> {
     const userRef = doc(firestore, USERS_COLLECTION, user.uid);
     const userDoc = await getDoc(userRef);
     
-    const userData = {
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      lastLogin: new Date().toISOString(),
-    };
-    
     if (userDoc.exists()) {
-      // Actualizar el documento existente
+      // Actualizar el documento existente, pero preservar photoURL si existe
       try {
+        const existingData = userDoc.data();
+        
+        // Verificar si hay una foto de perfil en Firestore
+        if (existingData.photoURL) {
+          console.log('initializeUserProfile: Preservando photoURL existente en Firestore');
+        } else {
+          console.log('initializeUserProfile: No hay photoURL en Firestore, usando la de Firebase Auth');
+        }
+        
+        const userData = {
+          email: user.email,
+          displayName: user.displayName,
+          // Preservar photoURL de Firestore si existe, de lo contrario usar el de Firebase Auth
+          photoURL: existingData.photoURL || user.photoURL,
+          lastLogin: new Date().toISOString(),
+        };
+        
         await updateDoc(userRef, userData);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (updateError) {
@@ -94,11 +104,16 @@ export async function initializeUserProfile(user: User): Promise<void> {
     } else {
       // Crear un nuevo documento con rol de participante por defecto
       try {
-        await setDoc(userRef, {
-          ...userData,
+        const newUserData = {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          lastLogin: new Date().toISOString(),
           role: UserRole.PARTICIPANT,
           createdAt: new Date().toISOString(),
-        });
+        };
+        
+        await setDoc(userRef, newUserData);
         
         // Crear una suscripción gratuita por defecto para el nuevo usuario
         try {
