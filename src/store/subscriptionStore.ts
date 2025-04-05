@@ -68,10 +68,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           set({ loading: true, error: null });
           
           // Forzar una consulta fresca a la base de datos
-          console.log(`Obteniendo suscripción para usuario: ${userId}`);
           const subscription = await getUserSubscription(userId);
-          
-          console.log(`Suscripción obtenida:`, subscription);
           
           // Actualizar el estado con la suscripción obtenida
           set({ currentSubscription: subscription, loading: false });

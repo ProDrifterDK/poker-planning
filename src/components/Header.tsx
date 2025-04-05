@@ -22,15 +22,28 @@ import PersonIcon from '@mui/icons-material/Person';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export default function Header() {
     const router = useRouter();
     const { currentUser, logout, isModerator, isGuestUser } = useAuth();
+    const { profilePhotoURL, reloadProfile } = useUserProfile();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     
     // Verificar si el usuario es invitado
     const isGuest = isGuestUser();
+    
+    // Forzar una recarga del perfil solo cuando el componente se monta o cambia el usuario
+    useEffect(() => {
+        if (currentUser) {
+            console.log('Header: Forzando recarga del perfil al montar');
+            // Usar una función anónima para evitar la dependencia en reloadProfile
+            const loadProfile = () => reloadProfile();
+            loadProfile();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUser]); // Eliminar reloadProfile de las dependencias
     
     // Obtener el plan actual del usuario
     const { fetchUserSubscription, getCurrentPlan, currentSubscription } = useSubscriptionStore();
@@ -122,9 +135,9 @@ export default function Header() {
                                 aria-expanded={open ? 'true' : undefined}
                                 sx={{ ml: 1 }}
                             >
-                                {currentUser.photoURL && currentUser.photoURL !== 'guest_user' ? (
+                                {profilePhotoURL && profilePhotoURL !== 'guest_user' ? (
                                     <Avatar
-                                        src={currentUser.photoURL}
+                                        src={profilePhotoURL}
                                         alt={currentUser.displayName || 'Usuario'}
                                         sx={{ width: 32, height: 32 }}
                                     />
