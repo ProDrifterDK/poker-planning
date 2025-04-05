@@ -16,9 +16,37 @@ La primera versión de Poker Planning Pro se lanzó en 2024, y desde entonces he
 - **Tiempo Real**: Sincronización instantánea entre todos los participantes
 - **Múltiples Series de Estimación**: Soporte para Fibonacci, T-shirt, Powers of 2 y más
 - **Sistema de Roles**: Control granular sobre quién puede realizar qué acciones
+- **Planes de Suscripción**: Opciones Free, Pro y Enterprise para adaptarse a diferentes necesidades
+- **Exportación de Datos**: Exporta tus estimaciones para su uso en otras herramientas (Pro y Enterprise)
+- **Integraciones**: Conecta con Jira, Trello y GitHub (Enterprise)
 - **Modo Offline Parcial**: Funcionalidad básica incluso con problemas de conexión
 - **Tema Claro/Oscuro**: Interfaz adaptable a las preferencias del usuario
 - **Diseño Responsive**: Funciona en dispositivos móviles, tablets y desktops
+
+## Planes de Suscripción
+
+Poker Planning Pro ofrece tres planes de suscripción para adaptarse a las necesidades de diferentes equipos:
+
+### Plan Free
+- Hasta 5 participantes por sala
+- 1 sala activa
+- Funcionalidades básicas de estimación
+- Temporizador para votación
+
+### Plan Pro ($9.99/mes)
+- Hasta 15 participantes por sala
+- 5 salas activas
+- Exportación de datos
+- Estadísticas avanzadas
+- Historial completo
+
+### Plan Enterprise ($29.99/mes)
+- Hasta 100 participantes por sala
+- 20 salas activas
+- Todas las características del plan Pro
+- Integraciones con Jira, Trello y GitHub
+- Personalización de marca
+- Soporte prioritario
 
 
 ## Equipo
@@ -27,27 +55,29 @@ Poker Planning Pro es desarrollado y mantenido por Resyst Softwares; un equipo d
 
 ## Versión Actual
 
-**Versión**: 1.1.0
+**Versión**: 2.0.0
 
-**Fecha de lanzamiento**: Marzo 2025
+**Fecha de lanzamiento**: Abril 2025
 
 **Cambios destacados**:
-- Identificación de usuario mejorada
-- Corrección de problemas con series de estimación
-- Manejo mejorado de errores de red
-- Experiencia offline parcial
-- Documentación completa
+- Sistema de suscripciones con planes Free, Pro y Enterprise
+- Perfil de usuario mejorado con foto de perfil personalizable
+- Exportación de datos para planes Pro y Enterprise
+- Integraciones con Jira, Trello y GitHub para plan Enterprise
+- Límites de participantes según el plan de suscripción
+- Procesamiento de pagos con PayPal
+- Gestión de suscripciones desde el panel de usuario
+- Documentación completa actualizada
 
 ## Planes Futuros
 
 Estamos constantemente trabajando para mejorar Poker Planning Pro. Algunas de las características que planeamos implementar en el futuro incluyen:
 
-- Integración con herramientas populares como JIRA, Trello y GitHub
-- Estadísticas y análisis de estimaciones
+- Más opciones de personalización de marca para usuarios Enterprise
 - Plantillas personalizables para diferentes tipos de equipos
 - Modo de observador para stakeholders
-- Funcionalidades avanzadas de exportación e importación
-- Aplicaciones nativas para iOS y Android
+- Análisis predictivo de estimaciones basado en datos históricos
+- Integración con más servicios de pago además de PayPal
 
 ## Contacto
 
