@@ -103,16 +103,42 @@ export default function SubscriptionPage() {
         <Typography variant="h5" gutterBottom>
           Planes disponibles
         </Typography>
+        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+          Planes Mensuales
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {Object.values(SUBSCRIPTION_PLANS)
+            .filter(plan => plan.billingInterval === 'month')
+            .map((plan) => (
+              <Grid item xs={12} md={4} key={plan.id + '-' + plan.billingInterval}>
+                <PlanCard
+                  plan={plan}
+                  isCurrentPlan={
+                    currentSubscription?.plan === plan.id
+                  }
+                  userId={userId || ''}
+                />
+              </Grid>
+            ))}
+        </Grid>
+        
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Planes Anuales (Ahorra más de 15%)
+        </Typography>
         <Grid container spacing={3}>
-          {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
-            <Grid item xs={12} md={4} key={plan.id}>
-              <PlanCard 
-                plan={plan} 
-                isCurrentPlan={currentSubscription?.plan === plan.id}
-                userId={userId || ''}
-              />
-            </Grid>
-          ))}
+          {Object.values(SUBSCRIPTION_PLANS)
+            .filter(plan => plan.billingInterval === 'year' && plan.id !== SubscriptionPlan.FREE)
+            .map((plan) => (
+              <Grid item xs={12} md={4} key={plan.id + '-' + plan.billingInterval}>
+                <PlanCard
+                  plan={plan}
+                  isCurrentPlan={
+                    currentSubscription?.plan === plan.id
+                  }
+                  userId={userId || ''}
+                />
+              </Grid>
+            ))}
         </Grid>
       </Box>
       
