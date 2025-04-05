@@ -63,6 +63,44 @@ Si no puedes o no quieres modificar la configuración de tu bloqueador de anunci
 
 Sin embargo, estos cambios no se sincronizarán con otros usuarios en la sala, lo que limita la funcionalidad colaborativa de la aplicación.
 
+## Problemas con Suscripciones
+
+### No puedo actualizar mi plan
+
+Si tienes problemas al actualizar tu plan de suscripción:
+
+1. Verifica que tu método de pago sea válido y tenga fondos suficientes
+2. Asegúrate de que no hay restricciones en tu cuenta de PayPal
+3. Intenta usar otro navegador o dispositivo
+4. Limpia la caché y las cookies de tu navegador
+
+### Mi pago fue procesado pero mi plan no se actualizó
+
+Si realizaste un pago pero tu plan no se actualizó:
+
+1. Espera unos minutos, a veces hay un retraso en la actualización
+2. Verifica tu correo electrónico para confirmar que el pago fue procesado
+3. Revisa la página de suscripción para ver el estado actual
+4. Si después de 30 minutos no se actualiza, contacta a soporte con el ID de transacción
+
+### No puedo cancelar mi suscripción
+
+Si tienes problemas para cancelar tu suscripción:
+
+1. Asegúrate de estar iniciando sesión con la misma cuenta que utilizaste para suscribirte
+2. Intenta acceder a la página de suscripción directamente desde el menú de usuario
+3. Limpia la caché y las cookies de tu navegador
+4. Si persiste el problema, contacta a soporte
+
+### No puedo acceder a características incluidas en mi plan
+
+Si no puedes acceder a características que deberían estar disponibles en tu plan:
+
+1. Verifica que tu suscripción esté activa en la página de suscripción
+2. Intenta cerrar sesión y volver a iniciar sesión
+3. Recarga la página donde intentas usar la característica
+4. Si el problema persiste, contacta a soporte
+
 ## Otros Problemas Comunes
 
 ### La sala no se carga
@@ -80,7 +118,17 @@ Si no puedes crear una sala:
 
 1. Verifica tu conexión a internet
 2. Asegúrate de que no hay restricciones de red que bloqueen Firebase
-3. Intenta usar un navegador diferente
+3. Verifica que no hayas alcanzado el límite de salas activas de tu plan
+4. Intenta usar un navegador diferente
+
+### No puedo unirme a una sala
+
+Si no puedes unirte a una sala existente:
+
+1. Verifica que el código de sala sea correcto
+2. Asegúrate de que la sala no haya alcanzado el límite de participantes del plan del creador
+3. Verifica tu conexión a internet
+4. Intenta unirte desde otro navegador o dispositivo
 
 ### Problemas de rendimiento
 
@@ -89,5 +137,14 @@ Si experimentas lentitud o problemas de rendimiento:
 1. Cierra otras pestañas y aplicaciones para liberar recursos
 2. Actualiza tu navegador a la última versión
 3. Limpia la caché del navegador
+
+### Problemas con el perfil de usuario
+
+Si tienes problemas con tu perfil de usuario:
+
+1. Asegúrate de que la imagen de perfil no sea demasiado grande (máximo recomendado: 1MB)
+2. Si la imagen no se muestra correctamente, intenta subir una nueva imagen
+3. Si los cambios en tu perfil no se guardan, verifica tu conexión a internet
+4. Intenta cerrar sesión y volver a iniciar sesión
 
 Para cualquier otro problema no listado aquí, por favor contacta al equipo de soporte o reporta el problema en nuestro repositorio de [GitHub](https://github.com/ProDrifterDK/poker-planning).

@@ -16,6 +16,8 @@ Este documento describe el sistema de roles y permisos implementado en Poker Pla
 
 Poker Planning Pro utiliza un sistema de roles para controlar quién puede realizar ciertas acciones dentro de una sala de planificación. Este sistema está diseñado para proporcionar la flexibilidad necesaria para diferentes estructuras de equipo, mientras se mantiene la integridad del proceso de estimación.
 
+Además del sistema de roles, Poker Planning Pro también implementa restricciones basadas en el plan de suscripción del usuario. Estas restricciones determinan el número máximo de participantes por sala, el número de salas activas y el acceso a características avanzadas.
+
 ## Roles Disponibles
 
 Actualmente, Poker Planning Pro ofrece dos roles principales:
@@ -105,6 +107,32 @@ Para una gestión efectiva de roles en tu equipo:
 
 4. **Establece guías claras**: Define cuándo y cómo se deben usar los permisos de moderador en tu equipo.
 
+## Restricciones por Plan de Suscripción
+
+Además de los roles, Poker Planning Pro implementa restricciones basadas en el plan de suscripción del usuario. Estas restricciones afectan principalmente a la capacidad de las salas y el acceso a características avanzadas.
+
+### Plan Free
+- **Participantes por sala**: Hasta 5 participantes
+- **Salas activas**: 1 sala
+- **Características disponibles**: Funcionalidades básicas de estimación, temporizador para votación
+
+### Plan Pro ($9.99/mes)
+- **Participantes por sala**: Hasta 15 participantes
+- **Salas activas**: 5 salas
+- **Características adicionales**: Exportación de datos, estadísticas avanzadas, historial completo
+
+### Plan Enterprise ($29.99/mes)
+- **Participantes por sala**: Hasta 100 participantes
+- **Salas activas**: 20 salas
+- **Características adicionales**: Todas las del plan Pro, más integraciones con Jira, Trello y GitHub, personalización de marca, soporte prioritario
+
+### Comportamiento con Límites de Participantes
+
+Cuando una sala alcanza el límite de participantes permitido por el plan del creador:
+1. Los nuevos participantes no podrán unirse a la sala
+2. Se mostrará un mensaje indicando que se ha alcanzado el límite
+3. Se sugerirá al creador de la sala actualizar su plan para permitir más participantes
+
 ## Preguntas Frecuentes
 
 ### ¿Puedo tener más de un moderador en una sala?
@@ -121,3 +149,12 @@ Sí, una vez que se te asigna un rol en una sala específica, este rol persiste 
 
 ### ¿Cómo puedo ver mi rol actual?
 Tu rol actual se muestra en el menú de usuario en la esquina superior derecha de la aplicación.
+
+### ¿Cómo afecta mi plan de suscripción a las salas que creo?
+El plan de suscripción del creador de la sala determina el número máximo de participantes que pueden unirse y las características disponibles en esa sala.
+
+### ¿Qué sucede si cambio a un plan inferior?
+Si cambias a un plan inferior y tienes más salas activas o participantes de los permitidos por el nuevo plan, las salas existentes seguirán funcionando, pero no podrás crear nuevas salas hasta que estés dentro de los límites del nuevo plan.
+
+### ¿Puedo tener diferentes roles en diferentes salas?
+Sí, los roles se asignan por sala. Puedes ser moderador en una sala y participante en otra.
