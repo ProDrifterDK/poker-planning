@@ -51,12 +51,12 @@ if (typeof window !== 'undefined') {
 // Estos IDs fueron creados con el script scripts/create-paypal-plans.js
 const PAYPAL_PLAN_IDS: Record<string, string> = {
   // Plan Pro
-  'pro-month': 'P-42S738476L718491KM7RRM3Y',     // Pro Plan - Monthly - $9.99
-  'pro-year': 'P-64E61299XT6358002M7RRM4A',      // Pro Plan - Annual - $99.99
+  'pro-month': 'P-9A328530RT196135VM7YIXKQ',     // Pro Plan - Monthly - $9.99
+  'pro-year': 'P-6SB704566L0364918M7YIXKY',      // Pro Plan - Annual - $99.99
   
   // Plan Enterprise
-  'enterprise-month': 'P-0PR63221X9356841PM7RRM4A',  // Enterprise Plan - Monthly - $29.99
-  'enterprise-year': 'P-5J015147RW196750PM7RRM4I',   // Enterprise Plan - Annual - $299.99
+  'enterprise-month': 'P-5V974677RP9328647M7YIXKY',  // Enterprise Plan - Monthly - $29.99
+  'enterprise-year': 'P-8CL99754V12387622M7YIXLA',   // Enterprise Plan - Annual - $299.99
 };
 
 /**

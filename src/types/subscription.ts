@@ -9,6 +9,12 @@ export enum SubscriptionPlan {
   ENTERPRISE = 'enterprise'
 }
 
+// Intervalos de facturación
+export enum BillingInterval {
+  MONTH = 'month',
+  YEAR = 'year'
+}
+
 // Características de cada plan
 export interface PlanFeatures {
   maxParticipants: number;
@@ -29,7 +35,8 @@ export interface PlanFeatures {
 export interface PlanDetails {
   id: SubscriptionPlan;
   name: string;
-  price: number; // Precio mensual en USD
+  price: number; // Precio en USD
+  billingInterval: BillingInterval; // Intervalo de facturación (mensual o anual)
   features: PlanFeatures;
   description: string;
 }
@@ -77,11 +84,13 @@ export interface PaymentHistory {
 }
 
 // Definición de los planes disponibles
-export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
+export const SUBSCRIPTION_PLANS = {
+  // Planes mensuales
   [SubscriptionPlan.FREE]: {
     id: SubscriptionPlan.FREE,
     name: 'Free',
     price: 0,
+    billingInterval: BillingInterval.MONTH,
     description: 'Para equipos pequeños y uso personal',
     features: {
       maxParticipants: 5,
@@ -98,10 +107,11 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       adFree: false // Los usuarios Free ven anuncios
     }
   },
-  [SubscriptionPlan.PRO]: {
+  [SubscriptionPlan.PRO + '-' + BillingInterval.MONTH]: {
     id: SubscriptionPlan.PRO,
-    name: 'Pro',
+    name: 'Pro (Mensual)',
     price: 9.99,
+    billingInterval: BillingInterval.MONTH,
     description: 'Para equipos profesionales',
     features: {
       maxParticipants: 15,
@@ -118,10 +128,11 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       adFree: true // Los usuarios Pro no ven anuncios
     }
   },
-  [SubscriptionPlan.ENTERPRISE]: {
+  [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.MONTH]: {
     id: SubscriptionPlan.ENTERPRISE,
-    name: 'Enterprise',
+    name: 'Enterprise (Mensual)',
     price: 29.99,
+    billingInterval: BillingInterval.MONTH,
     description: 'Para grandes organizaciones',
     features: {
       maxParticipants: 100,
@@ -137,5 +148,49 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, PlanDetails> = {
       api: true,
       adFree: true // Los usuarios Enterprise no ven anuncios
     }
+  },
+  
+  // Planes anuales
+  [SubscriptionPlan.PRO + '-' + BillingInterval.YEAR]: {
+    id: SubscriptionPlan.PRO,
+    name: 'Pro (Anual)',
+    price: 99.99,
+    billingInterval: BillingInterval.YEAR,
+    description: 'Para equipos profesionales - Ahorra más de 15%',
+    features: {
+      maxParticipants: 15,
+      maxActiveRooms: 5,
+      exportData: true,
+      advancedStats: true,
+      timer: true,
+      fullHistory: true,
+      integrations: false,
+      branding: false,
+      advancedRoles: false,
+      prioritySupport: false,
+      api: false,
+      adFree: true // Los usuarios Pro no ven anuncios
+    }
+  },
+  [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.YEAR]: {
+    id: SubscriptionPlan.ENTERPRISE,
+    name: 'Enterprise (Anual)',
+    price: 299.99,
+    billingInterval: BillingInterval.YEAR,
+    description: 'Para grandes organizaciones - Ahorra más de 15%',
+    features: {
+      maxParticipants: 100,
+      maxActiveRooms: 20,
+      exportData: true,
+      advancedStats: true,
+      timer: true,
+      fullHistory: true,
+      integrations: true,
+      branding: true,
+      advancedRoles: true,
+      prioritySupport: true,
+      api: true,
+      adFree: true // Los usuarios Enterprise no ven anuncios
+    }
   }
-};
+} as Record<string, PlanDetails>;

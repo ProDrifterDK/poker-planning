@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { PlanDetails, SubscriptionPlan } from '@/types/subscription';
+import { PlanDetails, SubscriptionPlan, BillingInterval } from '@/types/subscription';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import PayPalSubscriptionButton from './PayPalSubscriptionButton';
 import PayPalTest from './PayPalTest';
@@ -71,7 +71,7 @@ export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps)
       // Crear suscripción en nuestra base de datos
       await subscribeToPlan(userId, plan.id, subscriptionId);
       // Redirigir a la página de éxito con indicador de que viene del SDK de PayPal
-      window.location.href = `/settings/subscription/success?subscription_id=${subscriptionId}&plan_name=${plan.name}&plan_price=${plan.price}&plan_interval=MONTH&from_paypal_sdk=true`;
+      window.location.href = `/settings/subscription/success?subscription_id=${subscriptionId}&plan_name=${plan.name}&plan_price=${plan.price}&plan_interval=${plan.billingInterval.toUpperCase()}&from_paypal_sdk=true`;
     } catch (error) {
       console.error('Error al procesar suscripción de PayPal:', error);
       setProcessing(false);
@@ -133,7 +133,12 @@ export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps)
           </Typography>
 
           <Typography variant="h4" color="primary" gutterBottom>
-            {plan.price === 0 ? 'Gratis' : `$${plan.price.toFixed(2)}/mes`}
+            {plan.price === 0
+              ? 'Gratis'
+              : plan.billingInterval === BillingInterval.MONTH
+                ? `$${plan.price.toFixed(2)}/mes`
+                : `$${plan.price.toFixed(2)}/año`
+            }
           </Typography>
 
           <List dense>
@@ -219,9 +224,15 @@ export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps)
                   <Button
                     variant="contained"
                     color="primary"
-                    href={plan.id === SubscriptionPlan.PRO
-                      ? '/paypal-pro-subscription.html'
-                      : '/paypal-enterprise-subscription.html'}
+                    href={
+                      plan.id === SubscriptionPlan.PRO
+                        ? plan.billingInterval === BillingInterval.MONTH
+                          ? '/paypal-pro-subscription.html'
+                          : '/paypal-pro-annual-subscription.html'
+                        : plan.billingInterval === BillingInterval.MONTH
+                          ? '/paypal-enterprise-subscription.html'
+                          : '/paypal-enterprise-annual-subscription.html'
+                    }
                     target="_blank"
                     fullWidth
                   >
