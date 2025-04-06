@@ -5,14 +5,61 @@ import { WelcomeMessage } from "@/components/Onboarding";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SessionPersistence from "@/components/SessionPersistence";
 import { useAuth } from "@/context/authContext";
-import { Box, Typography, Button, Paper, Alert } from "@mui/material";
+import { Box, Typography, Button, Paper, Alert, useTheme, Fade, Grow, Zoom } from "@mui/material";
+import { keyframes } from '@mui/system';
 import Link from "next/link";
 import { useEffect } from "react";
 import Advertisement from "@/components/Advertisement";
 import AdFreeContent from "@/components/AdFreeContent";
 
+// Definir animaciones personalizadas
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+const float = keyframes`
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
 export default function HomePage() {
   const { currentUser, isGuestUser, logout } = useAuth();
+  const theme = useTheme();
   
   // Verificar si el usuario es un invitado
   const isGuest = isGuestUser();
@@ -130,71 +177,379 @@ export default function HomePage() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            p: 4,
-            maxWidth: 1000,
+            p: { xs: 2, md: 4 },
+            maxWidth: 1200,
             mx: 'auto',
-            mt: 2
+            mt: 0,
+            minHeight: '100vh',
+            backgroundAttachment: 'fixed',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundSize: '20px 20px',
+              opacity: 0.5,
+              zIndex: 0
+            }
           }}
         >
+          <Box sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
           {/* Componente de persistencia de sesión */}
           <SessionPersistence />
           
           {/* Sección de bienvenida */}
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Bienvenido a Poker Planning Pro
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 800, mx: 'auto', mb: 4 }}>
-              La herramienta perfecta para estimar tareas en equipo de forma ágil y efectiva, sin importar dónde se encuentren los miembros del equipo.
-            </Typography>
-            <Box sx={{ mt: 3 }}>
-              <Link href="/auth/signin" passHref>
-                <Button variant="contained" color="primary" size="large" sx={{ mr: 2, textTransform: "none", px: 4, py: 1 }}>
-                  Iniciar Sesión
-                </Button>
-              </Link>
-              <Link href="/auth/signup" passHref>
-                <Button variant="outlined" color="primary" size="large" sx={{ textTransform: "none", px: 4, py: 1 }}>
-                  Registrarse
-                </Button>
-              </Link>
+          <Fade in={true} timeout={1000}>
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                sx={{
+                  fontWeight: 'bold',
+                  animation: `${fadeInUp} 1s ease-out`,
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+                    : 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                  backgroundClip: 'text',
+                  textFillColor: 'transparent',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 2
+                }}
+              >
+                Bienvenido a Poker Planning Pro
+              </Typography>
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                sx={{
+                  maxWidth: 800,
+                  mx: 'auto',
+                  mb: 4,
+                  animation: `${fadeInUp} 1.2s ease-out`,
+                  animationDelay: '0.2s',
+                  animationFillMode: 'both'
+                }}
+              >
+                La herramienta perfecta para estimar tareas en equipo de forma ágil y efectiva, sin importar dónde se encuentren los miembros del equipo.
+              </Typography>
+              <Box
+                sx={{
+                  mt: 3,
+                  animation: `${fadeInUp} 1.4s ease-out`,
+                  animationDelay: '0.4s',
+                  animationFillMode: 'both'
+                }}
+              >
+                <Link href="/auth/signin" passHref>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    sx={{
+                      mr: 2,
+                      textTransform: "none",
+                      px: 4,
+                      py: 1,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                      }
+                    }}
+                  >
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link href="/auth/signup" passHref>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    sx={{
+                      textTransform: "none",
+                      px: 4,
+                      py: 1,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                      }
+                    }}
+                  >
+                    Registrarse
+                  </Button>
+                </Link>
+              </Box>
             </Box>
-          </Box>
+          </Fade>
           
           {/* Sección de características */}
           <Box sx={{ width: '100%', mb: 6 }}>
-            <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-              ¿Por qué usar Poker Planning Pro?
-            </Typography>
+            <Grow in={true} timeout={1000}>
+              <Typography
+                variant="h4"
+                component="h2"
+                gutterBottom
+                sx={{
+                  textAlign: 'center',
+                  mb: 4,
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 80,
+                    height: 3,
+                    backgroundColor: 'primary.main',
+                    borderRadius: 2
+                  }
+                }}
+              >
+                ¿Por qué usar Poker Planning Pro?
+              </Typography>
+            </Grow>
             
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
-              <Paper elevation={2} sx={{ p: 3, maxWidth: 300, flex: '1 1 300px' }}>
-                <Typography variant="h6" gutterBottom>
-                  🚀 Estimación en Tiempo Real
-                </Typography>
-                <Typography variant="body1">
-                  Todos los miembros del equipo pueden votar simultáneamente y ver los resultados en tiempo real, facilitando la discusión y el consenso.
-                </Typography>
-              </Paper>
+              <Zoom in={true} style={{ transitionDelay: '200ms' }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    maxWidth: 350,
+                    flex: '1 1 350px',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 12px 20px rgba(0,0,0,0.1)'
+                    },
+                    borderRadius: 2,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'primary.main',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        mr: 1,
+                        animation: `${pulse} 2s infinite ease-in-out`,
+                        fontSize: '1.5rem'
+                      }}
+                    >
+                      🚀
+                    </Box>
+                    Estimación en Tiempo Real
+                  </Typography>
+                  <Box
+                    component="img"
+                    src="/images/planning-estimation.gif"
+                    alt="Demostración de estimación en tiempo real"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      borderRadius: 1,
+                      mb: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.02)'
+                      }
+                    }}
+                  />
+                  <Typography variant="body1">
+                    Todos los miembros del equipo pueden votar simultáneamente y ver los resultados en tiempo real, facilitando la discusión y el consenso.
+                  </Typography>
+                </Paper>
+              </Zoom>
               
-              <Paper elevation={2} sx={{ p: 3, maxWidth: 300, flex: '1 1 300px' }}>
-                <Typography variant="h6" gutterBottom>
-                  🔄 Múltiples Series de Estimación
-                </Typography>
-                <Typography variant="body1">
-                  Soportamos Fibonacci, T-shirt Sizing, Powers of 2 y más, adaptándose a la metodología preferida de tu equipo.
-                </Typography>
-              </Paper>
-              
-              <Paper elevation={2} sx={{ p: 3, maxWidth: 300, flex: '1 1 300px' }}>
-                <Typography variant="h6" gutterBottom>
-                  👥 Roles y Permisos
-                </Typography>
-                <Typography variant="body1">
-                  Sistema de roles que permite controlar quién puede realizar qué acciones, ideal para Scrum Masters y facilitadores.
-                </Typography>
-              </Paper>
+              <Zoom in={true} style={{ transitionDelay: '400ms' }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    maxWidth: 350,
+                    flex: '1 1 350px',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 12px 20px rgba(0,0,0,0.1)'
+                    },
+                    borderRadius: 2,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'primary.main',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        mr: 1,
+                        animation: `${float} 3s infinite ease-in-out`,
+                        fontSize: '1.5rem'
+                      }}
+                    >
+                      🔄
+                    </Box>
+                    Múltiples Series de Estimación
+                  </Typography>
+                  <Box
+                    component="img"
+                    src="/images/planning-series.gif"
+                    alt="Demostración de series de estimación"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      borderRadius: 1,
+                      mb: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.02)'
+                      }
+                    }}
+                  />
+                  <Typography variant="body1">
+                    Soportamos Fibonacci, T-shirt Sizing, Powers of 2 y más, adaptándose a la metodología preferida de tu equipo.
+                  </Typography>
+                </Paper>
+              </Zoom>
             </Box>
+          </Box>
+          
+          {/* Sección de demostración */}
+          <Box
+            sx={{
+              width: '100%',
+              mb: 8,
+              mt: 4,
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: -30,
+                left: 0,
+                right: 0,
+                height: 1,
+                zIndex: 1
+              }
+            }}
+          >
+            <Fade in={true} timeout={1500}>
+              <Typography
+                variant="h4"
+                component="h2"
+                gutterBottom
+                sx={{
+                  textAlign: 'center',
+                  mb: 4,
+                  fontWeight: 'bold',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(45deg, #FF5722 30%, #FFC107 90%)'
+                    : 'linear-gradient(45deg, #FF5722 30%, #FFC107 90%)',
+                  backgroundClip: 'text',
+                  textFillColor: 'transparent',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Vea Poker Planning Pro en acción
+              </Typography>
+            </Fade>
+            
+            <Zoom in={true} timeout={1000} style={{ transitionDelay: '500ms' }}>
+              <Paper
+                elevation={5}
+                sx={{
+                  p: { xs: 2, md: 4 },
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  maxWidth: 900,
+                  mx: 'auto',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(to bottom, rgba(30,30,30,1) 0%, rgba(20,20,20,1) 100%)'
+                    : 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(245,245,245,1) 100%)',
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 15px 25px rgba(0,0,0,0.3)'
+                    : '0 15px 25px rgba(0,0,0,0.1)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 20px 30px rgba(0,0,0,0.4)'
+                      : '0 20px 30px rgba(0,0,0,0.15)'
+                  }
+                }}
+              >
+                <Box sx={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
+                  <Box
+                    component="img"
+                    src="/images/planning-demo.gif"
+                    alt="Demostración completa de Poker Planning Pro"
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: 2
+                    }}
+                  />
+                </Box>
+                
+                <Fade in={true} timeout={1000} style={{ transitionDelay: '800ms' }}>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        mt: 3,
+                        mb: 1,
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        color: 'primary.main'
+                      }}
+                    >
+                      Flujo completo de una sesión de Planning Poker
+                    </Typography>
+                    
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        textAlign: 'center',
+                        px: { xs: 1, md: 4 }
+                      }}
+                    >
+                      Observe cómo un equipo crea una sala, añade issues, vota y revela las estimaciones en tiempo real.
+                      Experimente la simplicidad y eficiencia de Poker Planning Pro.
+                    </Typography>
+                  </Box>
+                </Fade>
+              </Paper>
+            </Zoom>
           </Box>
           
           {/* Sección de planes */}
@@ -303,6 +658,7 @@ export default function HomePage() {
                 </Link>
               </Box>
             </AdFreeContent>
+          </Box>
           </Box>
         </Box>
       )}

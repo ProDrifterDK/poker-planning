@@ -10,9 +10,12 @@ import {
   Divider,
   Alert,
   CircularProgress,
-  Link as MuiLink
+  Link as MuiLink,
+  LinearProgress
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +28,14 @@ const SignUp: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  
+  // Estados para los requisitos de contraseña
+  const [hasMinLength, setHasMinLength] = useState(false);
+  const [hasUpperCase, setHasUpperCase] = useState(false);
+  const [hasLowerCase, setHasLowerCase] = useState(false);
+  const [hasNumber, setHasNumber] = useState(false);
+  const [hasSpecialChar, setHasSpecialChar] = useState(false);
   const { signUp, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
 
@@ -64,12 +75,101 @@ const SignUp: React.FC = () => {
     }
   }, [currentUser, success, router]);
 
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
+  // Función para verificar los requisitos de la contraseña
+  const checkPasswordRequirements = (password: string) => {
+    const minLength = 8;
+    
+    // Verificar cada requisito y actualizar los estados
+    setHasMinLength(password.length >= minLength);
+    setHasUpperCase(/[A-Z]/.test(password));
+    setHasLowerCase(/[a-z]/.test(password));
+    setHasNumber(/\d/.test(password));
+    setHasSpecialChar(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
+  };
+
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setter(e.target.value);
+      const value = e.target.value;
+      setter(value);
+      
+      // Actualizar la fortaleza de la contraseña si el campo es la contraseña
+      if (setter === setPassword) {
+        setPasswordStrength(calculatePasswordStrength(value));
+        checkPasswordRequirements(value);
+      }
+      
       if (formError) setFormError(null);
       if (error) clearError();
     };
+
+  // Función para validar la fortaleza de la contraseña
+  const validatePasswordStrength = (password: string) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (password.length < minLength) {
+      return { valid: false, message: `La contraseña debe tener al menos ${minLength} caracteres` };
+    }
+    
+    if (!hasUpperCase) {
+      return { valid: false, message: 'La contraseña debe incluir al menos una letra mayúscula' };
+    }
+    
+    if (!hasLowerCase) {
+      return { valid: false, message: 'La contraseña debe incluir al menos una letra minúscula' };
+    }
+    
+    if (!hasNumbers) {
+      return { valid: false, message: 'La contraseña debe incluir al menos un número' };
+    }
+    
+    if (!hasSpecialChar) {
+      return { valid: false, message: 'La contraseña debe incluir al menos un carácter especial (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?)' };
+    }
+    
+    return { valid: true, message: '' };
+  };
+  
+  // Calcular la fortaleza de la contraseña (0-100)
+  const calculatePasswordStrength = (password: string) => {
+    if (!password) return 0;
+    
+    let strength = 0;
+    
+    // Longitud contribuye hasta 25 puntos (8 caracteres = 25 puntos)
+    strength += Math.min(25, Math.floor((password.length / 8) * 25));
+    
+    // Variedad de caracteres
+    if (/[A-Z]/.test(password)) strength += 15; // Mayúsculas
+    if (/[a-z]/.test(password)) strength += 15; // Minúsculas
+    if (/\d/.test(password)) strength += 15;    // Números
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 20; // Caracteres especiales
+    
+    // Complejidad adicional
+    const uniqueChars = new Set(password).size;
+    strength += Math.min(10, uniqueChars / 2); // Hasta 10 puntos por caracteres únicos
+    
+    return Math.min(100, strength);
+  };
+  
+  // Obtener el color basado en la fortaleza
+  const getStrengthColor = (strength: number) => {
+    if (strength < 30) return 'error.main';
+    if (strength < 60) return 'warning.main';
+    if (strength < 80) return 'info.main';
+    return 'success.main';
+  };
+  
+  // Obtener el texto basado en la fortaleza
+  const getStrengthText = (strength: number) => {
+    if (strength < 30) return 'Muy débil';
+    if (strength < 60) return 'Débil';
+    if (strength < 80) return 'Moderada';
+    return 'Fuerte';
+  };
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -84,10 +184,14 @@ const SignUp: React.FC = () => {
       setFormError('La contraseña es obligatoria');
       return false;
     }
-    if (password.length < 6) {
-      setFormError('La contraseña debe tener al menos 6 caracteres');
+    
+    // Validar requisitos de contraseña
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      setFormError(passwordValidation.message);
       return false;
     }
+    
     if (password !== confirmPassword) {
       setFormError('Las contraseñas no coinciden');
       return false;
@@ -195,7 +299,115 @@ const SignUp: React.FC = () => {
             onChange={handleInputChange(setPassword)}
             disabled={isSubmitting}
             required
-            helperText="La contraseña debe tener al menos 6 caracteres"
+            helperText={
+              <Box sx={{ mt: 0.5 }}>
+                <Typography variant="caption" display="block">
+                  La contraseña debe tener:
+                </Typography>
+                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                  <Box component="li" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: hasMinLength ? 'success.main' : 'text.secondary',
+                    transition: 'color 0.3s'
+                  }}>
+                    {hasMinLength ?
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
+                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    <Typography variant="caption">
+                      Al menos 8 caracteres
+                    </Typography>
+                  </Box>
+                  
+                  <Box component="li" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: hasUpperCase ? 'success.main' : 'text.secondary',
+                    transition: 'color 0.3s'
+                  }}>
+                    {hasUpperCase ?
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
+                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    <Typography variant="caption">
+                      Al menos una letra mayúscula
+                    </Typography>
+                  </Box>
+                  
+                  <Box component="li" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: hasLowerCase ? 'success.main' : 'text.secondary',
+                    transition: 'color 0.3s'
+                  }}>
+                    {hasLowerCase ?
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
+                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    <Typography variant="caption">
+                      Al menos una letra minúscula
+                    </Typography>
+                  </Box>
+                  
+                  <Box component="li" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: hasNumber ? 'success.main' : 'text.secondary',
+                    transition: 'color 0.3s'
+                  }}>
+                    {hasNumber ?
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
+                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    <Typography variant="caption">
+                      Al menos un número
+                    </Typography>
+                  </Box>
+                  
+                  <Box component="li" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: hasSpecialChar ? 'success.main' : 'text.secondary',
+                    transition: 'color 0.3s'
+                  }}>
+                    {hasSpecialChar ?
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
+                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    <Typography variant="caption">
+                      Al menos un carácter especial (!@#$%^&*)
+                    </Typography>
+                  </Box>
+                </Box>
+                {password && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" display="block">
+                      Fortaleza: {getStrengthText(passwordStrength)}
+                    </Typography>
+                    <Box
+                      sx={{
+                        height: 4,
+                        width: '100%',
+                        bgcolor: 'grey.300',
+                        borderRadius: 2,
+                        mt: 0.5
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: '100%',
+                          width: `${passwordStrength}%`,
+                          bgcolor: getStrengthColor(passwordStrength),
+                          borderRadius: 2,
+                          transition: 'width 0.3s, background-color 0.3s'
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            }
           />
           
           <TextField

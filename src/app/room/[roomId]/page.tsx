@@ -100,6 +100,37 @@ export default function RoomPage() {
         }
     }, [isJoined, shouldAttemptJoin]);
 
+    // Función para verificar si el usuario ya está en la sala
+    const isUserAlreadyInRoom = useCallback(() => {
+        // Verificar si el usuario ya está en la lista de participantes
+        if (participants.length > 0) {
+            // Obtener el ID de participante guardado
+            const participantId = localStorage.getItem(`participant_id_${roomId}`);
+            
+            if (participantId) {
+                // Verificar si este participante ya está en la lista
+                const existingParticipant = participants.find(p => p.id === participantId);
+                if (existingParticipant) {
+                    console.log(`Usuario ya está en la sala con ID: ${participantId}`);
+                    return true;
+                }
+            }
+            
+            // Verificar por nombre si no encontramos por ID
+            if (name) {
+                const existingParticipantByName = participants.find(p => p.name === name);
+                if (existingParticipantByName) {
+                    console.log(`Usuario ya está en la sala con nombre: ${name}`);
+                    // Guardar el ID para futuras referencias
+                    localStorage.setItem(`participant_id_${roomId}`, existingParticipantByName.id);
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }, [participants, roomId, name]);
+
     // Función para verificar si hay una sesión persistente
     const checkPersistedSession = useCallback(async () => {
         try {
@@ -108,6 +139,13 @@ export default function RoomPage() {
             
             // Verificar si ya estamos unidos a la sala
             if (isJoined) return true;
+            
+            // Verificar si el usuario ya está en la sala
+            if (isUserAlreadyInRoom()) {
+                console.log('Usuario ya detectado en la sala, actualizando estado isJoined');
+                setIsJoined(true);
+                return true;
+            }
             
             // Verificar si hay una sesión persistente en localStorage
             const storageData = localStorage.getItem('poker-planning-storage');
@@ -119,17 +157,36 @@ export default function RoomPage() {
                 if (state && state.roomId === roomId && state.currentParticipantId) {
                     console.log('Encontrada sesión persistente para la sala:', roomId);
                     
+                    // Verificar si este participante ya está en la sala
+                    const participantId = state.currentParticipantId;
+                    const existingParticipant = participants.find(p => p.id === participantId);
+                    
+                    if (existingParticipant) {
+                        console.log(`Participante ya está en la sala con ID: ${participantId}`);
+                        setIsJoined(true);
+                        return true;
+                    }
+                    
                     // Determinar el nombre a usar
                     let userName = name;
                     
                     // Si no hay nombre en el estado, intentar obtenerlo directamente del localStorage
                     if (!userName.trim()) {
-                        const guestName = localStorage.getItem('guestName');
-                        if (guestName) {
-                            console.log("Usando nombre de invitado del localStorage para sesión persistente:", guestName);
-                            userName = guestName;
-                            // Actualizar el estado para futuros usos
-                            setName(guestName);
+                        // Verificar si es un usuario invitado
+                        if (currentUser?.photoURL === 'guest_user') {
+                            const guestName = localStorage.getItem('guestName');
+                            if (guestName) {
+                                console.log("Usando nombre de invitado del localStorage para sesión persistente:", guestName);
+                                userName = guestName;
+                                // Actualizar el estado para futuros usos
+                                setName(guestName);
+                            } else if (currentUser?.displayName) {
+                                userName = currentUser.displayName;
+                                // Actualizar el estado para futuros usos
+                                setName(currentUser.displayName);
+                                // Guardar el nombre en localStorage para futuras referencias
+                                localStorage.setItem('guestName', currentUser.displayName);
+                            }
                         } else if (currentUser?.displayName) {
                             userName = currentUser.displayName;
                             // Actualizar el estado para futuros usos
@@ -164,14 +221,33 @@ export default function RoomPage() {
             console.error("Error al verificar sesión persistente:", error);
             return false;
         }
-    }, [roomId, isJoined, name, joinRoomWithName, currentUser]);
+    }, [roomId, isJoined, name, joinRoomWithName, currentUser, participants, isUserAlreadyInRoom]);
 
-    // Usar el nombre del usuario autenticado
+    // Usar el nombre del usuario autenticado o invitado
     useEffect(() => {
         console.log("Entrando al useEffect de nombre de usuario");
         
-        // Intentar obtener el nombre del usuario autenticado
-        if (currentUser?.displayName) {
+        // Verificar si es un usuario invitado
+        if (currentUser?.photoURL === 'guest_user') {
+            // Intentar obtener el nombre del invitado desde localStorage
+            const guestName = localStorage.getItem('guestName');
+            if (guestName) {
+                console.log("Usando nombre de invitado del localStorage:", guestName);
+                setName(guestName);
+                // Si tenemos un nombre de invitado, intentar unirse
+                setShouldAttemptJoin(true);
+            } else if (currentUser?.displayName) {
+                // Si no hay nombre en localStorage pero sí en displayName
+                console.log("Usando displayName del usuario invitado:", currentUser.displayName);
+                setName(currentUser.displayName);
+                // Guardar el nombre en localStorage para futuras referencias
+                localStorage.setItem('guestName', currentUser.displayName);
+                // Intentar unirse
+                setShouldAttemptJoin(true);
+            }
+        }
+        // Si es un usuario normal (no invitado)
+        else if (currentUser?.displayName) {
             console.log("Usando displayName del usuario:", currentUser.displayName);
             setName(currentUser.displayName);
             // Si tenemos un nombre de usuario autenticado, intentar unirse
@@ -183,6 +259,13 @@ export default function RoomPage() {
     useEffect(() => {
         if (!isJoined && roomId && name && shouldAttemptJoin) {
             console.log("Intentando auto-unirse a la sala con nombre:", name);
+            
+            // Verificar primero si el usuario ya está en la sala
+            if (isUserAlreadyInRoom()) {
+                console.log('Usuario ya detectado en la sala, no es necesario unirse de nuevo');
+                setIsJoined(true);
+                return;
+            }
             
             // Establecer un timeout para intentar unirse manualmente si la auto-unión tarda demasiado
             const autoJoinTimeout = setTimeout(() => {
@@ -200,27 +283,38 @@ export default function RoomPage() {
                 }
             }, 8000); // 8 segundos de timeout
             
-            // Eliminar el ID de participante guardado para esta sala para forzar la creación de un nuevo participante
-            localStorage.removeItem(`participant_id_${roomId}`);
-            console.log(`ID de participante eliminado para la sala ${roomId} (auto-unión)`);
+            // Verificar si ya existe un ID de participante para esta sala
+            const existingParticipantId = localStorage.getItem(`participant_id_${roomId}`);
             
-            joinRoomWithName(roomId, name)
-                .then(() => {
-                    console.log('Auto-unión exitosa');
-                    // Actualizar el estado isJoined directamente
-                    setIsJoined(true);
-                    // Limpiar los timeouts si la unión fue exitosa
-                    clearTimeout(autoJoinTimeout);
-                    clearTimeout(forceJoinTimeout);
-                })
-                .catch(error => {
-                    console.error('Error al unirse automáticamente a la sala:', error);
-                    // Si falla la auto-unión, mostrar un mensaje de error
-                    setErrorMessage('Error al unirse automáticamente. Puedes intentar unirte manualmente.');
-                    // Limpiar los timeouts si hubo un error
-                    clearTimeout(autoJoinTimeout);
-                    clearTimeout(forceJoinTimeout);
-                });
+            // Solo eliminar el ID si no existe o si hay un problema específico que requiera reinicio
+            if (!existingParticipantId) {
+                console.log(`No se encontró ID de participante para la sala ${roomId}, se creará uno nuevo`);
+                
+                // Solo intentar unirse si no hay un ID de participante existente
+                joinRoomWithName(roomId, name)
+                    .then(() => {
+                        console.log('Auto-unión exitosa');
+                        // Actualizar el estado isJoined directamente
+                        setIsJoined(true);
+                        // Limpiar los timeouts si la unión fue exitosa
+                        clearTimeout(autoJoinTimeout);
+                        clearTimeout(forceJoinTimeout);
+                    })
+                    .catch(error => {
+                        console.error('Error al unirse automáticamente a la sala:', error);
+                        // Si falla la auto-unión, mostrar un mensaje de error
+                        setErrorMessage('Error al unirse automáticamente. Puedes intentar unirte manualmente.');
+                        // Limpiar los timeouts si hubo un error
+                        clearTimeout(autoJoinTimeout);
+                        clearTimeout(forceJoinTimeout);
+                    });
+            } else {
+                console.log(`ID de participante existente para la sala ${roomId}: ${existingParticipantId}, no es necesario unirse de nuevo`);
+                // Si ya existe un ID de participante, simplemente actualizar el estado
+                setIsJoined(true);
+                clearTimeout(autoJoinTimeout);
+                clearTimeout(forceJoinTimeout);
+            }
             
             // Limpiar los timeouts cuando el componente se desmonte
             return () => {
@@ -228,7 +322,7 @@ export default function RoomPage() {
                 clearTimeout(forceJoinTimeout);
             };
         }
-    }, [isJoined, roomId, name, joinRoomWithName, shouldAttemptJoin]);
+    }, [isJoined, roomId, name, joinRoomWithName, shouldAttemptJoin, isUserAlreadyInRoom]);
 
     // Función para actualizar el nombre del moderador
     const updateModeratorName = useCallback(async () => {
@@ -283,19 +377,37 @@ export default function RoomPage() {
     const handleJoinRoom = async () => {
         if (!roomId) return;
         
+        // Verificar primero si el usuario ya está en la sala
+        if (isUserAlreadyInRoom()) {
+            console.log('Usuario ya detectado en la sala, no es necesario unirse de nuevo');
+            setIsJoined(true);
+            return;
+        }
+        
         // Usar el nombre del estado, que debería estar configurado correctamente por los useEffect
         let userName = name;
         
         // Si aún no hay nombre en el estado, intentar obtenerlo directamente del localStorage
         if (!userName || !userName.trim()) {
-            const guestName = localStorage.getItem('guestName');
-            if (guestName) {
-                console.log("Usando nombre de invitado del localStorage para unirse manualmente:", guestName);
-                userName = guestName;
-                // Actualizar el estado para futuros usos
-                setName(guestName);
-                // Indicar que se debe intentar la auto-unión
-                setShouldAttemptJoin(true);
+            // Verificar si es un usuario invitado
+            if (currentUser?.photoURL === 'guest_user') {
+                const guestName = localStorage.getItem('guestName');
+                if (guestName) {
+                    console.log("Usando nombre de invitado del localStorage para unirse manualmente:", guestName);
+                    userName = guestName;
+                    // Actualizar el estado para futuros usos
+                    setName(guestName);
+                    // Indicar que se debe intentar la auto-unión
+                    setShouldAttemptJoin(true);
+                } else if (currentUser?.displayName) {
+                    userName = currentUser.displayName;
+                    // Actualizar el estado para futuros usos
+                    setName(currentUser.displayName);
+                    // Guardar el nombre en localStorage para futuras referencias
+                    localStorage.setItem('guestName', currentUser.displayName);
+                    // Indicar que se debe intentar la auto-unión
+                    setShouldAttemptJoin(true);
+                }
             } else if (currentUser?.displayName) {
                 userName = currentUser.displayName;
                 // Actualizar el estado para futuros usos
@@ -314,9 +426,25 @@ export default function RoomPage() {
         try {
             console.log(`Intentando unirse manualmente a la sala ${roomId} con el nombre ${userName}`);
             
-            // Eliminar el ID de participante guardado para esta sala para forzar la creación de un nuevo participante
-            localStorage.removeItem(`participant_id_${roomId}`);
-            console.log(`ID de participante eliminado para la sala ${roomId}`);
+            // Verificar si ya existe un ID de participante para esta sala
+            const existingParticipantId = localStorage.getItem(`participant_id_${roomId}`);
+            
+            // Solo eliminar el ID si no existe o si hay un problema específico que requiera reinicio
+            if (!existingParticipantId) {
+                console.log(`No se encontró ID de participante para la sala ${roomId}, se creará uno nuevo`);
+            } else {
+                console.log(`ID de participante existente para la sala ${roomId}: ${existingParticipantId}, verificando si está activo`);
+                
+                // Verificar si este participante ya está en la lista
+                const existingParticipant = participants.find(p => p.id === existingParticipantId);
+                if (existingParticipant) {
+                    console.log(`Participante ya está activo en la sala, no es necesario unirse de nuevo`);
+                    setIsJoined(true);
+                    return;
+                } else {
+                    console.log(`Participante no encontrado en la sala, se creará uno nuevo`);
+                }
+            }
             
             await joinRoomWithName(roomId, userName);
             console.log('Unido a la sala exitosamente (unión manual)');
