@@ -24,6 +24,32 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
+// Función auxiliar para obtener el nombre del plan de forma segura
+const getPlanName = (plan: SubscriptionPlan): string => {
+    // Intentar obtener el plan con la clave simple
+    if (SUBSCRIPTION_PLANS[plan]) {
+        return SUBSCRIPTION_PLANS[plan].name;
+    }
+    
+    // Intentar con la clave compuesta (plan-month)
+    const monthlyKey = `${plan}-month`;
+    if (SUBSCRIPTION_PLANS[monthlyKey]) {
+        return SUBSCRIPTION_PLANS[monthlyKey].name;
+    }
+    
+    // Si no se encuentra, devolver un nombre predeterminado
+    switch (plan) {
+        case SubscriptionPlan.FREE:
+            return 'Free';
+        case SubscriptionPlan.PRO:
+            return 'Pro';
+        case SubscriptionPlan.ENTERPRISE:
+            return 'Enterprise';
+        default:
+            return 'Desconocido';
+    }
+};
+
 export default function Header() {
     const router = useRouter();
     const { currentUser, logout, isModerator, isGuestUser } = useAuth();
@@ -185,7 +211,7 @@ export default function Header() {
                                             </Typography>
                                         ) : (
                                             <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
-                                                Plan {SUBSCRIPTION_PLANS[currentPlan].name}
+                                                Plan {getPlanName(currentPlan)}
                                             </Typography>
                                         )}
                                     </Box>
