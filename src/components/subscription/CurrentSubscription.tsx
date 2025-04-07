@@ -14,6 +14,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { UserSubscription, SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { getPlanLookupKey } from '@/utils/planUtils';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 
 interface CurrentSubscriptionProps {
@@ -50,7 +51,8 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   };
   
   // Obtener detalles del plan
-  const planDetails = SUBSCRIPTION_PLANS[subscription.plan];
+  const planLookupKey = getPlanLookupKey(subscription.plan);
+  const planDetails = SUBSCRIPTION_PLANS[planLookupKey];
   
   // Calcular días restantes
   const calculateRemainingDays = () => {

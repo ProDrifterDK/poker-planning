@@ -22,32 +22,16 @@ import PersonIcon from '@mui/icons-material/Person';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
+import { getPlanLookupKey } from '@/utils/planUtils';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 // Función auxiliar para obtener el nombre del plan de forma segura
 const getPlanName = (plan: SubscriptionPlan): string => {
-    // Intentar obtener el plan con la clave simple
-    if (SUBSCRIPTION_PLANS[plan]) {
-        return SUBSCRIPTION_PLANS[plan].name;
-    }
+    // Usar la función auxiliar para obtener la clave correcta
+    const planLookupKey = getPlanLookupKey(plan);
     
-    // Intentar con la clave compuesta (plan-month)
-    const monthlyKey = `${plan}-month`;
-    if (SUBSCRIPTION_PLANS[monthlyKey]) {
-        return SUBSCRIPTION_PLANS[monthlyKey].name;
-    }
-    
-    // Si no se encuentra, devolver un nombre predeterminado
-    switch (plan) {
-        case SubscriptionPlan.FREE:
-            return 'Free';
-        case SubscriptionPlan.PRO:
-            return 'Pro';
-        case SubscriptionPlan.ENTERPRISE:
-            return 'Enterprise';
-        default:
-            return 'Desconocido';
-    }
+    // Obtener el nombre del plan
+    return SUBSCRIPTION_PLANS[planLookupKey].name;
 };
 
 export default function Header() {
