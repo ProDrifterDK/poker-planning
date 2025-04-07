@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Box, Typography } from '@mui/material';
+import { usePathname } from 'next/navigation';
+import { shouldShowAdsOnPage, MIN_CONTENT_HEIGHT_FOR_ADS } from '@/config/adConfig';
 // AdSense types are defined in src/types/adsense.d.ts
 
 interface AdvertisementProps {
@@ -10,33 +12,67 @@ interface AdvertisementProps {
   format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
   position?: 'top' | 'bottom' | 'sidebar';
   className?: string;
+  minContentHeight?: number;
+  contentRef?: React.RefObject<HTMLElement>;
 }
 
 /**
  * Advertisement component that displays Google AdSense ads only for free users
- * 
+ * and only on pages with sufficient content
+ *
  * @param slot - The AdSense ad slot ID
  * @param format - The ad format (auto, horizontal, vertical, rectangle)
  * @param position - The position of the ad (top, bottom, sidebar)
  * @param className - Additional CSS class name
+ * @param minContentHeight - Minimum height of content required to show ads
+ * @param contentRef - Reference to the content element to measure its height
  */
-export default function Advertisement({ 
-  slot, 
-  format = 'auto', 
+export default function Advertisement({
+  slot,
+  format = 'auto',
   position = 'top',
-  className 
+  className,
+  minContentHeight = MIN_CONTENT_HEIGHT_FOR_ADS,
+  contentRef
 }: AdvertisementProps) {
   const { canUserAccessFeature } = useSubscriptionStore();
   const adRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [adLoaded, setAdLoaded] = useState(false);
+  const [hasEnoughContent, setHasEnoughContent] = useState(false);
+  const pathname = usePathname();
   
   // Check if user has ad-free feature
   const isAdFree = canUserAccessFeature('adFree');
   
+  // Check if we should show ads on this page
+  const shouldShowAds = shouldShowAdsOnPage(pathname);
+  
+  // Check if there's enough content to show ads
+  useEffect(() => {
+    // If we have a content reference, use it to measure content height
+    if (contentRef?.current) {
+      const checkContentHeight = () => {
+        const contentHeight = contentRef.current?.offsetHeight || 0;
+        setHasEnoughContent(contentHeight >= minContentHeight);
+      };
+      
+      // Check initially
+      checkContentHeight();
+      
+      // And also after a short delay to account for dynamic content
+      const timer = setTimeout(checkContentHeight, 1000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // If no content reference is provided, assume there's enough content
+      setHasEnoughContent(true);
+    }
+  }, [contentRef, minContentHeight]);
+  
   // Set up intersection observer for lazy loading
   useEffect(() => {
-    if (!isAdFree && adRef.current && !adLoaded) {
+    if (!isAdFree && shouldShowAds && hasEnoughContent && adRef.current && !adLoaded) {
       const observer = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting) {
@@ -54,12 +90,12 @@ export default function Advertisement({
         observer.disconnect();
       };
     }
-  }, [isAdFree, adLoaded]);
+  }, [isAdFree, shouldShowAds, hasEnoughContent, adLoaded]);
   
   // Load the ad when it becomes visible
   useEffect(() => {
-    // Only load ads when they're visible and for users without ad-free feature
-    if (isVisible && !isAdFree && adRef.current && !adLoaded) {
+    // Only load ads when they're visible, on allowed pages, with enough content, and for users without ad-free feature
+    if (isVisible && !isAdFree && shouldShowAds && hasEnoughContent && adRef.current && !adLoaded) {
       try {
         // Create a new ad unit
         const adsbygoogle = window.adsbygoogle || [];
@@ -73,10 +109,10 @@ export default function Advertisement({
         console.error('Error loading advertisement:', error);
       }
     }
-  }, [isVisible, isAdFree, slot, adLoaded]);
+  }, [isVisible, isAdFree, shouldShowAds, hasEnoughContent, slot, adLoaded]);
   
-  // Don't render anything for users with ad-free feature
-  if (isAdFree) {
+  // Don't render anything for users with ad-free feature or on pages where ads shouldn't be shown
+  if (isAdFree || !shouldShowAds || !hasEnoughContent) {
     return null;
   }
   
