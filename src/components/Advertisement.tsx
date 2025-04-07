@@ -50,7 +50,13 @@ export default function Advertisement({
   
   // Check if there's enough content to show ads
   useEffect(() => {
-    // If we have a content reference, use it to measure content height
+    // If we're on the homepage, always show ads regardless of content height
+    if (pathname === '/' || pathname === '/home') {
+      setHasEnoughContent(true);
+      return;
+    }
+    
+    // For other pages, check content height
     if (contentRef?.current) {
       const checkContentHeight = () => {
         const contentHeight = contentRef.current?.offsetHeight || 0;
@@ -68,7 +74,7 @@ export default function Advertisement({
       // If no content reference is provided, assume there's enough content
       setHasEnoughContent(true);
     }
-  }, [contentRef, minContentHeight]);
+  }, [contentRef, minContentHeight, pathname]);
   
   // Set up intersection observer for lazy loading
   useEffect(() => {
