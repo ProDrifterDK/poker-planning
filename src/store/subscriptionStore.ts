@@ -237,10 +237,28 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           
           console.log(`Ejecutando suscripción con plan: ${subscriptionPlan}`);
           
+          // Verificar que el plan existe en SUBSCRIPTION_PLANS
+          // Primero intentar con la clave simple
+          let planLookupKey: string = subscriptionPlan as string;
+          
+          // Si no existe, intentar con la clave compuesta (plan-month)
+          if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+            planLookupKey = `${subscriptionPlan}-month`;
+          }
+          
+          // Si sigue sin existir, usar el plan FREE como fallback
+          if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+            console.error(`Plan no encontrado: ${subscriptionPlan}, usando FREE como fallback`);
+            subscriptionPlan = SubscriptionPlan.FREE;
+            planLookupKey = SubscriptionPlan.FREE;
+          }
+          
+          console.log(`Clave de plan determinada: ${planLookupKey}`);
+          
           // Crear suscripción en nuestra base de datos
           const subscription = await createSubscription(
             userId,
-            subscriptionPlan,
+            subscriptionPlan as SubscriptionPlan, // Asegurar que se trata como SubscriptionPlan
             PaymentMethod.PAYPAL,
             subscriptionDetails.id, // Usar el ID de la suscripción como paymentId
             subscriptionDetails.id  // Usar el ID de la suscripción como subscriptionId
