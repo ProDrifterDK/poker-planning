@@ -8,7 +8,8 @@ import {
   UserSubscription,
   PaymentHistory,
   SUBSCRIPTION_PLANS,
-  SubscriptionStatus
+  SubscriptionStatus,
+  PlanFeatures
 } from '@/types/subscription';
 import {
   getUserSubscription,
@@ -69,7 +70,7 @@ interface SubscriptionState {
   clearError: () => void;
   
   // Utilidades
-  canUserAccessFeature: (feature: keyof typeof SUBSCRIPTION_PLANS[SubscriptionPlan]['features']) => boolean;
+  canUserAccessFeature: (feature: keyof PlanFeatures) => boolean;
   canUserCreateRoom: () => boolean;
   canRoomAddParticipant: (roomId: string) => Promise<boolean>;
   getCurrentPlan: () => SubscriptionPlan;
@@ -153,7 +154,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           }
           
           // Para planes de pago sin ID de suscripción, obtener el ID del plan en PayPal
-          const planDetails = SUBSCRIPTION_PLANS[plan];
+          const planLookupKey = getPlanLookupKey(plan);
+          const planDetails = SUBSCRIPTION_PLANS[planLookupKey];
           const interval = 'MONTH'; // Por defecto mensual, podría ser un parámetro adicional
           const paypalPlanId = await getPayPalPlanId(
             plan, // Usar el enum del plan directamente

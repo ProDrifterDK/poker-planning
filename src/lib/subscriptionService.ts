@@ -21,8 +21,33 @@ import {
   UserSubscription,
   PaymentHistory,
   PaymentMethod,
-  SUBSCRIPTION_PLANS
+  SUBSCRIPTION_PLANS,
+  PlanFeatures
 } from '@/types/subscription';
+
+/**
+ * Función auxiliar para obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+ *
+ * @param plan - El plan de suscripción
+ * @returns La clave correcta para buscar en SUBSCRIPTION_PLANS
+ */
+const getPlanLookupKey = (plan: SubscriptionPlan): string => {
+  // Primero intentar con la clave simple
+  let planLookupKey: string = plan as string;
+  
+  // Si no existe, intentar con la clave compuesta (plan-month)
+  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+    planLookupKey = `${plan}-month`;
+  }
+  
+  // Si sigue sin existir, usar el plan FREE como fallback
+  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+    console.error(`Plan no encontrado: ${plan}, usando FREE como fallback`);
+    planLookupKey = SubscriptionPlan.FREE;
+  }
+  
+  return planLookupKey;
+};
 
 // Colecciones en Firestore
 const SUBSCRIPTIONS_COLLECTION = 'subscriptions';
@@ -118,10 +143,13 @@ export async function createSubscription(
     
     // Registrar el pago si corresponde
     if (paymentId) {
+      // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+      const planLookupKey = getPlanLookupKey(plan);
+      
       await addPaymentRecord(
         userId,
         docRef.id,
-        SUBSCRIPTION_PLANS[plan].price,
+        SUBSCRIPTION_PLANS[planLookupKey].price,
         'USD',
         paymentMethod,
         paymentId
@@ -181,7 +209,7 @@ export async function cancelSubscription(
  */
 export async function hasFeatureAccess(
   userId: string,
-  feature: keyof typeof SUBSCRIPTION_PLANS[SubscriptionPlan]['features']
+  feature: keyof PlanFeatures
 ): Promise<boolean> {
   try {
     // Obtener la suscripción del usuario
@@ -190,8 +218,11 @@ export async function hasFeatureAccess(
     // Si no tiene suscripción, usar plan FREE
     const plan = subscription?.plan || SubscriptionPlan.FREE;
     
+    // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+    const planLookupKey = getPlanLookupKey(plan);
+    
     // Verificar si el plan tiene acceso a la característica
-    const featureValue = SUBSCRIPTION_PLANS[plan].features[feature];
+    const featureValue = SUBSCRIPTION_PLANS[planLookupKey].features[feature];
     
     // Si es un booleano, devolverlo directamente
     if (typeof featureValue === 'boolean') {
@@ -279,6 +310,9 @@ export async function canCreateRoom(userId: string): Promise<boolean> {
     // Si no tiene suscripción, usar plan FREE
     const plan = subscription?.plan || SubscriptionPlan.FREE;
     
+    // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+    const planLookupKey = getPlanLookupKey(plan);
+    
     // Contar cuántas salas activas tiene el usuario
     const roomsRef = collection(firestore, 'rooms');
     const q = query(roomsRef, where('createdBy', '==', userId), where('active', '==', true));
@@ -287,7 +321,7 @@ export async function canCreateRoom(userId: string): Promise<boolean> {
     const activeRoomsCount = querySnapshot.size;
     
     // Verificar si puede crear más salas según su plan
-    return activeRoomsCount < SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
+    return activeRoomsCount < SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
   } catch (error) {
     console.error('Error al verificar si puede crear sala:', error);
     // En caso de error, permitir crear sala (mejor experiencia de usuario)
@@ -365,10 +399,13 @@ export async function canAddParticipant(roomId: string): Promise<boolean> {
     const querySnapshot = await getDocs(participantsRef);
     const participantsCount = querySnapshot.size;
     
-    console.log(`Room has ${participantsCount} participants, max allowed for ${plan} plan is ${SUBSCRIPTION_PLANS[plan].features.maxParticipants}`);
+    // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+    const planLookupKey = getPlanLookupKey(plan);
+    
+    console.log(`Room has ${participantsCount} participants, max allowed for ${plan} plan is ${SUBSCRIPTION_PLANS[planLookupKey].features.maxParticipants}`);
     
     // Verificar si puede añadir más participantes según su plan
-    return participantsCount < SUBSCRIPTION_PLANS[plan].features.maxParticipants;
+    return participantsCount < SUBSCRIPTION_PLANS[planLookupKey].features.maxParticipants;
   } catch (error) {
     console.error('Error al verificar si puede añadir participante:', error);
     // En caso de error, permitir añadir participante (mejor experiencia de usuario)

@@ -19,6 +19,7 @@ import { useRoomStore } from "@/store/roomStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/types/subscription";
+import { getPlanLookupKey } from "@/utils/planUtils";
 import { OnboardingButton } from "./Onboarding";
 import SessionPersistence from "./SessionPersistence";
 import SubscriptionLimits from "./subscription/SubscriptionLimits";
@@ -65,7 +66,8 @@ export default function RoomManager() {
     if (!canCreate) {
       // Obtener el plan actual y el límite de salas
       const currentPlan = subscriptionStore.getCurrentPlan();
-      const maxRooms = SUBSCRIPTION_PLANS[currentPlan].features.maxActiveRooms;
+      const planLookupKey = getPlanLookupKey(currentPlan);
+      const maxRooms = SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
       
       // Para usuarios Free, mostrar un mensaje específico indicando que deben abandonar su sala actual
       if (currentPlan === SubscriptionPlan.FREE) {

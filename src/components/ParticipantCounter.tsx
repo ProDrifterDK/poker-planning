@@ -6,6 +6,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import { useRoomStore } from '@/store/roomStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
+import { getPlanLookupKey } from '@/utils/planUtils';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref, get as firebaseGet } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
@@ -108,7 +109,8 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
   const plan = roomCreatorPlan || creatorPlan;
   
   // Get the maximum participants allowed for this plan
-  const maxParticipants = SUBSCRIPTION_PLANS[plan].features.maxParticipants;
+  const planLookupKey = getPlanLookupKey(plan);
+  const maxParticipants = SUBSCRIPTION_PLANS[planLookupKey].features.maxParticipants;
   
   // Calculate percentage
   const percentage = Math.min((participantCount / maxParticipants) * 100, 100);
@@ -149,7 +151,7 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
   
   return (
     <Tooltip
-      title={`Esta sala permite hasta ${maxParticipants} participantes (Basado en el plan ${SUBSCRIPTION_PLANS[plan].name} del creador de la sala)`}
+      title={`Esta sala permite hasta ${maxParticipants} participantes (Basado en el plan ${SUBSCRIPTION_PLANS[planLookupKey].name} del creador de la sala)`}
       placement="top"
     >
       <Box

@@ -5,6 +5,7 @@ import { Box, Typography, LinearProgress, Button, Tooltip } from '@mui/material'
 import InfoIcon from '@mui/icons-material/Info';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
+import { getPlanLookupKey } from '@/utils/planUtils';
 import Link from 'next/link';
 
 /**
@@ -17,7 +18,8 @@ export default function SubscriptionLimits() {
   const currentPlan = getCurrentPlan();
   
   // Get the plan details
-  const planDetails = SUBSCRIPTION_PLANS[currentPlan];
+  const planLookupKey = getPlanLookupKey(currentPlan);
+  const planDetails = SUBSCRIPTION_PLANS[planLookupKey];
   
   // Get the limits
   const maxActiveRooms = planDetails.features.maxActiveRooms;
