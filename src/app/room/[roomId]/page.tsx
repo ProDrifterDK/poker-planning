@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
@@ -64,6 +64,9 @@ export default function RoomPage() {
         setError,
         leaveRoom,
     } = useRoomStore();
+
+    // Referencia para medir el contenido principal
+    const mainContentRef = useRef<HTMLDivElement>(null);
 
     // Estado local para la estimación seleccionada
     const [selectedEstimation, setSelectedEstimation] = useState<number | string | null>(null);
@@ -954,13 +957,19 @@ export default function RoomPage() {
                         </Snackbar>
                         
                         {/* Anuncio para usuarios free DESPUÉS del contenido principal */}
-                        {isJoined && participants.length > 0 && (
-                            <Box sx={{ width: '100%', mt: 4, mb: 2 }}>
+                        {isJoined && participants.length > 2 && !isLoading && (
+                            <Box sx={{ width: '100%', mt: 4, mb: 2 }} ref={mainContentRef}>
                                 <FeatureGuard
                                     feature="adFree"
                                     fallback={
                                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                            <Advertisement slot="1234567890" format="horizontal" position="bottom" />
+                                            <Advertisement
+                                                slot="1234567890"
+                                                format="horizontal"
+                                                position="bottom"
+                                                contentRef={mainContentRef}
+                                                minContentHeight={600} // Asegurar que haya suficiente contenido
+                                            />
                                         </Box>
                                     }
                                 >
@@ -981,7 +990,11 @@ export default function RoomPage() {
                         <FeatureGuard
                             feature="adFree"
                             fallback={
-                                <SidebarAdvertisement slot="9876543210" />
+                                <SidebarAdvertisement
+                                    slot="9876543210"
+                                    contentRef={mainContentRef}
+                                    minContentHeight={600}
+                                />
                             }
                         >
                             {/* No se muestra nada para usuarios premium */}

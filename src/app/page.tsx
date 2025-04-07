@@ -8,7 +8,7 @@ import { useAuth } from "@/context/authContext";
 import { Box, Typography, Button, Paper, Alert, useTheme, Fade, Grow, Zoom } from "@mui/material";
 import { keyframes } from '@mui/system';
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Advertisement from "@/components/Advertisement";
 import AdFreeContent from "@/components/AdFreeContent";
 
@@ -61,6 +61,10 @@ export default function HomePage() {
   const { currentUser, isGuestUser, logout } = useAuth();
   const theme = useTheme();
   
+  // Referencias para medir el contenido
+  const topContentRef = useRef<HTMLDivElement>(null);
+  const bottomContentRef = useRef<HTMLDivElement>(null);
+  
   // Verificar si el usuario es un invitado
   const isGuest = isGuestUser();
   
@@ -78,8 +82,13 @@ export default function HomePage() {
       {currentUser ? (
         isGuest ? (
           // Vista especial para usuarios invitados
-          <AdFreeContent adSlot="3456789012" adFormat="horizontal" adPosition="top">
-            <Box
+          <AdFreeContent
+            adSlot="3456789012"
+            adFormat="horizontal"
+            adPosition="top"
+            minContentHeight={800} // Asegurar que haya suficiente contenido
+          >
+            <Box ref={topContentRef}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -643,8 +652,13 @@ export default function HomePage() {
           
           {/* Anuncio al final de todo el contenido */}
           <Box sx={{ width: '100%', overflow: 'hidden' }}>
-            <AdFreeContent adSlot="7890123456" adFormat="horizontal" adPosition="bottom">
-              <Box sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
+            <AdFreeContent
+              adSlot="7890123456"
+              adFormat="horizontal"
+              adPosition="bottom"
+              minContentHeight={1000} // Asegurar que haya suficiente contenido
+            >
+              <Box ref={bottomContentRef} sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
                 <Typography variant="h5" gutterBottom>
                   ¿Listo para mejorar tus sesiones de Planning Poker?
                 </Typography>
