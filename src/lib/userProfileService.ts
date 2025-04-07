@@ -5,8 +5,9 @@
  * información del perfil de usuario en Firestore.
  */
 
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore, auth, updateUserProfile } from './firebaseConfig';
+import { cancelSubscription } from './subscriptionService';
 import { User, EmailAuthProvider, reauthenticateWithCredential, updateEmail, deleteUser } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -288,6 +289,30 @@ export async function deleteUserAccount(currentPassword: string) {
     // Reautenticar al usuario
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
+    
+    // Buscar y cancelar suscripciones activas
+    const subscriptionsRef = collection(firestore, 'subscriptions');
+    const q = query(
+      subscriptionsRef,
+      where('userId', '==', user.uid),
+      where('status', '==', 'active')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    // Cancelar cada suscripción activa
+    for (const doc of querySnapshot.docs) {
+      const subscriptionData = doc.data();
+      console.log(`Cancelando suscripción ${doc.id} para usuario ${user.uid}`);
+      
+      try {
+        // Cancelar la suscripción en PayPal y en nuestra base de datos
+        await cancelSubscription(doc.id, 'Cuenta eliminada por el usuario');
+      } catch (subscriptionError) {
+        console.error('Error al cancelar suscripción:', subscriptionError);
+        // Continuar con el proceso de eliminación incluso si falla la cancelación de la suscripción
+      }
+    }
     
     // Eliminar documento en Firestore
     const userRef = doc(firestore, USERS_COLLECTION, user.uid);

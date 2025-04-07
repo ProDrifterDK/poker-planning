@@ -97,13 +97,19 @@ export default function Advertisement({
     // Only load ads when they're visible, on allowed pages, with enough content, and for users without ad-free feature
     if (isVisible && !isAdFree && shouldShowAds && hasEnoughContent && adRef.current && !adLoaded) {
       try {
-        // Create a new ad unit
-        const adsbygoogle = window.adsbygoogle || [];
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - AdSense API doesn't match our type definitions perfectly
-        adsbygoogle.push({});
-        
-        console.log('Ad loaded for slot:', slot);
+        // Check if the ad element already has the data-ad-status attribute
+        const adElement = adRef.current.querySelector('.adsbygoogle');
+        if (adElement && !adElement.getAttribute('data-ad-status')) {
+          // Create a new ad unit only if it hasn't been initialized yet
+          const adsbygoogle = window.adsbygoogle || [];
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - AdSense API doesn't match our type definitions perfectly
+          adsbygoogle.push({});
+          
+          console.log('Ad loaded for slot:', slot);
+        } else {
+          console.log('Ad already initialized for slot:', slot);
+        }
         setAdLoaded(true);
       } catch (error) {
         console.error('Error loading advertisement:', error);

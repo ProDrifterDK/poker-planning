@@ -22,22 +22,13 @@ export const NO_ADS_PAGES = [
 
 /**
  * Determina si se deben mostrar anuncios en una página específica
- * 
+ *
  * @param pathname - La ruta de la página actual
  * @returns true si se deben mostrar anuncios, false en caso contrario
  */
 export function shouldShowAdsOnPage(pathname: string): boolean {
-  // No mostrar anuncios en páginas específicas
-  if (NO_ADS_PAGES.some(page => pathname === page || pathname.startsWith(page + '/'))) {
-    return false;
-  }
-  
-  // No mostrar anuncios en páginas de error
-  if (pathname.includes('error')) {
-    return false;
-  }
-  
-  return true;
+  // Solo mostrar anuncios en la página de inicio
+  return pathname === '/' || pathname === '/home';
 }
 
 /**

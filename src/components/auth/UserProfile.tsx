@@ -18,7 +18,16 @@ import {
   Switch,
   IconButton,
   Tooltip,
-  InputAdornment
+  InputAdornment,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import { useAuth } from '@/context/authContext';
 import { getUserProfile, uploadProfileImage } from '@/lib/userProfileService';
@@ -30,6 +39,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SecurityIcon from '@mui/icons-material/Security';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import DeleteAccountModal from './DeleteAccountModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -81,13 +91,16 @@ const UserProfile: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
-  
+
+  // Estado para el modal de eliminación de cuenta
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   // Notification preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [roomInvites, setRoomInvites] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
-  
+
   // Load user profile data when component mounts
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -95,12 +108,12 @@ const UserProfile: React.FC = () => {
         try {
           setIsLoading(true);
           const profileData = await getUserProfile(currentUser.uid);
-          
+
           if (profileData) {
             // Set basic profile data
             setDisplayName(profileData.displayName || '');
             setEmail(profileData.email || '');
-            
+
             if (profileData.photoURL) {
               console.log('Loading profile photo from Firestore:', profileData.photoURL.substring(0, 50) + '...');
               setPhotoURL(profileData.photoURL);
@@ -108,12 +121,12 @@ const UserProfile: React.FC = () => {
               console.log('No profile photo found in Firestore');
               setPhotoURL(null);
             }
-            
+
             // Set additional profile data
             setPhoneNumber(profileData.phoneNumber || '');
             setJobTitle(profileData.jobTitle || '');
             setCompany(profileData.company || '');
-            
+
             // Set notification preferences
             if (profileData.notificationPreferences) {
               setEmailNotifications(profileData.notificationPreferences.email ?? true);
@@ -129,7 +142,7 @@ const UserProfile: React.FC = () => {
         }
       }
     };
-    
+
     loadUserProfile();
   }, [currentUser]);
 
@@ -177,36 +190,36 @@ const UserProfile: React.FC = () => {
       setFormError('El nombre es obligatorio');
       return false;
     }
-    
+
     // Validar email
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setFormError('El formato del correo electrónico no es válido');
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
     try {
       // Actualizar nombre y preservar la foto de perfil actual
       console.log('Guardando cambios, preservando photoURL:', photoURL ? 'presente' : 'ausente');
       await updateProfile(displayName, photoURL || undefined);
-      
+
       // Actualizar campos adicionales
       await updateUserData({
         phoneNumber,
         jobTitle,
         company
       });
-      
+
       setIsSuccess(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
     } finally {
@@ -214,19 +227,18 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const handleEmailUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleEmailUpdate = async () => {
+
     // Aquí se implementaría un diálogo para solicitar la contraseña actual
     const currentPassword = prompt('Ingresa tu contraseña actual para confirmar el cambio de email:');
-    
+
     if (!currentPassword) return;
-    
+
     setIsSubmitting(true);
     try {
       await updateUserEmail(currentPassword, email);
       setIsSuccess(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
     } finally {
@@ -236,7 +248,7 @@ const UserProfile: React.FC = () => {
 
   const handleNotificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setIsSubmitting(true);
     try {
       await updateNotificationPreferences({
@@ -245,9 +257,9 @@ const UserProfile: React.FC = () => {
         roomInvites,
         weeklyDigest
       });
-      
+
       setIsSuccess(true);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
     } finally {
@@ -255,34 +267,34 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    // Confirmar con el usuario
-    const confirmed = window.confirm('¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.');
-    
-    if (!confirmed) return;
-    
-    // Solicitar contraseña
-    const currentPassword = prompt('Ingresa tu contraseña para confirmar la eliminación de tu cuenta:');
-    
-    if (!currentPassword) return;
-    
+  const handleDeleteAccount = () => {
+    // Abrir el modal de confirmación
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async (password: string) => {
     setIsSubmitting(true);
     try {
-      await deleteAccount(currentPassword);
+      await deleteAccount(password);
       // La redirección se manejará automáticamente por el ProtectedRoute
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
     } finally {
       setIsSubmitting(false);
+      setDeleteConfirmOpen(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
   };
 
   const handleLogout = async () => {
     try {
       await logout();
       // La redirección se manejará automáticamente por el ProtectedRoute
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // No registramos el error en la consola por razones de seguridad
     }
@@ -290,48 +302,48 @@ const UserProfile: React.FC = () => {
 
   const handleUploadPhoto = () => {
     if (!currentUser) return;
-    
+
     setIsSubmitting(true);
     setFormError(null);
-    
+
     console.log('Iniciando proceso de subida de imagen');
-    
+
     // Crear un input de tipo file y abrirlo
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
-    
+
     fileInput.onchange = async (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files[0]) {
         try {
           const file = target.files[0];
           console.log('Archivo seleccionado:', file.name, 'Tamaño:', file.size, 'bytes');
-          
+
           // Verificar tamaño del archivo (máximo 2MB)
           if (file.size > 2 * 1024 * 1024) {
             setFormError('La imagen es demasiado grande. El tamaño máximo es 2MB.');
             setIsSubmitting(false);
             return;
           }
-          
+
           // Subir la imagen como base64
           console.log('Subiendo imagen...');
           const dataUrl = await uploadProfileImage(currentUser.uid, file);
           console.log('Imagen subida correctamente, longitud de dataUrl:', dataUrl.length);
-          
+
           // Actualizar el estado local y el header
           console.log('Imagen subida correctamente, actualizando estado local con dataUrl:', dataUrl.substring(0, 50) + '...');
           setPhotoURL(dataUrl);
           updateProfilePhoto(dataUrl);
-          
+
           // Forzar una recarga del perfil en el header
           reloadProfile();
-          
+
           // Mostrar mensaje de éxito
           setFormError(null);
           setIsSuccess(true);
-          
+
           // No es necesario recargar la página ya que actualizamos el estado local
           console.log('Proceso de subida completado con éxito');
         } catch (error) {
@@ -345,14 +357,14 @@ const UserProfile: React.FC = () => {
         setIsSubmitting(false);
       }
     };
-    
+
     fileInput.click();
   };
 
   if (!currentUser) {
     return null; // No debería ocurrir debido al ProtectedRoute
   }
-  
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -363,122 +375,122 @@ const UserProfile: React.FC = () => {
       </Box>
     );
   }
-  
+
   // Debug output
   console.log('Rendering UserProfile with photoURL:', photoURL ? photoURL.substring(0, 50) + '...' : 'null');
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        p: 2,
-      }}
-    >
-      <Paper
-        elevation={3}
+    <>
+      <Box
         sx={{
-          p: 4,
-          width: '100%',
-          maxWidth: 800,
-          borderRadius: 2,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 2,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ position: 'relative' }}>
-            {photoURL ? (
-              <Avatar
-                src={photoURL}
-                alt={currentUser.displayName || 'Usuario'}
-                sx={{ width: 80, height: 80, mr: 2 }}
-                imgProps={{
-                  onError: (e) => {
-                    console.error('Error loading profile image:', e);
-                    // Fallback to default avatar
-                    (e.target as HTMLImageElement).src = '';
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            width: '100%',
+            maxWidth: 800,
+            borderRadius: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ position: 'relative' }}>
+              {photoURL ? (
+                <Avatar
+                  src={photoURL}
+                  alt={currentUser.displayName || 'Usuario'}
+                  sx={{ width: 80, height: 80, mr: 2 }}
+                  imgProps={{
+                    onError: (e) => {
+                      console.error('Error loading profile image:', e);
+                      // Fallback to default avatar
+                      (e.target as HTMLImageElement).src = '';
+                    }
+                  }}
+                />
+              ) : (
+                <Avatar
+                  sx={{ width: 80, height: 80, mr: 2, bgcolor: 'secondary.main' }}
+                >
+                  <PersonIcon sx={{ fontSize: 40 }} />
+                </Avatar>
+              )}
+              <IconButton
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 8,
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
                   }
                 }}
-              />
-            ) : (
-              <Avatar
-                sx={{ width: 80, height: 80, mr: 2, bgcolor: 'secondary.main' }}
+                onClick={handleUploadPhoto}
               >
-                <PersonIcon sx={{ fontSize: 40 }} />
-              </Avatar>
-            )}
-            <IconButton
-              size="small"
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                right: 8,
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                }
-              }}
-              onClick={handleUploadPhoto}
-            >
-              <PhotoCameraIcon fontSize="small" />
-            </IconButton>
+                <PhotoCameraIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box>
+              <Typography variant="h5" component="h1" gutterBottom>
+                Mi Perfil
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {currentUser.email}
+              </Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Mi Perfil
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {currentUser.email}
-            </Typography>
-          </Box>
-        </Box>
 
-        <Divider sx={{ mb: 2 }} />
-        
-        {isSuccess && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Perfil actualizado correctamente
-          </Alert>
-        )}
-        
-        {(error || formError) && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error || formError}
-          </Alert>
-        )}
-        
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            aria-label="profile tabs"
-            variant="scrollable"
-            scrollButtons="auto"
-          >
-            <Tab icon={<PersonIcon />} label="Información Personal" />
-            <Tab icon={<BusinessIcon />} label="Información Profesional" />
-            <Tab icon={<NotificationsIcon />} label="Notificaciones" />
-            <Tab icon={<SecurityIcon />} label="Seguridad" />
-          </Tabs>
-        </Box>
-        
-        <TabPanel value={tabValue} index={0}>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Nombre"
-                  fullWidth
-                  variant="outlined"
-                  value={displayName}
-                  onChange={handleDisplayNameChange}
-                  disabled={isSubmitting}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <form onSubmit={handleEmailUpdate}>
+          <Divider sx={{ mb: 2 }} />
+
+          {isSuccess && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Perfil actualizado correctamente
+            </Alert>
+          )}
+
+          {(error || formError) && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error || formError}
+            </Alert>
+          )}
+
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              aria-label="profile tabs"
+              variant="scrollable"
+              scrollButtons="auto"
+            >
+              <Tab icon={<PersonIcon />} label="Información Personal" />
+              <Tab icon={<BusinessIcon />} label="Información Profesional" />
+              <Tab icon={<NotificationsIcon />} label="Notificaciones" />
+              <Tab icon={<SecurityIcon />} label="Seguridad" />
+            </Tabs>
+          </Box>
+
+          <TabPanel value={tabValue} index={0}>
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Nombre"
+                    fullWidth
+                    variant="outlined"
+                    value={displayName}
+                    onChange={handleDisplayNameChange}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
                   <TextField
                     label="Correo Electrónico"
                     fullWidth
@@ -496,7 +508,7 @@ const UserProfile: React.FC = () => {
                               <IconButton
                                 edge="end"
                                 color="primary"
-                                type="submit"
+                                onClick={handleEmailUpdate}
                                 disabled={isSubmitting || email === currentUser?.email}
                               >
                                 <EditIcon fontSize="small" />
@@ -507,195 +519,203 @@ const UserProfile: React.FC = () => {
                       ),
                     }}
                   />
-                </form>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Teléfono"
+                    fullWidth
+                    variant="outlined"
+                    value={phoneNumber}
+                    onChange={handlePhoneNumberChange}
+                    disabled={isSubmitting}
+                    placeholder="Opcional"
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Teléfono"
-                  fullWidth
+
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+                <Button
                   variant="outlined"
-                  value={phoneNumber}
-                  onChange={handlePhoneNumberChange}
+                  color="error"
+                  onClick={handleLogout}
                   disabled={isSubmitting}
-                  placeholder="Opcional"
-                />
+                >
+                  Cerrar Sesión
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
+                </Button>
+              </Box>
+            </form>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Cargo / Puesto"
+                    fullWidth
+                    variant="outlined"
+                    value={jobTitle}
+                    onChange={handleJobTitleChange}
+                    disabled={isSubmitting}
+                    placeholder="Ej: Scrum Master, Project Manager, Developer"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Empresa / Organización"
+                    fullWidth
+                    variant="outlined"
+                    value={company}
+                    onChange={handleCompanyChange}
+                    disabled={isSubmitting}
+                    placeholder="Opcional"
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-            
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
+                </Button>
+              </Box>
+            </form>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+            <form onSubmit={handleNotificationSubmit}>
+              <Typography variant="h6" gutterBottom>
+                Preferencias de Notificación
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={emailNotifications}
+                        onChange={(e) => setEmailNotifications(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Recibir notificaciones por correo electrónico"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={pushNotifications}
+                        onChange={(e) => setPushNotifications(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Recibir notificaciones push en el navegador"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={roomInvites}
+                        onChange={(e) => setRoomInvites(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Notificarme sobre invitaciones a salas"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={weeklyDigest}
+                        onChange={(e) => setWeeklyDigest(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Recibir resumen semanal de actividad"
+                  />
+                </Grid>
+              </Grid>
+
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Preferencias'}
+                </Button>
+              </Box>
+            </form>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={3}>
+            <Typography variant="h6" gutterBottom>
+              Seguridad de la Cuenta
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Cambio de Contraseña
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Para cambiar tu contraseña, primero debes cerrar sesión y usar la opción &ldquo;Olvidé mi contraseña&rdquo; en la pantalla de inicio de sesión.
+              </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleLogout}
+              >
+                Cerrar Sesión para Cambiar Contraseña
+              </Button>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box>
+              <Typography variant="subtitle1" gutterBottom color="error">
+                Zona de Peligro
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Eliminar tu cuenta es una acción permanente y no se puede deshacer. Todos tus datos serán eliminados.
+              </Typography>
               <Button
                 variant="outlined"
                 color="error"
-                onClick={handleLogout}
+                onClick={handleDeleteAccount}
                 disabled={isSubmitting}
               >
-                Cerrar Sesión
-              </Button>
-              
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
+                Eliminar mi Cuenta
               </Button>
             </Box>
-          </form>
-        </TabPanel>
-        
-        <TabPanel value={tabValue} index={1}>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Cargo / Puesto"
-                  fullWidth
-                  variant="outlined"
-                  value={jobTitle}
-                  onChange={handleJobTitleChange}
-                  disabled={isSubmitting}
-                  placeholder="Ej: Scrum Master, Project Manager, Developer"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Empresa / Organización"
-                  fullWidth
-                  variant="outlined"
-                  value={company}
-                  onChange={handleCompanyChange}
-                  disabled={isSubmitting}
-                  placeholder="Opcional"
-                />
-              </Grid>
-            </Grid>
-            
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
-              </Button>
-            </Box>
-          </form>
-        </TabPanel>
-        
-        <TabPanel value={tabValue} index={2}>
-          <form onSubmit={handleNotificationSubmit}>
-            <Typography variant="h6" gutterBottom>
-              Preferencias de Notificación
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={emailNotifications}
-                      onChange={(e) => setEmailNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="Recibir notificaciones por correo electrónico"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={pushNotifications}
-                      onChange={(e) => setPushNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="Recibir notificaciones push en el navegador"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={roomInvites}
-                      onChange={(e) => setRoomInvites(e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="Notificarme sobre invitaciones a salas"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={weeklyDigest}
-                      onChange={(e) => setWeeklyDigest(e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label="Recibir resumen semanal de actividad"
-                />
-              </Grid>
-            </Grid>
-            
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Preferencias'}
-              </Button>
-            </Box>
-          </form>
-        </TabPanel>
-        
-        <TabPanel value={tabValue} index={3}>
-          <Typography variant="h6" gutterBottom>
-            Seguridad de la Cuenta
-          </Typography>
-          
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Cambio de Contraseña
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Para cambiar tu contraseña, primero debes cerrar sesión y usar la opción &ldquo;Olvidé mi contraseña&rdquo; en la pantalla de inicio de sesión.
-            </Typography>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleLogout}
-            >
-              Cerrar Sesión para Cambiar Contraseña
-            </Button>
-          </Box>
-          
-          <Divider sx={{ my: 3 }} />
-          
-          <Box>
-            <Typography variant="subtitle1" gutterBottom color="error">
-              Zona de Peligro
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Eliminar tu cuenta es una acción permanente y no se puede deshacer. Todos tus datos serán eliminados.
-            </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={handleDeleteAccount}
-              disabled={isSubmitting}
-            >
-              Eliminar mi Cuenta
-            </Button>
-          </Box>
-        </TabPanel>
-      </Paper>
-    </Box>
+          </TabPanel>
+        </Paper>
+      </Box>
+
+      {/* Modal de confirmación para eliminar cuenta */}
+      <DeleteAccountModal
+        open={deleteConfirmOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        isSubmitting={isSubmitting}
+      />
+    </>
   );
 };
 
