@@ -10,9 +10,9 @@ import {
   SUBSCRIPTION_PLANS,
   SubscriptionStatus
 } from '@/types/subscription';
-import { 
-  getUserSubscription, 
-  createSubscription, 
+import {
+  getUserSubscription,
+  createSubscription,
   cancelSubscription,
   getUserPaymentHistory,
   hasFeatureAccess,
@@ -26,6 +26,30 @@ import {
   cancelSubscription as cancelPaypalSubscription
 } from '@/lib/paypalSdk';
 import { PaymentMethod } from '@/types/subscription';
+
+/**
+ * Función auxiliar para obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+ *
+ * @param plan - El plan de suscripción
+ * @returns La clave correcta para buscar en SUBSCRIPTION_PLANS
+ */
+const getPlanLookupKey = (plan: SubscriptionPlan): string => {
+  // Primero intentar con la clave simple
+  let planLookupKey: string = plan as string;
+  
+  // Si no existe, intentar con la clave compuesta (plan-month)
+  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+    planLookupKey = `${plan}-month`;
+  }
+  
+  // Si sigue sin existir, usar el plan FREE como fallback
+  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
+    console.error(`Plan no encontrado: ${plan}, usando FREE como fallback`);
+    planLookupKey = SubscriptionPlan.FREE;
+  }
+  
+  return planLookupKey;
+};
 
 // Tipos para el store
 interface SubscriptionState {
@@ -237,20 +261,12 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           
           console.log(`Ejecutando suscripción con plan: ${subscriptionPlan}`);
           
-          // Verificar que el plan existe en SUBSCRIPTION_PLANS
-          // Primero intentar con la clave simple
-          let planLookupKey: string = subscriptionPlan as string;
+          // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+          const planLookupKey = getPlanLookupKey(subscriptionPlan);
           
-          // Si no existe, intentar con la clave compuesta (plan-month)
-          if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-            planLookupKey = `${subscriptionPlan}-month`;
-          }
-          
-          // Si sigue sin existir, usar el plan FREE como fallback
-          if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-            console.error(`Plan no encontrado: ${subscriptionPlan}, usando FREE como fallback`);
+          // Si el plan no existe, actualizar subscriptionPlan a FREE
+          if (planLookupKey === SubscriptionPlan.FREE && subscriptionPlan !== SubscriptionPlan.FREE) {
             subscriptionPlan = SubscriptionPlan.FREE;
-            planLookupKey = SubscriptionPlan.FREE;
           }
           
           console.log(`Clave de plan determinada: ${planLookupKey}`);
@@ -297,7 +313,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
         
-        const featureValue = SUBSCRIPTION_PLANS[plan].features[feature];
+        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+        const planLookupKey = getPlanLookupKey(plan);
+        
+        const featureValue = SUBSCRIPTION_PLANS[planLookupKey].features[feature];
         
         if (typeof featureValue === 'boolean') {
           return featureValue;
@@ -314,7 +333,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       canUserCreateRoom: () => {
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
-        const maxRooms = SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
+        
+        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+        const planLookupKey = getPlanLookupKey(plan);
+        
+        const maxRooms = SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
         
         // Si el usuario es Free y tiene una sesión activa en localStorage, no permitir crear más salas
         if (plan === SubscriptionPlan.FREE) {
@@ -359,14 +382,22 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       getMaxParticipants: () => {
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
-        return SUBSCRIPTION_PLANS[plan].features.maxParticipants;
+        
+        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+        const planLookupKey = getPlanLookupKey(plan);
+        
+        return SUBSCRIPTION_PLANS[planLookupKey].features.maxParticipants;
       },
       
       // Obtener el número máximo de salas activas permitidas para el plan actual
       getMaxActiveRooms: () => {
         const { currentSubscription } = get();
         const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
-        return SUBSCRIPTION_PLANS[plan].features.maxActiveRooms;
+        
+        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
+        const planLookupKey = getPlanLookupKey(plan);
+        
+        return SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
       }
     }),
     {
