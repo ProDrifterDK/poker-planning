@@ -71,6 +71,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
+  // Verificar si hay un encabezado especial que indica que estamos cambiando de idioma
+  const isLanguageChange = request.headers.get('X-Language-Change') === 'true';
+  if (isLanguageChange) {
+    // Si estamos cambiando de idioma, no redirigir
+    return NextResponse.next();
+  }
+  
   // Verificar si la ruta actual debe ser redirigida a la versión localizada
   const shouldLocalize = localizedRoutes.some(route =>
     pathname === route || pathname.startsWith(`${route}/`)

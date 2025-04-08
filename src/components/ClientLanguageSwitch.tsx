@@ -1,17 +1,18 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { Box } from '@mui/material';
-import { i18n } from '../../next-i18next.config.js';
-import { useState, useEffect } from 'react';
 
-export default function LanguageSelector() {
-  const router = useRouter();
+/**
+ * Componente para cambiar el idioma sin recargar la página
+ * Este componente es una alternativa a LanguageSelector que evita la recarga de la página
+ */
+export default function ClientLanguageSwitch() {
   const pathname = usePathname();
-  const { i18n: i18nInstance } = useTranslation();
+  const { i18n } = useTranslation();
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
   
   // Efecto para evitar múltiples cambios de idioma simultáneos
@@ -31,7 +32,7 @@ export default function LanguageSelector() {
     setIsChangingLanguage(true);
     
     // Cambiar el idioma en i18next
-    i18nInstance.changeLanguage(newLocale);
+    i18n.changeLanguage(newLocale);
     
     // Guardar la preferencia en una cookie
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
@@ -67,7 +68,7 @@ export default function LanguageSelector() {
     changeLanguage(newLocale);
   };
   
-  const isEnglish = i18nInstance.language === 'en';
+  const isEnglish = i18n.language === 'en';
   
   // Custom switch track colors
   const trackColor = isEnglish ? '#004489' : '#e4312b';

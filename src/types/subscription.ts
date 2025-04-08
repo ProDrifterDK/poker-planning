@@ -76,6 +76,8 @@ export interface UserSubscription {
   paymentMethod: PaymentMethod;
   paymentId?: string; // Payment ID in PayPal
   subscriptionId?: string; // Subscription ID in PayPal
+  cancelDate?: string; // ISO date string when subscription was cancelled
+  cancelReason?: string; // Reason for cancellation
 }
 
 // Payment history

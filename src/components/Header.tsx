@@ -24,8 +24,9 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 import { getPlanLookupKey } from '@/utils/planUtils';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import LanguageSelector from './LanguageSelector';
+import ClientLanguageSwitch from './ClientLanguageSwitch';
 import { useTranslation } from 'react-i18next';
+import LanguageAwareComponent from './LanguageAwareComponent';
 
 // Lista de idiomas soportados
 const supportedLocales = ['es', 'en'];
@@ -171,17 +172,19 @@ export default function Header() {
     return (
         <AppBar position="static" color="primary">
             <Toolbar>
-                <Typography
-                    variant="h6"
-                    component="button"
-                    sx={{ flexGrow: 1 }}
-                    onClick={() => router.push(getLocalizedRoute(''))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
-                >
-                    {t('appName', 'Poker Planning Pro')}
-                </Typography>
+                <LanguageAwareComponent>
+                    <Typography
+                        variant="h6"
+                        component="button"
+                        sx={{ flexGrow: 1 }}
+                        onClick={() => router.push(getLocalizedRoute(''))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                    >
+                        {t('appName', 'Poker Planning Pro')}
+                    </Typography>
+                </LanguageAwareComponent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LanguageSelector />
+                    <ClientLanguageSwitch />
                     <OnboardingButton variant="icon" color="inherit" />
                     <ThemeToggleButton />
                     
@@ -211,98 +214,102 @@ export default function Header() {
                                     </Avatar>
                                 )}
                             </IconButton>
-                            <Menu
-                                anchorEl={anchorEl}
-                                id="account-menu"
-                                open={open}
-                                onClose={handleClose}
-                                PaperProps={{
-                                    elevation: 3,
-                                    sx: {
-                                        overflow: 'visible',
-                                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
-                                        mt: 1.5,
-                                        minWidth: 180,
-                                        '& .MuiAvatar-root': {
-                                            width: 32,
-                                            height: 32,
-                                            ml: -0.5,
-                                            mr: 1,
+                            <LanguageAwareComponent>
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    id="account-menu"
+                                    open={open}
+                                    onClose={handleClose}
+                                    PaperProps={{
+                                        elevation: 3,
+                                        sx: {
+                                            overflow: 'visible',
+                                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                                            mt: 1.5,
+                                            minWidth: 180,
+                                            '& .MuiAvatar-root': {
+                                                width: 32,
+                                                height: 32,
+                                                ml: -0.5,
+                                                mr: 1,
+                                            },
                                         },
-                                    },
-                                }}
-                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                            >
-                                <MenuItem sx={{ pointerEvents: 'none', opacity: 0.7 }}>
-                                    <Box>
-                                        <Typography variant="body2" noWrap>
-                                            {currentUser.displayName || currentUser.email}
-                                        </Typography>
-                                        {isGuest ? (
-                                            <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
-                                                {t('menu.guestUser')}
+                                    }}
+                                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                >
+                                    <MenuItem sx={{ pointerEvents: 'none', opacity: 0.7 }}>
+                                        <Box>
+                                            <Typography variant="body2" noWrap>
+                                                {currentUser.displayName || currentUser.email}
                                             </Typography>
-                                        ) : (
-                                            <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
-                                                {t('menu.plan')} {getTranslatedPlanName(currentPlan)}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                </MenuItem>
-                                <Divider />
-                                {!isGuest && (
-                                    <>
-                                        <MenuItem onClick={handleProfile}>
-                                            {t('menu.myProfile')}
-                                        </MenuItem>
-                                        <MenuItem onClick={() => {
-                                            router.push(getLocalizedRoute('/settings'));
-                                            handleClose();
-                                        }}>
-                                            {t('menu.settings')}
-                                        </MenuItem>
-                                        <MenuItem onClick={() => {
-                                            router.push(getLocalizedRoute('/settings/subscription'));
-                                            handleClose();
-                                        }}>
-                                            {t('menu.subscription')}
-                                        </MenuItem>
-                                        <MenuItem onClick={() => {
-                                            router.push(getLocalizedRoute('/settings/integrations'));
-                                            handleClose();
-                                        }}>
-                                            {t('menu.integrations')}
-                                        </MenuItem>
-                                    </>
-                                )}
-                                {isModerator() && (
-                                    <MenuItem onClick={() => {
-                                        router.push(getLocalizedRoute('/admin'));
-                                        handleClose();
-                                    }}>
-                                        {t('menu.adminPanel')}
+                                            {isGuest ? (
+                                                <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
+                                                    {t('menu.guestUser')}
+                                                </Typography>
+                                            ) : (
+                                                <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
+                                                    {t('menu.plan')} {getTranslatedPlanName(currentPlan)}
+                                                </Typography>
+                                            )}
+                                        </Box>
                                     </MenuItem>
-                                )}
-                                <MenuItem onClick={handleLogout}>
-                                    {t('menu.logout')}
-                                </MenuItem>
-                            </Menu>
+                                    <Divider />
+                                    {!isGuest && (
+                                        <>
+                                            <MenuItem onClick={handleProfile}>
+                                                {t('menu.myProfile')}
+                                            </MenuItem>
+                                            <MenuItem onClick={() => {
+                                                router.push(getLocalizedRoute('/settings'));
+                                                handleClose();
+                                            }}>
+                                                {t('menu.settings')}
+                                            </MenuItem>
+                                            <MenuItem onClick={() => {
+                                                router.push(getLocalizedRoute('/settings/subscription'));
+                                                handleClose();
+                                            }}>
+                                                {t('menu.subscription')}
+                                            </MenuItem>
+                                            <MenuItem onClick={() => {
+                                                router.push(getLocalizedRoute('/settings/integrations'));
+                                                handleClose();
+                                            }}>
+                                                {t('menu.integrations')}
+                                            </MenuItem>
+                                        </>
+                                    )}
+                                    {isModerator() && (
+                                        <MenuItem onClick={() => {
+                                            router.push(getLocalizedRoute('/admin'));
+                                            handleClose();
+                                        }}>
+                                            {t('menu.adminPanel')}
+                                        </MenuItem>
+                                    )}
+                                    <MenuItem onClick={handleLogout}>
+                                        {t('menu.logout')}
+                                    </MenuItem>
+                                </Menu>
+                            </LanguageAwareComponent>
                         </>
                     ) : (
-                        <Link href={getLocalizedRoute('/auth/signin')} passHref>
-                            <Button
-                                color="info"
-                                variant="contained"
-                                size="small"
-                                sx={{
-                                    ml: 1,
-                                    textTransform: "none"
-                                }}
-                            >
-                                {t('login')}
-                            </Button>
-                        </Link>
+                        <LanguageAwareComponent>
+                            <Link href={getLocalizedRoute('/auth/signin')} passHref>
+                                <Button
+                                    color="info"
+                                    variant="contained"
+                                    size="small"
+                                    sx={{
+                                        ml: 1,
+                                        textTransform: "none"
+                                    }}
+                                >
+                                    {t('login')}
+                                </Button>
+                            </Link>
+                        </LanguageAwareComponent>
                     )}
                 </Box>
             </Toolbar>
