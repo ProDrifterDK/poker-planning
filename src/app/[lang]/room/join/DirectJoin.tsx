@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import {
   Box,
   Typography,
@@ -19,6 +20,8 @@ import Link from "next/link";
 export default function DirectJoin() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
+  const { t } = useTranslation('common');
   const roomCode = searchParams.get("code");
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -61,7 +64,7 @@ export default function DirectJoin() {
                   roomSnapshot.val().markedForDeletion === true || 
                   roomSnapshot.val().active === false) {
                 localStorage.removeItem('poker-planning-storage');
-                setJoinError("Esta sala ha sido cerrada porque todos los participantes la abandonaron.");
+                setJoinError(t('directJoin.roomClosed'));
                 return false;
               }
               
@@ -93,12 +96,12 @@ export default function DirectJoin() {
   // Función para unirse a la sala
   const joinRoom = async () => {
     if (!roomCode) {
-      setJoinError("Código de sala no válido");
+      setJoinError(t('directJoin.invalidRoomCode'));
       return;
     }
 
     if (!currentUser) {
-      setJoinError("Debes iniciar sesión para unirte a una sala");
+      setJoinError(t('directJoin.mustSignIn'));
       return;
     }
 
@@ -114,7 +117,7 @@ export default function DirectJoin() {
     }
 
     if (!userName) {
-      setJoinError("No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.");
+      setJoinError(t('directJoin.nameNotDetermined'));
       return;
     }
 
@@ -122,7 +125,7 @@ export default function DirectJoin() {
     try {
       const canJoin = await subscriptionStore.canRoomAddParticipant(roomCode);
       if (!canJoin) {
-        setJoinError("Esta sala ha alcanzado su límite de participantes. El creador de la sala necesita actualizar su plan para permitir más participantes.");
+        setJoinError(t('directJoin.roomLimitReached'));
         return;
       }
 
@@ -132,7 +135,7 @@ export default function DirectJoin() {
     } catch (error) {
       console.error("Error al unirse a la sala:", error);
       setIsJoining(false);
-      setJoinError(error instanceof Error ? error.message : "Error al unirse a la sala");
+      setJoinError(error instanceof Error ? error.message : t('directJoin.errorJoiningRoom'));
     }
   };
 
@@ -159,14 +162,14 @@ export default function DirectJoin() {
           }}
         >
           <Typography variant="h5" color="error" gutterBottom>
-            Error al unirse a la sala
+            {t('directJoin.errorJoiningRoom')}
           </Typography>
           <Typography variant="body1" paragraph>
-            No se ha proporcionado un código de sala válido.
+            {t('directJoin.noValidRoomCode')}
           </Typography>
-          <Link href="/" passHref>
+          <Link href={`/${params.lang}`} passHref>
             <Button variant="contained" color="primary">
-              Volver al inicio
+              {t('directJoin.backToHome')}
             </Button>
           </Link>
         </Paper>
@@ -195,11 +198,11 @@ export default function DirectJoin() {
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Unirse a la Sala
+          {t('directJoin.joinRoom')}
         </Typography>
 
         <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-          Código de sala: <strong>{roomCode}</strong>
+          {t('directJoin.roomCode')}<strong>{roomCode}</strong>
         </Typography>
 
         {(error || joinError) && (
@@ -219,7 +222,7 @@ export default function DirectJoin() {
           <Box sx={{ textAlign: 'center', py: 3 }}>
             <CircularProgress size={40} sx={{ mb: 2 }} />
             <Typography variant="body1">
-              Uniéndote a la sala como <strong>{
+              {t('directJoin.joiningAs')} <strong>{
                 isGuest
                   ? localStorage.getItem('guestName')
                   : currentUser?.displayName
@@ -229,7 +232,7 @@ export default function DirectJoin() {
         ) : (
           <Box sx={{ textAlign: 'center', py: 2 }}>
             <Typography variant="body1" paragraph>
-              Estás a punto de unirte a la sala con el nombre:
+              {t('directJoin.aboutToJoin')}
             </Typography>
             <Typography variant="h6" sx={{ mb: 3 }}>
               {isGuest
@@ -243,7 +246,7 @@ export default function DirectJoin() {
               disabled={isJoining}
               sx={{ minWidth: 200 }}
             >
-              Unirse a la Sala
+              {t('directJoin.joinRoom')}
             </Button>
           </Box>
         )}

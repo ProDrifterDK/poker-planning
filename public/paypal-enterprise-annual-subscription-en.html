@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPal Enterprise Annual Subscription Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #003087;
+            border-bottom: 2px solid #0070ba;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: #f7f9fa;
+            border: 1px solid #e7e9eb;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .plan-selector {
+            margin-bottom: 20px;
+        }
+        .plan-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .plan-card:hover, .plan-card.selected {
+            border-color: #0070ba;
+            box-shadow: 0 0 10px rgba(0, 112, 186, 0.2);
+        }
+        .plan-card.selected {
+            background-color: #f0f8ff;
+        }
+        .plan-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #003087;
+        }
+        .plan-price {
+            font-size: 24px;
+            color: #0070ba;
+            margin: 10px 0;
+        }
+        .plan-description {
+            color: #666;
+        }
+        .paypal-button-container {
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #e2f3f5;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #0070ba;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>PayPal Enterprise Annual Subscription Test</h1>
+    
+    <div class="container">
+        <h2>Select a Plan</h2>
+        
+        <div class="plan-selector">
+            <div class="plan-card selected" data-plan-id="enterprise" data-plan-price="299.99">
+                <div class="plan-name">Enterprise Plan (Annual)</div>
+                <div class="plan-price">$299.99 USD / year</div>
+                <div class="plan-description">
+                    <p>Access to all Enterprise features for a full year.</p>
+                    <p>Save over 15% compared to monthly billing.</p>
+                    <p>Ideal for large teams and companies.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="paypal-button-container"></div>
+    </div>
+    
+    <div id="status-container"></div>
+    
+    <a href="/" class="back-link">← Back to main page</a>
+    
+    <!-- Load PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=Ad6FjYnXb1rFqI-SkBVRji5cXWe9bBaVyTaBGTrPo5Dlwh_lK4dLsMRJplfL12yoyMcIwK-AWGX4jzXR&vault=true&intent=subscription&currency=USD"></script>
+    
+    <script>
+        // Global variables
+        let selectedPlan = {
+            name: 'Enterprise Plan (Annual)',
+            id: 'enterprise',
+            price: '299.99'
+        };
+        
+        // Function to display status messages
+        function showStatus(message, type = 'info') {
+            const statusContainer = document.getElementById('status-container');
+            statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Function to display errors
+        function showError(error) {
+            console.error('PayPal error:', error);
+            showStatus(`Error: ${error.message || error}`, 'error');
+        }
+        
+        // Initialize PayPal buttons when SDK loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verify that PayPal SDK loaded correctly
+            if (typeof paypal === 'undefined') {
+                showStatus('Error: Could not load PayPal SDK. Check your internet connection and ensure there are no blockers preventing it from loading.', 'error');
+                return;
+            }
+            
+            console.log('PayPal SDK loaded successfully');
+            
+            // Render PayPal button
+            paypal.Buttons({
+                style: {
+                    shape: 'rect',
+                    color: 'blue',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                
+                createSubscription: function(data, actions) {
+                    console.log('Creating subscription for plan:', selectedPlan);
+                    
+                    // Note: This plan_id must be updated with the ID generated by the create-paypal-live-plans.js script
+                    // The current ID is just a placeholder and should be replaced with the real ID generated in the live environment
+                    return actions.subscription.create({
+                        'plan_id': 'P-8CL99754V12387622M7YIXLA',  // Replace with the real Enterprise Annual plan ID in live environment
+                        'application_context': {
+                            'shipping_preference': 'NO_SHIPPING',
+                            'user_action': 'SUBSCRIBE_NOW',
+                            'return_url': 'https://poker-planning-pro.vercel.app/settings/subscription/success',
+                            'cancel_url': 'https://poker-planning-pro.vercel.app/settings/subscription'
+                        }
+                    });
+                },
+                
+                onApprove: function(data, actions) {
+                    console.log('Subscription approved:', data);
+                    showStatus(`
+                        <h3>Subscription Approved!</h3>
+                        <p>Your subscription has been successfully created.</p>
+                        <p><strong>Subscription ID:</strong> ${data.subscriptionID}</p>
+                        <p>You will be redirected to the confirmation page in a few seconds...</p>
+                    `, 'success');
+                    
+                    // Simulate redirection to success page
+                    setTimeout(function() {
+                        window.location.href = `subscription-status.html?subscription_id=${data.subscriptionID}&status=success`;
+                    }, 3000);
+                },
+                
+                onError: function(err) {
+                    showError(err);
+                }
+            }).render('#paypal-button-container');
+        });
+    </script>
+</body>
+</html>

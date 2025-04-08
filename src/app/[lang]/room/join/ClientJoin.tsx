@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import {
   Box,
   Typography,
@@ -17,6 +18,8 @@ import { getLocalizedRoute } from "@/utils/routeUtils";
 export default function ClientJoin() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
+  const { t } = useTranslation('common');
   const roomCode = searchParams.get("code");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,7 +73,7 @@ export default function ClientJoin() {
                   roomSnapshot.val().markedForDeletion === true || 
                   roomSnapshot.val().active === false) {
                 localStorage.removeItem('poker-planning-storage');
-                setError("Esta sala ha sido cerrada porque todos los participantes la abandonaron.");
+                setError(t('clientJoin.roomClosed'));
                 return false;
               }
               
@@ -137,12 +140,12 @@ export default function ClientJoin() {
 
   const handleJoinRoom = async () => {
     if (!roomCode) {
-      setError("Código de sala no válido");
+      setError(t('clientJoin.invalidRoomCode'));
       return;
     }
 
     if (!name.trim()) {
-      setError("Debes ingresar tu nombre");
+      setError(t('clientJoin.enterName'));
       return;
     }
 
@@ -171,11 +174,11 @@ export default function ClientJoin() {
       gap={3}
     >
       <Typography variant="h4" gutterBottom>
-        Unirse a la Sala
+        {t('clientJoin.joinRoom')}
       </Typography>
 
       <Typography variant="h6" color="text.secondary">
-        Código de sala: <strong>{roomCode}</strong>
+        {t('clientJoin.roomCode')}<strong>{roomCode}</strong>
       </Typography>
 
       {error && (
@@ -204,7 +207,7 @@ export default function ClientJoin() {
           }}
         >
           <Typography variant="body1">
-            Uniéndote automáticamente como <strong>{
+            {t('clientJoin.joiningAutomatically')} <strong>{
               currentUser.photoURL === 'guest_user'
                 ? localStorage.getItem('guestName')
                 : currentUser.displayName
@@ -227,7 +230,7 @@ export default function ClientJoin() {
           }}
         >
           <TextField
-            label="Tu nombre"
+            label={t('clientJoin.yourName')}
             fullWidth
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -245,7 +248,7 @@ export default function ClientJoin() {
             {isLoading || isSubmitting ? (
               <CircularProgress size={24} />
             ) : (
-              "Unirse a la Sala"
+              t('clientJoin.joinRoom')
             )}
           </Button>
         </Box>

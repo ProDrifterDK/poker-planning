@@ -121,7 +121,12 @@
     "retry": "Reintentar",
     "checkOur": "Consulta nuestra",
     "troubleshootingGuide": "guía de solución de problemas",
-    "toSolveThisProblem": "para resolver este problema"
+    "toSolveThisProblem": "para resolver este problema",
+    "autoJoinFailed": "Error al unirse automáticamente. Puedes intentar unirte manualmente.",
+    "determineNameFailed": "No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.",
+    "joinRoomFailed": "Error al unirse a la sala. Por favor, intenta nuevamente.",
+    "cannotChangeEstimation": "No puedes cambiar tu estimación hasta una nueva votación.",
+    "leaveRoomFailed": "Error al salir de la sala. Por favor, intenta nuevamente."
   },
   "adBlocker": {
     "detected": "Bloqueador de anuncios detectado",
@@ -131,6 +136,29 @@
     "addException": "O añade una excepción para este dominio"
   },
   "home": "Inicio",
+  "directJoin": {
+    "roomClosed": "Esta sala ha sido cerrada porque todos los participantes la abandonaron.",
+    "invalidRoomCode": "Código de sala no válido",
+    "mustSignIn": "Debes iniciar sesión para unirte a una sala",
+    "nameNotDetermined": "No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.",
+    "roomLimitReached": "Esta sala ha alcanzado su límite de participantes. El creador de la sala necesita actualizar su plan para permitir más participantes.",
+    "errorJoiningRoom": "Error al unirse a la sala",
+    "noValidRoomCode": "No se ha proporcionado un código de sala válido.",
+    "backToHome": "Volver al inicio",
+    "joinRoom": "Unirse a la Sala",
+    "roomCode": "Código de sala: ",
+    "aboutToJoin": "Estás a punto de unirte a la sala con el nombre:",
+    "joiningAs": "Uniéndote a la sala como"
+  },
+  "clientJoin": {
+    "roomClosed": "Esta sala ha sido cerrada porque todos los participantes la abandonaron.",
+    "invalidRoomCode": "Código de sala no válido",
+    "enterName": "Debes ingresar tu nombre",
+    "joinRoom": "Unirse a la Sala",
+    "roomCode": "Código de sala: ",
+    "joiningAutomatically": "Uniéndote automáticamente como",
+    "yourName": "Tu nombre"
+  },
   "settings": {
     "title": "Configuración",
     "description": "Gestiona tus preferencias y configura integraciones con herramientas externas.",
@@ -444,5 +472,41 @@
     "section10Title": "10. Contacto",
     "section10Content": "Si tiene preguntas sobre esta Política de Privacidad, contáctenos en:",
     "contactEmail": "Email: alan.resyst@gmail.com"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "¡Bienvenido a Poker Planning Pro!",
+      "description": "Este tutorial te guiará a través de las principales funcionalidades de la aplicación. Puedes saltarlo en cualquier momento y retomarlo después desde el menú de ayuda."
+    },
+    "createRoom": {
+      "title": "Crear una sala",
+      "description": "Puedes crear una nueva sala de Planning Poker seleccionando una serie de estimación y haciendo clic en \"Crear Sala\"."
+    },
+    "joinRoom": {
+      "title": "Unirse a una sala",
+      "description": "También puedes unirte a una sala existente introduciendo el código de la sala y tu nombre."
+    },
+    "selectCard": {
+      "title": "Seleccionar una carta",
+      "description": "Una vez en la sala, puedes seleccionar una carta para estimar la tarea actual. Haz clic en la carta que represente tu estimación."
+    },
+    "revealCards": {
+      "title": "Revelar cartas",
+      "description": "Cuando todos los participantes hayan votado, el moderador puede revelar las cartas para ver todas las estimaciones."
+    },
+    "manageIssues": {
+      "title": "Gestionar issues",
+      "description": "Puedes gestionar los issues a estimar desde el panel lateral. Añade, edita o elimina issues según sea necesario."
+    },
+    "completed": {
+      "title": "¡Tutorial completado!",
+      "description": "Has completado el tutorial básico. Ahora puedes comenzar a utilizar Poker Planning Pro para tus estimaciones ágiles. Si necesitas ayuda adicional, consulta la documentación o contacta con soporte."
+    },
+    "buttons": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "start": "Comenzar",
+      "finish": "Finalizar"
+    }
   }
 }

@@ -309,7 +309,7 @@ export default function RoomPage() {
                     .catch(error => {
                         console.error('Error al unirse automáticamente a la sala:', error);
                         // Si falla la auto-unión, mostrar un mensaje de error
-                        setErrorMessage('Error al unirse automáticamente. Puedes intentar unirte manualmente.');
+                        setErrorMessage(t('errors.autoJoinFailed'));
                         // Limpiar los timeouts si hubo un error
                         clearTimeout(autoJoinTimeout);
                         clearTimeout(forceJoinTimeout);
@@ -425,7 +425,7 @@ export default function RoomPage() {
         
         // Verificar que tengamos un nombre
         if (!userName || !userName.trim()) {
-            setErrorMessage('No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.');
+            setErrorMessage(t('errors.determineNameFailed'));
             return;
         }
 
@@ -458,14 +458,14 @@ export default function RoomPage() {
             setIsJoined(true);
         } catch (error) {
             console.error('Error al unirse a la sala:', error);
-            setErrorMessage('Error al unirse a la sala. Por favor, intenta nuevamente.');
+            setErrorMessage(t('errors.joinRoomFailed'));
         }
     };
 
     // Seleccionar carta
     const handleSelectEstimation = async (value: number | string) => {
         if (reveal) {
-            setErrorMessage('No puedes cambiar tu estimación hasta una nueva votación.');
+            setErrorMessage(t('errors.cannotChangeEstimation'));
             return;
         }
         
@@ -509,7 +509,7 @@ export default function RoomPage() {
             router.push(getLocalizedRoute('/'));
         } catch (error) {
             console.error('Error al salir de la sala:', error);
-            setErrorMessage(t('errors.retry'));
+            setErrorMessage(t('errors.leaveRoomFailed'));
         }
     };
 

@@ -121,7 +121,12 @@
     "retry": "Retry",
     "checkOur": "Check our",
     "troubleshootingGuide": "troubleshooting guide",
-    "toSolveThisProblem": "to solve this problem"
+    "toSolveThisProblem": "to solve this problem",
+    "autoJoinFailed": "Error joining automatically. You can try joining manually.",
+    "determineNameFailed": "Could not determine your name. Please sign in again.",
+    "joinRoomFailed": "Error joining the room. Please try again.",
+    "cannotChangeEstimation": "You cannot change your estimation until a new vote.",
+    "leaveRoomFailed": "Error leaving the room. Please try again."
   },
   "adBlocker": {
     "detected": "Ad Blocker Detected",
@@ -131,6 +136,29 @@
     "addException": "Or add an exception for this domain"
   },
   "home": "Home",
+  "directJoin": {
+    "roomClosed": "This room has been closed because all participants left.",
+    "invalidRoomCode": "Invalid room code",
+    "mustSignIn": "You must sign in to join a room",
+    "nameNotDetermined": "Could not determine your name. Please sign in again.",
+    "roomLimitReached": "This room has reached its participant limit. The room creator needs to upgrade their plan to allow more participants.",
+    "errorJoiningRoom": "Error joining the room",
+    "noValidRoomCode": "No valid room code provided.",
+    "backToHome": "Back to home",
+    "joinRoom": "Join Room",
+    "roomCode": "Room code: ",
+    "aboutToJoin": "You are about to join the room with the name:",
+    "joiningAs": "Joining the room as"
+  },
+  "clientJoin": {
+    "roomClosed": "This room has been closed because all participants left.",
+    "invalidRoomCode": "Invalid room code",
+    "enterName": "You must enter your name",
+    "joinRoom": "Join Room",
+    "roomCode": "Room code: ",
+    "joiningAutomatically": "Joining automatically as",
+    "yourName": "Your name"
+  },
   "settings": {
     "title": "Settings",
     "description": "Manage your preferences and configure integrations with external tools.",
@@ -444,5 +472,41 @@
     "section10Title": "10. Contact",
     "section10Content": "If you have questions about this Privacy Policy, please contact us at:",
     "contactEmail": "Email: alan.resyst@gmail.com"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to Poker Planning Pro!",
+      "description": "This tutorial will guide you through the main features of the application. You can skip it at any time and resume it later from the help menu."
+    },
+    "createRoom": {
+      "title": "Create a room",
+      "description": "You can create a new Planning Poker room by selecting an estimation series and clicking on \"Create Room\"."
+    },
+    "joinRoom": {
+      "title": "Join a room",
+      "description": "You can also join an existing room by entering the room code and your name."
+    },
+    "selectCard": {
+      "title": "Select a card",
+      "description": "Once in the room, you can select a card to estimate the current task. Click on the card that represents your estimation."
+    },
+    "revealCards": {
+      "title": "Reveal cards",
+      "description": "When all participants have voted, the moderator can reveal the cards to see all estimations."
+    },
+    "manageIssues": {
+      "title": "Manage issues",
+      "description": "You can manage the issues to estimate from the sidebar. Add, edit, or delete issues as needed."
+    },
+    "completed": {
+      "title": "Tutorial completed!",
+      "description": "You have completed the basic tutorial. Now you can start using Poker Planning Pro for your agile estimations. If you need additional help, check the documentation or contact support."
+    },
+    "buttons": {
+      "previous": "Previous",
+      "next": "Next",
+      "start": "Start",
+      "finish": "Finish"
+    }
   }
 }

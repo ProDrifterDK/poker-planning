@@ -8,10 +8,10 @@ const locales = ['es', 'en'];
 // No definimos un defaultLocale fijo para permitir la detección automática
 
 // Lista de rutas que no necesitan internacionalización
-const publicPaths = ['/_next/', '/api/', '/favicon.ico', '/images/', '/locales/'];
+const publicPaths = ['/_next/', '/api/', '/favicon.ico', '/images/', '/locales/', '/subscription-status.html'];
 
 // Lista de rutas que deben ser redirigidas a la versión localizada
-const localizedRoutes = ['/terms', '/privacy-policy'];
+const localizedRoutes = ['/terms', '/privacy-policy', '/room', '/settings', '/auth'];
 
 /**
  * Obtiene el idioma preferido del usuario
@@ -44,6 +44,21 @@ export function middleware(request: NextRequest) {
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
   if (isPublicPath) {
     return NextResponse.next();
+  }
+  
+  // Manejar archivos HTML de suscripción de PayPal
+  if (pathname.includes('paypal-') && pathname.endsWith('.html')) {
+    const locale = getLocale(request);
+    
+    // Si el archivo ya tiene un sufijo de idioma, no hacer nada
+    if (pathname.includes('-en.html') || pathname.includes('-es.html')) {
+      return NextResponse.next();
+    }
+    
+    // Redirigir al archivo con el sufijo de idioma correcto
+    const newPath = pathname.replace('.html', `-${locale}.html`);
+    request.nextUrl.pathname = newPath;
+    return NextResponse.redirect(request.nextUrl);
   }
   
   // Verificar si ya hay un idioma en la URL

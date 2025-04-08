@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import ErrorDisplay from '../../components/ErrorDisplay';
 import { OnboardingTooltip } from '../../components/Onboarding';
 import AdBlockerWarning from '../../components/AdBlockerWarning';
+import OnboardingWrapper from '../../components/Onboarding/OnboardingWrapper';
 import Script from 'next/script';
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
@@ -51,7 +52,9 @@ export default async function RootLayout({
             <main style={{ flex: 1 }}>
               {children}
               <ErrorDisplay />
-              <OnboardingTooltip />
+              <OnboardingWrapper>
+                <OnboardingTooltip />
+              </OnboardingWrapper>
               <AdBlockerWarning />
             </main>
             <Footer />

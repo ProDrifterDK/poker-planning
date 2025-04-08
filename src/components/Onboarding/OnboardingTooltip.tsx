@@ -16,12 +16,14 @@ import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useOnboardingStore, OnboardingStep } from '@/store/onboardingStore';
+import { useTranslation } from 'react-i18next';
 
 // Componentes de motion
 const MotionCard = motion.create(Card);
 
 // Un componente básico para el tutorial interactivo sin manipulación del DOM
 const BasicOnboardingTooltip: React.FC = () => {
+    const { t } = useTranslation('common');
     const {
         isActive,
         currentStep,
@@ -179,7 +181,7 @@ const BasicOnboardingTooltip: React.FC = () => {
                                 }
                             }}
                         >
-                            Anterior
+                            {t('onboarding.buttons.previous', 'Anterior')}
                         </Button>
                     </motion.div>
 
@@ -204,7 +206,7 @@ const BasicOnboardingTooltip: React.FC = () => {
                                     boxShadow: 2
                                 }}
                             >
-                                Finalizar
+                                {t('onboarding.buttons.finish', 'Finalizar')}
                             </Button>
                         </motion.div>
                     ) : (
@@ -226,7 +228,7 @@ const BasicOnboardingTooltip: React.FC = () => {
                                     boxShadow: 2
                                 }}
                             >
-                                {isFirstStep ? 'Comenzar' : 'Siguiente'}
+                                {isFirstStep ? t('onboarding.buttons.start', 'Comenzar') : t('onboarding.buttons.next', 'Siguiente')}
                             </Button>
                         </motion.div>
                     )}

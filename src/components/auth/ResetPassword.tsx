@@ -49,7 +49,7 @@ const ResetPassword: React.FC = () => {
   const [resetSent, setResetSent] = useState(false);
   const { resetUserPassword, error, clearError } = useAuth();
   const router = useRouter();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('auth');
   
   // Redireccionar después de un tiempo si se envió el correo
   useEffect(() => {
@@ -70,7 +70,7 @@ const ResetPassword: React.FC = () => {
 
   const validateForm = () => {
     if (!email.trim()) {
-      setFormError('El correo electrónico es obligatorio');
+      setFormError(t('errors.emailRequired'));
       return false;
     }
     return true;
@@ -113,14 +113,13 @@ const ResetPassword: React.FC = () => {
         }}
       >
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
-          Restablecer Contraseña
+          {t('resetPassword.title')}
         </Typography>
         
         {resetSent ? (
           <>
             <Alert severity="success" sx={{ mb: 2 }}>
-              Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.
-              Serás redirigido a la página de inicio de sesión en unos segundos...
+              {t('resetPassword.emailSent', 'An email has been sent with instructions to reset your password. You will be redirected to the login page in a few seconds...')}
             </Alert>
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <MuiLink
@@ -128,14 +127,14 @@ const ResetPassword: React.FC = () => {
                 href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
-                Volver a Iniciar Sesión
+                {t('forgotPassword.backToLogin')}
               </MuiLink>
             </Box>
           </>
         ) : (
           <>
             <Typography variant="body1" paragraph>
-              Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.
+              {t('forgotPassword.instructions')}
             </Typography>
             
             {(error || formError) && (
@@ -146,7 +145,7 @@ const ResetPassword: React.FC = () => {
             
             <form onSubmit={handleSubmit}>
               <TextField
-                label="Correo electrónico"
+                label={t('forgotPassword.email')}
                 type="email"
                 fullWidth
                 margin="normal"
@@ -166,7 +165,7 @@ const ResetPassword: React.FC = () => {
                 disabled={isSubmitting}
                 sx={{ mt: 2, mb: 2, textTransform: "none" }}
               >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Enviar instrucciones'}
+                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('forgotPassword.submit')}
               </Button>
             </form>
             
@@ -176,7 +175,7 @@ const ResetPassword: React.FC = () => {
                 href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
-                Volver a iniciar sesión
+                {t('forgotPassword.backToLogin')}
               </MuiLink>
             </Box>
           </>
