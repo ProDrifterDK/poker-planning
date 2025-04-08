@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, 
   Typography, 
@@ -18,6 +19,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { getLocalizedRoute } from '@/utils/routeUtils';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, get } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
@@ -65,6 +67,7 @@ export default function ActiveRoomsList() {
   const [activeRooms, setActiveRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation('room');
   
   // Get the current plan
   const currentPlan = getCurrentPlan();
@@ -155,7 +158,7 @@ export default function ActiveRoomsList() {
                 
                 rooms.push({
                   id: roomId,
-                  title: metadata.title || `Sala ${roomId}`,
+                  title: metadata.title || `${t('activeRooms.roomPrefix')} ${roomId}`,
                   seriesKey: metadata.seriesKey || 'fibonacci',
                   createdAt: metadata.createdAt || Date.now(),
                   participantsCount
@@ -209,7 +212,7 @@ export default function ActiveRoomsList() {
               
               rooms.push({
                 id: roomId,
-                title: roomData.title || `Sala ${roomId}`,
+                title: roomData.title || `${t('activeRooms.roomPrefix')} ${roomId}`,
                 seriesKey: roomData.seriesKey || 'fibonacci',
                 createdAt: roomData.createdAt || Date.now(),
                 participantsCount
@@ -247,7 +250,7 @@ export default function ActiveRoomsList() {
       case 'powers2':
         return 'Poderes de 2';
       case 'days':
-        return 'Días';
+        return t('activeRooms.days');
       default:
         return key;
     }
@@ -261,7 +264,7 @@ export default function ActiveRoomsList() {
   
   // Join a room
   const handleJoinRoom = (roomId: string) => {
-    router.push(`/room/${roomId}`);
+    router.push(getLocalizedRoute(`/room/${roomId}`));
   };
   
   // If the user is not on Pro or Enterprise plan, don't show this component
@@ -272,7 +275,7 @@ export default function ActiveRoomsList() {
   return (
     <Box sx={{ width: '100%', maxWidth: 800, mb: 4 }}>
       <Typography variant="h6" gutterBottom>
-        Tus Salas Activas
+        {t('activeRooms.title')}
       </Typography>
       
       {loading ? (
@@ -282,7 +285,7 @@ export default function ActiveRoomsList() {
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : activeRooms.length === 0 ? (
-        <Alert severity="info">No tienes salas activas actualmente.</Alert>
+        <Alert severity="info">{t('activeRooms.noActiveRooms')}</Alert>
       ) : (
         <Paper elevation={2}>
           <List>
@@ -302,20 +305,20 @@ export default function ActiveRoomsList() {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
                             <Chip
                               icon={<MeetingRoomIcon fontSize="small" />}
-                              label={`Código: ${room.id}`}
+                              label={`${t('activeRooms.code')}: ${room.id}`}
                               size="small"
                               variant="outlined"
                             />
                             <Chip
                               icon={<PeopleIcon fontSize="small" />}
-                              label={`${room.participantsCount} participantes`}
+                              label={`${room.participantsCount} ${t('activeRooms.participants')}`}
                               size="small"
                               variant="outlined"
                             />
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Typography component="span" variant="body2" color="text.secondary">
-                              Serie: {formatSeriesKey(room.seriesKey)}
+                              {t('activeRooms.series')}: {formatSeriesKey(room.seriesKey)}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <AccessTimeIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
@@ -335,7 +338,7 @@ export default function ActiveRoomsList() {
                       onClick={() => handleJoinRoom(room.id)}
                       sx={{ textTransform: 'none' }}
                     >
-                      Entrar
+                      {t('activeRooms.enter')}
                     </Button>
                   </ListItemSecondaryAction>
                 </ListItem>

@@ -14,6 +14,33 @@ import {
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
+
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+  // Intentar obtener el idioma de i18next primero (cliente)
+  let lang = 'es'; // Valor por defecto
+  
+  if (typeof window !== 'undefined') {
+    // Estamos en el cliente, podemos acceder a i18next
+    const i18nLang = window.localStorage.getItem('i18nextLng');
+    
+    if (i18nLang && supportedLocales.includes(i18nLang)) {
+      lang = i18nLang;
+    } else {
+      // Fallback a la URL si no hay idioma en i18next
+      const urlLang = window.location.pathname.split('/')[1];
+      if (supportedLocales.includes(urlLang)) {
+        lang = urlLang;
+      }
+    }
+  }
+  
+  return `/${lang}${route}`;
+};
 
 const ResetPassword: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,12 +49,13 @@ const ResetPassword: React.FC = () => {
   const [resetSent, setResetSent] = useState(false);
   const { resetUserPassword, error, clearError } = useAuth();
   const router = useRouter();
+  const { i18n } = useTranslation();
   
   // Redireccionar después de un tiempo si se envió el correo
   useEffect(() => {
     if (resetSent) {
       const timer = setTimeout(() => {
-        router.push('/auth/signin');
+        router.push(getLocalizedRoute('/auth/signin'));
       }, 5000); // Dar más tiempo para leer el mensaje
       
       return () => clearTimeout(timer);
@@ -97,7 +125,7 @@ const ResetPassword: React.FC = () => {
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <MuiLink
                 component={Link}
-                href="/auth/signin"
+                href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
                 Volver a Iniciar Sesión
@@ -145,7 +173,7 @@ const ResetPassword: React.FC = () => {
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <MuiLink
                 component={Link}
-                href="/auth/signin"
+                href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
                 Volver a iniciar sesión

@@ -19,6 +19,33 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
+
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+  // Intentar obtener el idioma de i18next primero (cliente)
+  let lang = 'es'; // Valor por defecto
+  
+  if (typeof window !== 'undefined') {
+    // Estamos en el cliente, podemos acceder a i18next
+    const i18nLang = window.localStorage.getItem('i18nextLng');
+    
+    if (i18nLang && supportedLocales.includes(i18nLang)) {
+      lang = i18nLang;
+    } else {
+      // Fallback a la URL si no hay idioma en i18next
+      const urlLang = window.location.pathname.split('/')[1];
+      if (supportedLocales.includes(urlLang)) {
+        lang = urlLang;
+      }
+    }
+  }
+  
+  return `/${lang}${route}`;
+};
 
 const SignUp: React.FC = () => {
   const [name, setName] = useState('');
@@ -38,6 +65,7 @@ const SignUp: React.FC = () => {
   const [hasSpecialChar, setHasSpecialChar] = useState(false);
   const { signUp, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
+  const { i18n } = useTranslation();
 
   // Redireccionar si el usuario está autenticado o si el registro fue exitoso
   useEffect(() => {
@@ -67,7 +95,7 @@ const SignUp: React.FC = () => {
         } else {
           // Si no hay ninguna redirección específica, ir a la página de inicio
           console.log('Redirigiendo a página de inicio');
-          router.push('/');
+          router.push(getLocalizedRoute(''));
         }
       }, 1500);
       
@@ -453,7 +481,7 @@ const SignUp: React.FC = () => {
             ¿Ya tienes una cuenta?{' '}
             <MuiLink
               component={Link}
-              href="/auth/signin"
+              href={getLocalizedRoute('/auth/signin')}
               underline="hover"
             >
               Inicia sesión

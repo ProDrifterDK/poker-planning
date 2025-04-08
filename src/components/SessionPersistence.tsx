@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, Paper, Chip, Divider } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useRoomStore } from '@/store/roomStore';
+import { getLocalizedRoute } from '@/utils/routeUtils';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SubscriptionPlan } from '@/types/subscription';
 import { ref, update, get as firebaseGet } from 'firebase/database';
@@ -100,7 +101,7 @@ export default function SessionPersistence() {
 
   // Función para volver a la sala
   const returnToRoom = () => {
-    router.push(`/room/${roomId}`);
+    router.push(getLocalizedRoute(`/room/${roomId}`));
   };
 
   // Función para limpiar la sesión persistente y marcar al participante como inactivo

@@ -16,6 +16,33 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
+
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+  // Intentar obtener el idioma de i18next primero (cliente)
+  let lang = 'es'; // Valor por defecto
+  
+  if (typeof window !== 'undefined') {
+    // Estamos en el cliente, podemos acceder a i18next
+    const i18nLang = window.localStorage.getItem('i18nextLng');
+    
+    if (i18nLang && supportedLocales.includes(i18nLang)) {
+      lang = i18nLang;
+    } else {
+      // Fallback a la URL si no hay idioma en i18next
+      const urlLang = window.location.pathname.split('/')[1];
+      if (supportedLocales.includes(urlLang)) {
+        lang = urlLang;
+      }
+    }
+  }
+  
+  return `/${lang}${route}`;
+};
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,6 +52,7 @@ const SignIn: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const { signIn, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
+  const { i18n } = useTranslation();
 
   // Redireccionar si el usuario está autenticado o si el inicio de sesión fue exitoso
   useEffect(() => {
@@ -57,11 +85,11 @@ const SignIn: React.FC = () => {
           sessionStorage.removeItem('redirectAfterAuth');
         } else if (pendingSubscription) {
           console.log('Encontrada suscripción pendiente, redirigiendo a página de éxito');
-          router.push('/settings/subscription');
+          router.push(getLocalizedRoute('/settings/subscription'));
         } else {
           // Si no hay ninguna redirección específica, ir a la página de inicio
           console.log('Redirigiendo a página de inicio');
-          router.push('/');
+          router.push(getLocalizedRoute(''));
         }
       }, 1500);
 
@@ -188,7 +216,7 @@ const SignIn: React.FC = () => {
           <Box sx={{ mt: 1, mb: 2, textAlign: 'right' }}>
             <MuiLink
               component={Link}
-              href="/auth/reset-password"
+              href={getLocalizedRoute('/auth/reset-password')}
               underline="hover"
               variant="body2"
             >
@@ -227,7 +255,7 @@ const SignIn: React.FC = () => {
             ¿No tienes una cuenta?{' '}
             <MuiLink
               component={Link}
-              href="/auth/signup"
+              href={getLocalizedRoute('/auth/signup')}
               underline="hover"
             >
               Regístrate

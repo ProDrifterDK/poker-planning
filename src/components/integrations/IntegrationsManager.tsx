@@ -4,24 +4,32 @@ import React, { useState } from 'react';
 import { Typography, Paper, Divider } from '@mui/material';
 import IntegrationsList from './IntegrationsList';
 import IntegrationForm from './IntegrationForm';
+import { useTranslation } from 'react-i18next';
 
 export default function IntegrationsManager() {
   const [formOpen, setFormOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | undefined>(undefined);
+  const { t, i18n } = useTranslation('common');
+  
+  // Force a re-render when the language changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when the language changes
+    console.log('Current language:', i18n.language);
+  }, [i18n.language]);
 
-  // Abrir el formulario para añadir una nueva integración
+  // Open the form to add a new integration
   const handleAddClick = () => {
     setEditIndex(undefined);
     setFormOpen(true);
   };
 
-  // Abrir el formulario para editar una integración existente
+  // Open the form to edit an existing integration
   const handleEditClick = (index: number) => {
     setEditIndex(index);
     setFormOpen(true);
   };
 
-  // Cerrar el formulario
+  // Close the form
   const handleFormClose = () => {
     setFormOpen(false);
     setEditIndex(undefined);
@@ -30,10 +38,10 @@ export default function IntegrationsManager() {
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
       <Typography variant="h5" gutterBottom>
-        Integraciones
+        {t('settings.integrations.title', 'Integraciones')}
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        Configura integraciones con herramientas externas para enviar los resultados de las estimaciones.
+        {t('settings.integrations.description', 'Configura integraciones con herramientas externas para enviar los resultados de las estimaciones.')}
       </Typography>
 
       <Divider sx={{ my: 2 }} />

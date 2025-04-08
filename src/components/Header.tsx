@@ -24,6 +24,11 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 import { getPlanLookupKey } from '@/utils/planUtils';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import LanguageSelector from './LanguageSelector';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
 
 // Función auxiliar para obtener el nombre del plan de forma segura
 const getPlanName = (plan: SubscriptionPlan): string => {
@@ -34,12 +39,36 @@ const getPlanName = (plan: SubscriptionPlan): string => {
     return SUBSCRIPTION_PLANS[planLookupKey].name;
 };
 
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+    // Intentar obtener el idioma de i18next primero (cliente)
+    let lang = 'es'; // Valor por defecto
+    
+    if (typeof window !== 'undefined') {
+        // Estamos en el cliente, podemos acceder a i18next
+        const i18nLang = window.localStorage.getItem('i18nextLng');
+        
+        if (i18nLang && supportedLocales.includes(i18nLang)) {
+            lang = i18nLang;
+        } else {
+            // Fallback a la URL si no hay idioma en i18next
+            const urlLang = window.location.pathname.split('/')[1];
+            if (supportedLocales.includes(urlLang)) {
+                lang = urlLang;
+            }
+        }
+    }
+    
+    return `/${lang}${route}`;
+};
+
 export default function Header() {
     const router = useRouter();
     const { currentUser, logout, isModerator, isGuestUser } = useAuth();
     const { profilePhotoURL, reloadProfile } = useUserProfile();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const { t } = useTranslation('common');
     
     // Verificar si el usuario es invitado
     const isGuest = isGuestUser();
@@ -97,6 +126,26 @@ export default function Header() {
         }
     }, [currentUser, fetchUserSubscription]);
 
+    // Función para obtener el nombre traducido del plan
+    const getTranslatedPlanName = (plan: SubscriptionPlan): string => {
+        const planLookupKey = getPlanLookupKey(plan);
+        
+        // Determinar la clave de traducción basada en el plan y el intervalo de facturación
+        let translationKey = 'free';
+        
+        if (planLookupKey.includes('-')) {
+            // Es un plan con intervalo de facturación específico (ej: pro-month)
+            const [planType, interval] = planLookupKey.split('-');
+            translationKey = planType + (interval === 'month' ? 'Monthly' : 'Yearly');
+        } else {
+            // Es un plan simple (ej: free)
+            translationKey = planLookupKey;
+        }
+        
+        // Obtener el nombre traducido del plan
+        return t(`planNames.${translationKey}`, SUBSCRIPTION_PLANS[planLookupKey].name);
+    };
+
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -115,7 +164,7 @@ export default function Header() {
     };
 
     const handleProfile = () => {
-        router.push('/profile');
+        router.push(getLocalizedRoute('/profile'));
         handleClose();
     };
 
@@ -126,12 +175,13 @@ export default function Header() {
                     variant="h6"
                     component="button"
                     sx={{ flexGrow: 1 }}
-                    onClick={() => router.push('/')}
+                    onClick={() => router.push(getLocalizedRoute(''))}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
                 >
-                    Poker Planning Pro
+                    {t('appName', 'Poker Planning Pro')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LanguageSelector />
                     <OnboardingButton variant="icon" color="inherit" />
                     <ThemeToggleButton />
                     
@@ -191,11 +241,11 @@ export default function Header() {
                                         </Typography>
                                         {isGuest ? (
                                             <Typography variant="caption" color="info.main" sx={{ display: 'block' }}>
-                                                Usuario invitado
+                                                {t('menu.guestUser')}
                                             </Typography>
                                         ) : (
                                             <Typography variant="caption" color="primary" sx={{ display: 'block' }}>
-                                                Plan {getPlanName(currentPlan)}
+                                                {t('menu.plan')} {getTranslatedPlanName(currentPlan)}
                                             </Typography>
                                         )}
                                     </Box>
@@ -204,43 +254,43 @@ export default function Header() {
                                 {!isGuest && (
                                     <>
                                         <MenuItem onClick={handleProfile}>
-                                            Mi Perfil
+                                            {t('menu.myProfile')}
                                         </MenuItem>
                                         <MenuItem onClick={() => {
-                                            router.push('/settings');
+                                            router.push(getLocalizedRoute('/settings'));
                                             handleClose();
                                         }}>
-                                            Configuración
+                                            {t('menu.settings')}
                                         </MenuItem>
                                         <MenuItem onClick={() => {
-                                            router.push('/settings/subscription');
+                                            router.push(getLocalizedRoute('/settings/subscription'));
                                             handleClose();
                                         }}>
-                                            Suscripción
+                                            {t('menu.subscription')}
                                         </MenuItem>
                                         <MenuItem onClick={() => {
-                                            router.push('/settings/integrations');
+                                            router.push(getLocalizedRoute('/settings/integrations'));
                                             handleClose();
                                         }}>
-                                            Integraciones
+                                            {t('menu.integrations')}
                                         </MenuItem>
                                     </>
                                 )}
                                 {isModerator() && (
                                     <MenuItem onClick={() => {
-                                        router.push('/admin');
+                                        router.push(getLocalizedRoute('/admin'));
                                         handleClose();
                                     }}>
-                                        Panel de Administración
+                                        {t('menu.adminPanel')}
                                     </MenuItem>
                                 )}
                                 <MenuItem onClick={handleLogout}>
-                                    Cerrar Sesión
+                                    {t('menu.logout')}
                                 </MenuItem>
                             </Menu>
                         </>
                     ) : (
-                        <Link href="/auth/signin" passHref>
+                        <Link href={getLocalizedRoute('/auth/signin')} passHref>
                             <Button
                                 color="info"
                                 variant="contained"
@@ -250,7 +300,7 @@ export default function Header() {
                                     textTransform: "none"
                                 }}
                             >
-                                Iniciar Sesión
+                                {t('login')}
                             </Button>
                         </Link>
                     )}

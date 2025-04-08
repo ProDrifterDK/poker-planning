@@ -1,21 +1,29 @@
 /**
- * Tipos para el sistema de suscripciones
+ * Types for the subscription system
+ *
+ * This file defines the types and constants for the subscription system.
+ * The text content is internationalized using the subscriptionTranslations.ts file.
  */
 
-// Planes disponibles
+import { getSubscriptionTranslations } from './subscriptionTranslations';
+
+// Default to English translations for type definitions
+const enTranslations = getSubscriptionTranslations('en');
+
+// Available plans
 export enum SubscriptionPlan {
   FREE = 'free',
   PRO = 'pro',
   ENTERPRISE = 'enterprise'
 }
 
-// Intervalos de facturación
+// Billing intervals
 export enum BillingInterval {
   MONTH = 'month',
   YEAR = 'year'
 }
 
-// Características de cada plan
+// Features for each plan
 export interface PlanFeatures {
   maxParticipants: number;
   maxActiveRooms: number;
@@ -28,20 +36,20 @@ export interface PlanFeatures {
   advancedRoles: boolean;
   prioritySupport: boolean;
   api: boolean;
-  adFree: boolean; // Característica para indicar si el plan no muestra anuncios
+  adFree: boolean; // Feature to indicate if the plan shows no ads
 }
 
-// Detalles de cada plan
+// Details for each plan
 export interface PlanDetails {
   id: SubscriptionPlan;
   name: string;
-  price: number; // Precio en USD
-  billingInterval: BillingInterval; // Intervalo de facturación (mensual o anual)
+  price: number; // Price in USD
+  billingInterval: BillingInterval; // Billing interval (monthly or yearly)
   features: PlanFeatures;
   description: string;
 }
 
-// Estado de la suscripción
+// Subscription status
 export enum SubscriptionStatus {
   ACTIVE = 'active',
   CANCELLED = 'cancelled',
@@ -50,13 +58,13 @@ export enum SubscriptionStatus {
   FAILED = 'failed'
 }
 
-// Método de pago
+// Payment method
 export enum PaymentMethod {
   PAYPAL = 'paypal',
   CREDIT_CARD = 'credit_card'
 }
 
-// Información de la suscripción del usuario
+// User subscription information
 export interface UserSubscription {
   id: string;
   userId: string;
@@ -66,11 +74,11 @@ export interface UserSubscription {
   endDate: string; // ISO date string
   autoRenew: boolean;
   paymentMethod: PaymentMethod;
-  paymentId?: string; // ID de la transacción en PayPal
-  subscriptionId?: string; // ID de la suscripción en PayPal
+  paymentId?: string; // Payment ID in PayPal
+  subscriptionId?: string; // Subscription ID in PayPal
 }
 
-// Historial de pagos
+// Payment history
 export interface PaymentHistory {
   id: string;
   userId: string;
@@ -80,18 +88,18 @@ export interface PaymentHistory {
   date: string; // ISO date string
   status: 'completed' | 'pending' | 'failed';
   paymentMethod: PaymentMethod;
-  transactionId: string; // ID de la transacción en PayPal
+  transactionId: string; // Transaction ID in PayPal
 }
 
-// Definición de los planes disponibles
+// Definition of available plans
 export const SUBSCRIPTION_PLANS = {
   // Planes mensuales
   [SubscriptionPlan.FREE]: {
     id: SubscriptionPlan.FREE,
-    name: 'Free',
+    name: enTranslations.free.name,
     price: 0,
     billingInterval: BillingInterval.MONTH,
-    description: 'Para equipos pequeños y uso personal',
+    description: enTranslations.free.description,
     features: {
       maxParticipants: 5,
       maxActiveRooms: 1,
@@ -104,15 +112,15 @@ export const SUBSCRIPTION_PLANS = {
       advancedRoles: false,
       prioritySupport: false,
       api: false,
-      adFree: false // Los usuarios Free ven anuncios
+      adFree: false // Free users see ads
     }
   },
   [SubscriptionPlan.PRO + '-' + BillingInterval.MONTH]: {
     id: SubscriptionPlan.PRO,
-    name: 'Pro (Mensual)',
+    name: enTranslations.proMonthly.name,
     price: 9.99,
     billingInterval: BillingInterval.MONTH,
-    description: 'Para equipos profesionales',
+    description: enTranslations.proMonthly.description,
     features: {
       maxParticipants: 15,
       maxActiveRooms: 5,
@@ -125,15 +133,15 @@ export const SUBSCRIPTION_PLANS = {
       advancedRoles: false,
       prioritySupport: false,
       api: false,
-      adFree: true // Los usuarios Pro no ven anuncios
+      adFree: true // Pro users don't see ads
     }
   },
   [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.MONTH]: {
     id: SubscriptionPlan.ENTERPRISE,
-    name: 'Enterprise (Mensual)',
+    name: enTranslations.enterpriseMonthly.name,
     price: 29.99,
     billingInterval: BillingInterval.MONTH,
-    description: 'Para grandes organizaciones',
+    description: enTranslations.enterpriseMonthly.description,
     features: {
       maxParticipants: 100,
       maxActiveRooms: 20,
@@ -146,17 +154,17 @@ export const SUBSCRIPTION_PLANS = {
       advancedRoles: true,
       prioritySupport: true,
       api: true,
-      adFree: true // Los usuarios Enterprise no ven anuncios
+      adFree: true // Enterprise users don't see ads
     }
   },
   
   // Planes anuales
   [SubscriptionPlan.PRO + '-' + BillingInterval.YEAR]: {
     id: SubscriptionPlan.PRO,
-    name: 'Pro (Anual)',
+    name: enTranslations.proYearly.name,
     price: 99.99,
     billingInterval: BillingInterval.YEAR,
-    description: 'Para equipos profesionales - Ahorra más de 15%',
+    description: enTranslations.proYearly.description,
     features: {
       maxParticipants: 15,
       maxActiveRooms: 5,
@@ -169,15 +177,15 @@ export const SUBSCRIPTION_PLANS = {
       advancedRoles: false,
       prioritySupport: false,
       api: false,
-      adFree: true // Los usuarios Pro no ven anuncios
+      adFree: true // Pro users don't see ads
     }
   },
   [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.YEAR]: {
     id: SubscriptionPlan.ENTERPRISE,
-    name: 'Enterprise (Anual)',
+    name: enTranslations.enterpriseYearly.name,
     price: 299.99,
     billingInterval: BillingInterval.YEAR,
-    description: 'Para grandes organizaciones - Ahorra más de 15%',
+    description: enTranslations.enterpriseYearly.description,
     features: {
       maxParticipants: 100,
       maxActiveRooms: 20,
@@ -190,7 +198,44 @@ export const SUBSCRIPTION_PLANS = {
       advancedRoles: true,
       prioritySupport: true,
       api: true,
-      adFree: true // Los usuarios Enterprise no ven anuncios
+      adFree: true // Enterprise users don't see ads
     }
   }
 } as Record<string, PlanDetails>;
+
+/**
+ * Get plan details with translations for a specific language
+ * @param lang Language code ('en' or 'es')
+ * @returns Plan details with translations for the specified language
+ */
+export function getLocalizedSubscriptionPlans(lang: string): Record<string, PlanDetails> {
+  const translations = getSubscriptionTranslations(lang);
+  
+  return {
+    [SubscriptionPlan.FREE]: {
+      ...SUBSCRIPTION_PLANS[SubscriptionPlan.FREE],
+      name: translations.free.name,
+      description: translations.free.description
+    },
+    [SubscriptionPlan.PRO + '-' + BillingInterval.MONTH]: {
+      ...SUBSCRIPTION_PLANS[SubscriptionPlan.PRO + '-' + BillingInterval.MONTH],
+      name: translations.proMonthly.name,
+      description: translations.proMonthly.description
+    },
+    [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.MONTH]: {
+      ...SUBSCRIPTION_PLANS[SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.MONTH],
+      name: translations.enterpriseMonthly.name,
+      description: translations.enterpriseMonthly.description
+    },
+    [SubscriptionPlan.PRO + '-' + BillingInterval.YEAR]: {
+      ...SUBSCRIPTION_PLANS[SubscriptionPlan.PRO + '-' + BillingInterval.YEAR],
+      name: translations.proYearly.name,
+      description: translations.proYearly.description
+    },
+    [SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.YEAR]: {
+      ...SUBSCRIPTION_PLANS[SubscriptionPlan.ENTERPRISE + '-' + BillingInterval.YEAR],
+      name: translations.enterpriseYearly.name,
+      description: translations.enterpriseYearly.description
+    }
+  };
+}

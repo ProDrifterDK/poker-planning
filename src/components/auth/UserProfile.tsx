@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -68,6 +69,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const UserProfile: React.FC = () => {
+  const { t } = useTranslation('auth');
   const {
     currentUser,
     updateProfile,
@@ -187,13 +189,13 @@ const UserProfile: React.FC = () => {
 
   const validateForm = () => {
     if (!displayName.trim()) {
-      setFormError('El nombre es obligatorio');
+      setFormError(t('errors.nameRequired'));
       return false;
     }
 
     // Validar email
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setFormError('El formato del correo electrónico no es válido');
+      setFormError(t('errors.invalidEmail'));
       return false;
     }
 
@@ -230,7 +232,7 @@ const UserProfile: React.FC = () => {
   const handleEmailUpdate = async () => {
 
     // Aquí se implementaría un diálogo para solicitar la contraseña actual
-    const currentPassword = prompt('Ingresa tu contraseña actual para confirmar el cambio de email:');
+    const currentPassword = prompt(t('profile.currentPassword'));
 
     if (!currentPassword) return;
 
@@ -322,7 +324,7 @@ const UserProfile: React.FC = () => {
 
           // Verificar tamaño del archivo (máximo 2MB)
           if (file.size > 2 * 1024 * 1024) {
-            setFormError('La imagen es demasiado grande. El tamaño máximo es 2MB.');
+            setFormError(t('profile.imageTooBig'));
             setIsSubmitting(false);
             return;
           }
@@ -348,7 +350,7 @@ const UserProfile: React.FC = () => {
           console.log('Proceso de subida completado con éxito');
         } catch (error) {
           console.error('Error al subir imagen:', error);
-          setFormError('No se pudo subir la imagen. Inténtalo de nuevo.');
+          setFormError(t('errors.genericError'));
         } finally {
           setIsSubmitting(false);
         }
@@ -370,7 +372,7 @@ const UserProfile: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <CircularProgress />
         <Typography variant="h6" sx={{ ml: 2 }}>
-          Cargando perfil...
+          {t('profile.loading')}
         </Typography>
       </Box>
     );
@@ -439,7 +441,7 @@ const UserProfile: React.FC = () => {
             </Box>
             <Box>
               <Typography variant="h5" component="h1" gutterBottom>
-                Mi Perfil
+                {t('profile.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {currentUser.email}
@@ -451,7 +453,7 @@ const UserProfile: React.FC = () => {
 
           {isSuccess && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              Perfil actualizado correctamente
+              {t('profile.updated')}
             </Alert>
           )}
 
@@ -469,10 +471,10 @@ const UserProfile: React.FC = () => {
               variant="scrollable"
               scrollButtons="auto"
             >
-              <Tab icon={<PersonIcon />} label="Información Personal" />
-              <Tab icon={<BusinessIcon />} label="Información Profesional" />
-              <Tab icon={<NotificationsIcon />} label="Notificaciones" />
-              <Tab icon={<SecurityIcon />} label="Seguridad" />
+              <Tab icon={<PersonIcon />} label={t('profile.personalInfo')} />
+              <Tab icon={<BusinessIcon />} label={t('profile.professionalInfo')} />
+              <Tab icon={<NotificationsIcon />} label={t('profile.notifications')} />
+              <Tab icon={<SecurityIcon />} label={t('profile.security')} />
             </Tabs>
           </Box>
 
@@ -481,7 +483,7 @@ const UserProfile: React.FC = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
-                    label="Nombre"
+                    label={t('profile.name')}
                     fullWidth
                     variant="outlined"
                     value={displayName}
@@ -492,7 +494,7 @@ const UserProfile: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Correo Electrónico"
+                    label={t('profile.email')}
                     fullWidth
                     variant="outlined"
                     type="email"
@@ -503,7 +505,7 @@ const UserProfile: React.FC = () => {
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
-                          <Tooltip title="Cambiar email requiere verificación">
+                          <Tooltip title={t('profile.updateEmail')}>
                             <span>
                               <IconButton
                                 edge="end"
@@ -522,7 +524,7 @@ const UserProfile: React.FC = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Teléfono"
+                    label={t('profile.phoneNumber')}
                     fullWidth
                     variant="outlined"
                     value={phoneNumber}
@@ -540,7 +542,7 @@ const UserProfile: React.FC = () => {
                   onClick={handleLogout}
                   disabled={isSubmitting}
                 >
-                  Cerrar Sesión
+                  {t('profile.logout')}
                 </Button>
 
                 <Button
@@ -549,7 +551,7 @@ const UserProfile: React.FC = () => {
                   color="primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('profile.saveChanges')}
                 </Button>
               </Box>
             </form>
@@ -560,18 +562,18 @@ const UserProfile: React.FC = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
-                    label="Cargo / Puesto"
+                    label={t('profile.jobTitle')}
                     fullWidth
                     variant="outlined"
                     value={jobTitle}
                     onChange={handleJobTitleChange}
                     disabled={isSubmitting}
-                    placeholder="Ej: Scrum Master, Project Manager, Developer"
+                    placeholder="Scrum Master, Project Manager, Developer"
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Empresa / Organización"
+                    label={t('profile.company')}
                     fullWidth
                     variant="outlined"
                     value={company}
@@ -589,7 +591,7 @@ const UserProfile: React.FC = () => {
                   color="primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('profile.saveChanges')}
                 </Button>
               </Box>
             </form>
@@ -598,7 +600,7 @@ const UserProfile: React.FC = () => {
           <TabPanel value={tabValue} index={2}>
             <form onSubmit={handleNotificationSubmit}>
               <Typography variant="h6" gutterBottom>
-                Preferencias de Notificación
+                {t('profile.notifications')}
               </Typography>
 
               <Grid container spacing={2}>
@@ -611,7 +613,7 @@ const UserProfile: React.FC = () => {
                         color="primary"
                       />
                     }
-                    label="Recibir notificaciones por correo electrónico"
+                    label={t('profile.emailNotifications')}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -623,7 +625,7 @@ const UserProfile: React.FC = () => {
                         color="primary"
                       />
                     }
-                    label="Recibir notificaciones push en el navegador"
+                    label={t('profile.pushNotifications')}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -635,7 +637,7 @@ const UserProfile: React.FC = () => {
                         color="primary"
                       />
                     }
-                    label="Notificarme sobre invitaciones a salas"
+                    label={t('profile.roomInvites')}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -647,7 +649,7 @@ const UserProfile: React.FC = () => {
                         color="primary"
                       />
                     }
-                    label="Recibir resumen semanal de actividad"
+                    label={t('profile.weeklyDigest')}
                   />
                 </Grid>
               </Grid>
@@ -659,7 +661,7 @@ const UserProfile: React.FC = () => {
                   color="primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Guardar Preferencias'}
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('profile.savePreferences')}
                 </Button>
               </Box>
             </form>
@@ -667,22 +669,22 @@ const UserProfile: React.FC = () => {
 
           <TabPanel value={tabValue} index={3}>
             <Typography variant="h6" gutterBottom>
-              Seguridad de la Cuenta
+              {t('profile.security')}
             </Typography>
 
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Cambio de Contraseña
+                {t('profile.changePassword')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Para cambiar tu contraseña, primero debes cerrar sesión y usar la opción &ldquo;Olvidé mi contraseña&rdquo; en la pantalla de inicio de sesión.
+                {t('forgotPassword.instructions')}
               </Typography>
               <Button
                 variant="outlined"
                 color="primary"
                 onClick={handleLogout}
               >
-                Cerrar Sesión para Cambiar Contraseña
+                {t('profile.logout')}
               </Button>
             </Box>
 
@@ -690,10 +692,10 @@ const UserProfile: React.FC = () => {
 
             <Box>
               <Typography variant="subtitle1" gutterBottom color="error">
-                Zona de Peligro
+                {t('profile.deleteAccount')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Eliminar tu cuenta es una acción permanente y no se puede deshacer. Todos tus datos serán eliminados.
+                {t('errors.genericError')}
               </Typography>
               <Button
                 variant="outlined"
@@ -701,7 +703,7 @@ const UserProfile: React.FC = () => {
                 onClick={handleDeleteAccount}
                 disabled={isSubmitting}
               >
-                Eliminar mi Cuenta
+                {t('profile.deleteAccount')}
               </Button>
             </Box>
           </TabPanel>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, AlertTitle, Box, IconButton, Typography, List, ListItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -12,6 +13,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 const AdBlockerWarning: React.FC = () => {
   const [isAdBlockerDetected, setIsAdBlockerDetected] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     // Verificar si hay errores recientes relacionados con bloqueadores de anuncios
@@ -84,19 +86,19 @@ const AdBlockerWarning: React.FC = () => {
         }
         sx={{ borderRadius: 1 }}
       >
-        <AlertTitle>Bloqueador de anuncios detectado</AlertTitle>
+        <AlertTitle>{t('adBlocker.detected')}</AlertTitle>
         <Typography variant="body2">
-          Parece que estás usando un bloqueador de anuncios que podría estar interfiriendo con la funcionalidad de la aplicación.
+          {t('adBlocker.message')}
         </Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
-          Para una experiencia completa, por favor:
+          {t('adBlocker.forFullExperience')}
         </Typography>
         <List dense sx={{ pl: 2, mt: 0.5 }}>
           <ListItem sx={{ display: 'list-item', listStyleType: 'disc' }}>
-            <Typography variant="body2">Desactiva el bloqueador para este sitio</Typography>
+            <Typography variant="body2">{t('adBlocker.disableForThisSite')}</Typography>
           </ListItem>
           <ListItem sx={{ display: 'list-item', listStyleType: 'disc' }}>
-            <Typography variant="body2">O añade una excepción para este dominio</Typography>
+            <Typography variant="body2">{t('adBlocker.addException')}</Typography>
           </ListItem>
         </List>
       </Alert>

@@ -7,6 +7,7 @@ import { Participant } from "@/types/room";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { UserRole } from "@/types/roles";
+import i18next from "i18next";
 
 // Interfaces para el store
 /**
@@ -161,7 +162,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             seriesValues: seriesList[seriesKey],
             creatorId: creatorId,
             creatorPlan: creatorPlan, // Guardar el plan del creador
-            title: title || `Sala ${roomId}` // Usar el título proporcionado o uno por defecto
+            title: title || i18next.t('room.defaultRoomTitle', { roomId }) // Usar el título proporcionado o uno por defecto
           };
           
           console.log(`Storing room ${roomId} metadata in RTDB:`, roomMetadata);
@@ -174,7 +175,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               createdBy: creatorId,
               creatorId: creatorId, // Añadir también como creatorId para consistencia
               creatorPlan: creatorPlan, // Guardar el plan del creador
-              title: title || `Sala ${roomId}`, // Usar el título proporcionado o uno por defecto
+              title: title || i18next.t('room.defaultRoomTitle', { roomId }), // Usar el título proporcionado o uno por defecto
               active: true
             };
             
@@ -260,9 +261,9 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
           // Obtener metadatos de la sala
           const roomMetadata = roomSnapshot.val();
-          
           // Obtener el título de la sala
-          const roomTitle = roomMetadata.title || `Sala ${roomId}`;
+          const roomTitle = roomMetadata.title || i18next.t('room.defaultRoomTitle', { roomId });
+
 
           // Verificar si la sala está marcada para eliminación o inactiva
           if (roomMetadata.markedForDeletion === true || roomMetadata.active === false) {

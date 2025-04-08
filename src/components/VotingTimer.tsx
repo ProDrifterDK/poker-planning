@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -33,6 +34,7 @@ const TIME_OPTIONS = [
 ];
 
 export default function VotingTimer() {
+  const { t } = useTranslation('common');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -221,7 +223,7 @@ export default function VotingTimer() {
                 </Select>
               </FormControl>
               
-              <Tooltip title={timerEnabled ? "Deshabilitar temporizador" : "Habilitar temporizador"}>
+              <Tooltip title={timerEnabled ? t('votingTimer.disableTimer') : t('votingTimer.enableTimer')}>
                 <IconButton
                   size="small"
                   color={timerEnabled ? "error" : "primary"}
@@ -232,7 +234,7 @@ export default function VotingTimer() {
               </Tooltip>
               
               {timerEnabled && (
-                <Tooltip title="Iniciar temporizador">
+                <Tooltip title={t('votingTimer.startTimer')}>
                   <IconButton
                     size="small"
                     color="primary"
@@ -245,7 +247,7 @@ export default function VotingTimer() {
             </>
           ) : (
             <>
-              <Tooltip title="Detener temporizador">
+              <Tooltip title={t('votingTimer.stopTimer')}>
                 <IconButton
                   size="small"
                   color="error"
@@ -255,7 +257,7 @@ export default function VotingTimer() {
                 </IconButton>
               </Tooltip>
               
-              <Tooltip title="Reiniciar temporizador">
+              <Tooltip title={t('votingTimer.restartTimer')}>
                 <IconButton
                   size="small"
                   color="warning"
@@ -332,12 +334,12 @@ export default function VotingTimer() {
                 color="error"
                 sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
               >
-                {!hasAnyVotes ? "Sin votos" : "Faltan votos"}
+                {!hasAnyVotes ? t('votingTimer.noVotes') : t('votingTimer.votesNeeded')}
               </Typography>
               
               {/* Botón de reinicio solo visible para moderadores */}
               {isModerator && (
-                <Tooltip title="Reiniciar temporizador">
+                <Tooltip title={t('votingTimer.restartTimer')}>
                   <IconButton
                     size="small"
                     color="warning"

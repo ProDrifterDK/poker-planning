@@ -26,8 +26,9 @@ import {
   TrelloConfig,
   GitHubConfig,
 } from '@/integrations';
+import { useTranslation } from 'react-i18next';
 
-// Formulario para configurar Jira
+// Form for configuring Jira
 const JiraForm = ({
   config,
   onChange,
@@ -35,50 +36,57 @@ const JiraForm = ({
   config: Partial<JiraConfig>;
   onChange: (config: Partial<JiraConfig>) => void;
 }) => {
+  const { t, i18n } = useTranslation('common');
+  
+  // Force a re-render when the language changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when the language changes
+    console.log('JiraForm - Current language:', i18n.language);
+  }, [i18n.language]);
   return (
     <Box>
       <TextField
-        label="Dominio de Jira"
+        label={t('integrations.jira.domain', 'Dominio de Jira')}
         fullWidth
         margin="normal"
         value={config.domain || ''}
         onChange={(e) => onChange({ ...config, domain: e.target.value })}
-        helperText="Ejemplo: mycompany (para mycompany.atlassian.net)"
+        helperText={t('integrations.jira.domainHelp', 'Ejemplo: mycompany (para mycompany.atlassian.net)')}
         required
       />
       <TextField
-        label="Email"
+        label={t('integrations.jira.email', 'Email')}
         fullWidth
         margin="normal"
         value={config.email || ''}
         onChange={(e) => onChange({ ...config, email: e.target.value })}
-        helperText="Email asociado a tu cuenta de Jira"
+        helperText={t('integrations.jira.emailHelp', 'Email asociado a tu cuenta de Jira')}
         required
       />
       <TextField
-        label="Token API"
+        label={t('integrations.jira.apiToken', 'Token API')}
         fullWidth
         margin="normal"
         value={config.apiToken || ''}
         onChange={(e) => onChange({ ...config, apiToken: e.target.value })}
-        helperText="Token API de Jira (se puede generar en la configuración de tu cuenta)"
+        helperText={t('integrations.jira.apiTokenHelp', 'Token API de Jira (se puede generar en la configuración de tu cuenta)')}
         type="password"
         required
       />
       <TextField
-        label="Clave del Proyecto"
+        label={t('integrations.jira.projectKey', 'Clave del Proyecto')}
         fullWidth
         margin="normal"
         value={config.projectKey || ''}
         onChange={(e) => onChange({ ...config, projectKey: e.target.value })}
-        helperText="Ejemplo: PROJ"
+        helperText={t('integrations.jira.projectKeyHelp', 'Ejemplo: PROJ')}
         required
       />
     </Box>
   );
 };
 
-// Formulario para configurar Trello
+// Form for configuring Trello
 const TrelloForm = ({
   config,
   onChange,
@@ -86,50 +94,57 @@ const TrelloForm = ({
   config: Partial<TrelloConfig>;
   onChange: (config: Partial<TrelloConfig>) => void;
 }) => {
+  const { t, i18n } = useTranslation('common');
+  
+  // Force a re-render when the language changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when the language changes
+    console.log('TrelloForm - Current language:', i18n.language);
+  }, [i18n.language]);
   return (
     <Box>
       <TextField
-        label="API Key"
+        label={t('integrations.trello.apiKey', 'API Key')}
         fullWidth
         margin="normal"
         value={config.apiKey || ''}
         onChange={(e) => onChange({ ...config, apiKey: e.target.value })}
-        helperText="API Key de Trello (se puede obtener en https://trello.com/power-ups/admin)"
+        helperText={t('integrations.trello.apiKeyHelp', 'API Key de Trello (se puede obtener en https://trello.com/power-ups/admin)')}
         required
       />
       <TextField
-        label="Token"
+        label={t('integrations.trello.token', 'Token')}
         fullWidth
         margin="normal"
         value={config.token || ''}
         onChange={(e) => onChange({ ...config, token: e.target.value })}
-        helperText="Token de Trello (se puede generar desde la página de API Key)"
+        helperText={t('integrations.trello.tokenHelp', 'Token de Trello (se puede generar desde la página de API Key)')}
         type="password"
         required
       />
       <TextField
-        label="ID del Tablero"
+        label={t('integrations.trello.boardId', 'ID del Tablero')}
         fullWidth
         margin="normal"
         value={config.boardId || ''}
         onChange={(e) => onChange({ ...config, boardId: e.target.value })}
-        helperText="ID del tablero de Trello (se puede obtener de la URL del tablero)"
+        helperText={t('integrations.trello.boardIdHelp', 'ID del tablero de Trello (se puede obtener de la URL del tablero)')}
         required
       />
       <TextField
-        label="ID de la Lista"
+        label={t('integrations.trello.listId', 'ID de la Lista')}
         fullWidth
         margin="normal"
         value={config.listId || ''}
         onChange={(e) => onChange({ ...config, listId: e.target.value })}
-        helperText="ID de la lista donde se crearán las tarjetas"
+        helperText={t('integrations.trello.listIdHelp', 'ID de la lista donde se crearán las tarjetas')}
         required
       />
     </Box>
   );
 };
 
-// Formulario para configurar GitHub
+// Form for configuring GitHub
 const GitHubForm = ({
   config,
   onChange,
@@ -137,34 +152,41 @@ const GitHubForm = ({
   config: Partial<GitHubConfig>;
   onChange: (config: Partial<GitHubConfig>) => void;
 }) => {
+  const { t, i18n } = useTranslation('common');
+  
+  // Force a re-render when the language changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when the language changes
+    console.log('GitHubForm - Current language:', i18n.language);
+  }, [i18n.language]);
   return (
     <Box>
       <TextField
-        label="Token de Acceso Personal"
+        label={t('integrations.github.token', 'Token de Acceso Personal')}
         fullWidth
         margin="normal"
         value={config.token || ''}
         onChange={(e) => onChange({ ...config, token: e.target.value })}
-        helperText="Token de acceso personal de GitHub (con permisos para issues)"
+        helperText={t('integrations.github.tokenHelp', 'Token de acceso personal de GitHub (con permisos para issues)')}
         type="password"
         required
       />
       <TextField
-        label="Propietario del Repositorio"
+        label={t('integrations.github.owner', 'Propietario del Repositorio')}
         fullWidth
         margin="normal"
         value={config.owner || ''}
         onChange={(e) => onChange({ ...config, owner: e.target.value })}
-        helperText="Nombre de usuario o organización propietaria del repositorio"
+        helperText={t('integrations.github.ownerHelp', 'Nombre de usuario o organización propietaria del repositorio')}
         required
       />
       <TextField
-        label="Nombre del Repositorio"
+        label={t('integrations.github.repo', 'Nombre del Repositorio')}
         fullWidth
         margin="normal"
         value={config.repo || ''}
         onChange={(e) => onChange({ ...config, repo: e.target.value })}
-        helperText="Nombre del repositorio donde se crearán los issues"
+        helperText={t('integrations.github.repoHelp', 'Nombre del repositorio donde se crearán los issues')}
         required
       />
     </Box>
@@ -183,14 +205,21 @@ export default function IntegrationForm({
   editIndex,
 }: IntegrationFormProps) {
   const { integrations, addIntegration, updateIntegration, isLoading, error } = useIntegrationStore();
+  const { t, i18n } = useTranslation('common');
   
-  // Estado para el formulario
+  // Force a re-render when the language changes
+  React.useEffect(() => {
+    // This is just to ensure the component re-renders when the language changes
+    console.log('IntegrationForm - Current language:', i18n.language);
+  }, [i18n.language]);
+  
+  // Form state
   const [name, setName] = useState('');
   const [type, setType] = useState<IntegrationType>(IntegrationType.JIRA);
   const [config, setConfig] = useState<Partial<Integration>>({});
   const [formError, setFormError] = useState<string | null>(null);
   
-  // Cargar datos si estamos editando
+  // Load data if we're editing
   useEffect(() => {
     if (editIndex !== undefined && integrations[editIndex]) {
       const integration = integrations[editIndex];
@@ -198,29 +227,29 @@ export default function IntegrationForm({
       setType(integration.type);
       setConfig(integration);
     } else {
-      // Valores por defecto para nueva integración
+      // Default values for new integration
       setName('');
       setType(IntegrationType.JIRA);
       setConfig({});
     }
   }, [editIndex, integrations, open]);
   
-  // Manejar cambios en el tipo de integración
+  // Handle changes in integration type
   const handleTypeChange = (newType: IntegrationType) => {
     setType(newType);
-    // Reiniciar la configuración pero mantener el nombre
+    // Reset configuration but keep the name
     setConfig({ name, type: newType, enabled: true });
   };
   
-  // Manejar cambios en la configuración específica
+  // Handle changes in specific configuration
   const handleConfigChange = (newConfig: Partial<Integration>) => {
     setConfig({ ...config, ...newConfig });
   };
   
-  // Validar el formulario
+  // Validate the form
   const validateForm = (): boolean => {
     if (!name.trim()) {
-      setFormError('El nombre es requerido');
+      setFormError(t('integrations.errors.nameRequired', 'El nombre es requerido'));
       return false;
     }
     
@@ -228,21 +257,21 @@ export default function IntegrationForm({
       case IntegrationType.JIRA:
         const jiraConfig = config as Partial<JiraConfig>;
         if (!jiraConfig.domain || !jiraConfig.email || !jiraConfig.apiToken || !jiraConfig.projectKey) {
-          setFormError('Todos los campos de Jira son requeridos');
+          setFormError(t('integrations.errors.jiraFieldsRequired', 'Todos los campos de Jira son requeridos'));
           return false;
         }
         break;
       case IntegrationType.TRELLO:
         const trelloConfig = config as Partial<TrelloConfig>;
         if (!trelloConfig.apiKey || !trelloConfig.token || !trelloConfig.boardId || !trelloConfig.listId) {
-          setFormError('Todos los campos de Trello son requeridos');
+          setFormError(t('integrations.errors.trelloFieldsRequired', 'Todos los campos de Trello son requeridos'));
           return false;
         }
         break;
       case IntegrationType.GITHUB:
         const githubConfig = config as Partial<GitHubConfig>;
         if (!githubConfig.token || !githubConfig.owner || !githubConfig.repo) {
-          setFormError('Todos los campos de GitHub son requeridos');
+          setFormError(t('integrations.errors.githubFieldsRequired', 'Todos los campos de GitHub son requeridos'));
           return false;
         }
         break;
@@ -252,13 +281,13 @@ export default function IntegrationForm({
     return true;
   };
   
-  // Manejar el guardado del formulario
+  // Handle form save
   const handleSave = () => {
     if (!validateForm()) {
       return;
     }
     
-    // Crear la configuración completa según el tipo
+    // Create complete configuration based on type
     let completeConfig: Integration;
     
     switch (type) {
@@ -295,25 +324,27 @@ export default function IntegrationForm({
         } as GitHubConfig;
         break;
       default:
-        setFormError('Tipo de integración no soportado');
+        setFormError(t('integrations.errors.unsupportedType', 'Tipo de integración no soportado'));
         return;
     }
     
-    // Guardar la configuración
+    // Save the configuration
     if (editIndex !== undefined) {
       updateIntegration(editIndex, completeConfig);
     } else {
       addIntegration(completeConfig);
     }
     
-    // Cerrar el formulario
+    // Close the form
     onClose();
   };
   
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {editIndex !== undefined ? 'Editar Integración' : 'Añadir Integración'}
+        {editIndex !== undefined
+          ? t('integrations.editIntegration', 'Editar Integración')
+          : t('integrations.addIntegration', 'Añadir Integración')}
       </DialogTitle>
       <DialogContent>
         {(formError || error) && (
@@ -323,7 +354,7 @@ export default function IntegrationForm({
         )}
         
         <TextField
-          label="Nombre de la Integración"
+          label={t('integrations.name', 'Nombre de la Integración')}
           fullWidth
           margin="normal"
           value={name}
@@ -335,23 +366,23 @@ export default function IntegrationForm({
         />
         
         <FormControl fullWidth margin="normal">
-          <InputLabel id="integration-type-label">Tipo de Integración</InputLabel>
+          <InputLabel id="integration-type-label">{t('integrations.type', 'Tipo de Integración')}</InputLabel>
           <Select
             labelId="integration-type-label"
             value={type}
             onChange={(e) => handleTypeChange(e.target.value as IntegrationType)}
-            label="Tipo de Integración"
+            label={t('integrations.type', 'Tipo de Integración')}
           >
             <MenuItem value={IntegrationType.JIRA}>Jira</MenuItem>
             <MenuItem value={IntegrationType.TRELLO}>Trello</MenuItem>
             <MenuItem value={IntegrationType.GITHUB}>GitHub</MenuItem>
           </Select>
-          <FormHelperText>Selecciona el tipo de integración</FormHelperText>
+          <FormHelperText>{t('integrations.typeHelp', 'Selecciona el tipo de integración')}</FormHelperText>
         </FormControl>
         
         <Divider sx={{ my: 2 }} />
         
-        {/* Formulario específico según el tipo */}
+        {/* Specific form based on type */}
         {type === IntegrationType.JIRA && (
           <JiraForm
             config={config as Partial<JiraConfig>}
@@ -375,7 +406,7 @@ export default function IntegrationForm({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit">
-          Cancelar
+          {t('integrations.cancel', 'Cancelar')}
         </Button>
         <Button
           onClick={handleSave}
@@ -383,7 +414,7 @@ export default function IntegrationForm({
           variant="contained"
           disabled={isLoading}
         >
-          {isLoading ? <CircularProgress size={24} /> : 'Guardar'}
+          {isLoading ? <CircularProgress size={24} /> : t('integrations.save', 'Guardar')}
         </Button>
       </DialogActions>
     </Dialog>

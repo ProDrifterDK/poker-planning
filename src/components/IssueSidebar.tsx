@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
     Box,
     Typography,
@@ -41,6 +42,7 @@ export default function IssueSidebar({
     setCurrentIssueId,
 }: IssueSidebarProps) {
     const [issues, setIssues] = useState<Issue[]>([]);
+    const { t } = useTranslation('room');
 
     // Para el diálogo de "Agregar Issue"
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -121,22 +123,22 @@ export default function IssueSidebar({
         >
             {/* Encabezado */}
             <Box sx={{ p: 2 }}>
-                <Typography variant="h6">Issues</Typography>
+                <Typography variant="h6">{t('issues.title')}</Typography>
             </Box>
             <Divider />
 
             {/* Selector de Issue en Discusión */}
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
                 <FormControl size="small" fullWidth>
-                    <InputLabel id="issue-select-label">Issue en Discusión</InputLabel>
+                    <InputLabel id="issue-select-label">{t('issues.currentIssue')}</InputLabel>
                     <Select
                         labelId="issue-select-label"
-                        label="Issue en Discusión"
+                        label={t('issues.currentIssue')}
                         value={currentIssueId || ""}
                         onChange={(e) => handleSelectIssue(e.target.value)}
                     >
                         <MenuItem value="">
-                            <em>Ninguno</em>
+                            <em>{t('issues.none')}</em>
                         </MenuItem>
                         {issues.map((issue) => (
                             <MenuItem key={issue.id} value={issue.id}>
@@ -152,7 +154,7 @@ export default function IssueSidebar({
             <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
                 {issues.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
-                        No hay issues.
+                        {t('issues.noIssues')}
                     </Typography>
                 ) : (
                     issues.map((issue) => (
@@ -184,21 +186,21 @@ export default function IssueSidebar({
                 <Divider />
 
                 <Button variant="outlined" onClick={handleOpenDialog} sx={{ textTransform: "none" }}>
-                    Agregar Issue
+                    {t('issues.addIssue')}
                 </Button>
             </Box>
 
             {/* Dialog para agregar un nuevo Issue */}
             <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-                <DialogTitle>Agregar nuevo Issue</DialogTitle>
+                <DialogTitle>{t('issues.addNewIssue')}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Ingresa el key y un resumen para crear un nuevo issue.
+                        {t('issues.enterKeyAndSummary')}
                     </DialogContentText>
 
                     <TextField
                         margin="dense"
-                        label="Issue Key (ej: PROJ-123)"
+                        label={t('issues.issueKey')}
                         type="text"
                         fullWidth
                         variant="outlined"
@@ -209,7 +211,7 @@ export default function IssueSidebar({
 
                     <TextField
                         margin="dense"
-                        label="Resumen"
+                        label={t('issues.summary')}
                         type="text"
                         multiline
                         rows={3}
@@ -223,10 +225,10 @@ export default function IssueSidebar({
 
                 <DialogActions>
                     <Button onClick={handleCloseDialog} sx={{ textTransform: "none" }}>
-                        Cancelar
+                        {t('issues.cancel')}
                     </Button>
                     <Button variant="contained" onClick={handleAddIssue} sx={{ textTransform: "none" }}>
-                        Crear Issue
+                        {t('issues.create')}
                     </Button>
                 </DialogActions>
             </Dialog>

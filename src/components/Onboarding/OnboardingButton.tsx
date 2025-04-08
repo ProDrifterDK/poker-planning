@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useOnboardingStore } from "@/store/onboardingStore";
+import { useTranslation } from "react-i18next";
 
 interface OnboardingButtonProps {
     variant?: "icon" | "text";
@@ -27,6 +28,7 @@ const OnboardingButton: React.FC<OnboardingButtonProps> = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const { startOnboarding, resetOnboarding, hasCompletedOnboarding } = useOnboardingStore();
+    const { t } = useTranslation('common');
 
     // Función para reiniciar el tutorial
     const handleStartTutorial = () => {
@@ -47,8 +49,8 @@ const OnboardingButton: React.FC<OnboardingButtonProps> = ({
 
     // Determinar el texto del botón
     const buttonText = hasCompletedOnboarding
-        ? "Ver tutorial de nuevo"
-        : "Tutorial interactivo";
+        ? t('tutorial.viewAgain', 'Ver tutorial de nuevo')
+        : t('tutorial.interactive', 'Tutorial interactivo');
 
     // Renderizar un botón de icono o un botón de texto según la variante
     if (variant === "icon") {

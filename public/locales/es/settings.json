@@ -1,0 +1,59 @@
+{
+  "title": "Configuración",
+  "profile": {
+    "title": "Perfil",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "updateProfile": "Actualizar perfil",
+    "changePassword": "Cambiar contraseña",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "updatePassword": "Actualizar contraseña",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteAccountWarning": "Esta acción es permanente y no se puede deshacer.",
+    "deleteAccountConfirm": "Estoy seguro de que quiero eliminar mi cuenta",
+    "enterPassword": "Ingresa tu contraseña para confirmar",
+    "profileUpdated": "Perfil actualizado correctamente",
+    "passwordUpdated": "Contraseña actualizada correctamente"
+  },
+  "subscription": {
+    "title": "Suscripción",
+    "currentPlan": "Plan actual",
+    "freePlan": "Plan Gratuito",
+    "proPlan": "Plan Pro",
+    "enterprisePlan": "Plan Enterprise",
+    "upgradePlan": "Mejorar plan",
+    "managePlan": "Administrar plan",
+    "cancelPlan": "Cancelar plan",
+    "renewalDate": "Fecha de renovación",
+    "paymentHistory": "Historial de pagos",
+    "date": "Fecha",
+    "amount": "Monto",
+    "status": "Estado",
+    "noPayments": "No hay pagos registrados",
+    "features": "Características incluidas",
+    "upgradeToAccess": "Mejora tu plan para acceder a esta característica",
+    "confirmCancel": "¿Estás seguro de que quieres cancelar tu suscripción?",
+    "cancelWarning": "Tu suscripción seguirá activa hasta el final del período de facturación actual.",
+    "subscriptionCanceled": "Suscripción cancelada correctamente"
+  },
+  "appearance": {
+    "title": "Apariencia",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "language": "Idioma",
+    "spanish": "Español",
+    "english": "Inglés"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "email": "Notificaciones por correo electrónico",
+    "push": "Notificaciones push",
+    "roomInvites": "Invitaciones a salas",
+    "roomUpdates": "Actualizaciones de salas",
+    "systemUpdates": "Actualizaciones del sistema"
+  }
+}
