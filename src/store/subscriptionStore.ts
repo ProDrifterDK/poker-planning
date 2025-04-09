@@ -197,6 +197,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               reason || 'Cancelado por el usuario'
             );
           }
+          
           // Cancelar en nuestra base de datos
           await cancelSubscription(
             currentSubscription.id,
@@ -206,17 +207,16 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           // Obtener el ID del usuario
           const userId = currentSubscription.userId;
           
-          // Crear una nueva suscripción gratuita en la base de datos
-          console.log('Creando nueva suscripción gratuita en la base de datos');
-          const newSubscription = await createSubscription(
-            userId,
-            SubscriptionPlan.FREE,
-            PaymentMethod.PAYPAL
-          );
-          
-          // Actualizar el estado local con la nueva suscripción
+          // Actualizar el estado local de la suscripción actual
+          // Mantenemos el mismo plan pero marcamos como cancelada y sin renovación automática
           set({
-            currentSubscription: newSubscription,
+            currentSubscription: {
+              ...currentSubscription,
+              status: SubscriptionStatus.CANCELLED,
+              autoRenew: false,
+              cancelDate: new Date().toISOString(),
+              cancelReason: reason || 'Cancelado por el usuario'
+            },
             loading: false
           });
           
@@ -226,9 +226,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           return true;
         } catch (error) {
           console.error('Error al cancelar suscripción:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'Error desconocido al cancelar suscripción', 
-            loading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Error desconocido al cancelar suscripción',
+            loading: false
           });
           return false;
         }
@@ -313,7 +313,29 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Verificar si el usuario puede acceder a una característica
       canUserAccessFeature: (feature) => {
         const { currentSubscription } = get();
-        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        
+        // Si no hay suscripción, usar plan FREE
+        if (!currentSubscription) {
+          return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
+        }
+        
+        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
+        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
+          // Verificar si la fecha de finalización aún no ha llegado
+          const endDate = new Date(currentSubscription.endDate);
+          const now = new Date();
+          
+          // Si la fecha de finalización ya pasó, usar plan FREE
+          if (endDate < now) {
+            return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
+          }
+          
+          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
+        }
+        
+        // Usar el plan actual
+        const plan = currentSubscription.plan;
         
         // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
         const planLookupKey = getPlanLookupKey(plan);
@@ -334,7 +356,29 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Verificar si el usuario puede crear una sala
       canUserCreateRoom: () => {
         const { currentSubscription } = get();
-        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        
+        // Si no hay suscripción, usar plan FREE
+        if (!currentSubscription) {
+          return false; // Por defecto, no permitir crear salas sin suscripción
+        }
+        
+        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
+        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
+          // Verificar si la fecha de finalización aún no ha llegado
+          const endDate = new Date(currentSubscription.endDate);
+          const now = new Date();
+          
+          // Si la fecha de finalización ya pasó, usar plan FREE
+          if (endDate < now) {
+            return false; // No permitir crear salas si la suscripción ha expirado
+          }
+          
+          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
+        }
+        
+        // Usar el plan actual
+        const plan = currentSubscription.plan;
         
         // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
         const planLookupKey = getPlanLookupKey(plan);
@@ -377,13 +421,35 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Obtener el plan actual
       getCurrentPlan: () => {
         const { currentSubscription } = get();
-        return currentSubscription?.plan || SubscriptionPlan.FREE;
+        
+        // Si no hay suscripción, usar plan FREE
+        if (!currentSubscription) {
+          return SubscriptionPlan.FREE;
+        }
+        
+        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
+        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
+          // Verificar si la fecha de finalización aún no ha llegado
+          const endDate = new Date(currentSubscription.endDate);
+          const now = new Date();
+          
+          // Si la fecha de finalización ya pasó, usar plan FREE
+          if (endDate < now) {
+            return SubscriptionPlan.FREE;
+          }
+          
+          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
+        }
+        
+        // Usar el plan actual
+        return currentSubscription.plan;
       },
       
       // Obtener el número máximo de participantes permitidos para el plan actual
       getMaxParticipants: () => {
-        const { currentSubscription } = get();
-        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        // Usar la función getCurrentPlan para obtener el plan actual considerando suscripciones canceladas
+        const plan = get().getCurrentPlan();
         
         // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
         const planLookupKey = getPlanLookupKey(plan);
@@ -393,8 +459,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       
       // Obtener el número máximo de salas activas permitidas para el plan actual
       getMaxActiveRooms: () => {
-        const { currentSubscription } = get();
-        const plan = currentSubscription?.plan || SubscriptionPlan.FREE;
+        // Usar la función getCurrentPlan para obtener el plan actual considerando suscripciones canceladas
+        const plan = get().getCurrentPlan();
         
         // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
         const planLookupKey = getPlanLookupKey(plan);

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Paper, 
-  Typography, 
-  Box, 
-  Button, 
-  Chip, 
+import {
+  Paper,
+  Typography,
+  Box,
+  Button,
+  Chip,
   Grid,
   Dialog,
   DialogTitle,
@@ -13,9 +13,11 @@ import {
   DialogActions,
   CircularProgress
 } from '@mui/material';
-import { UserSubscription, SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { UserSubscription, SubscriptionPlan, getLocalizedSubscriptionPlans } from '@/types/subscription';
 import { getPlanLookupKey } from '@/utils/planUtils';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'next/navigation';
 
 interface CurrentSubscriptionProps {
   subscription: UserSubscription;
@@ -24,13 +26,17 @@ interface CurrentSubscriptionProps {
 export default function CurrentSubscription({ subscription }: CurrentSubscriptionProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const { t } = useTranslation('common');
+  const params = useParams();
+  const { lang } = params as { lang: string };
   
   const { cancelCurrentSubscription } = useSubscriptionStore();
+  const localizedPlans = getLocalizedSubscriptionPlans(lang as string);
   
   // Formatear fechas
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-CL', {
+    return date.toLocaleDateString(lang === 'es' ? 'es-CL' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -40,11 +46,11 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   // Traducir estado de suscripción
   const translateStatus = (status: string): string => {
     const statusMap: Record<string, string> = {
-      'active': 'Activo',
-      'cancelled': 'Cancelado',
-      'expired': 'Expirado',
-      'pending': 'Pendiente',
-      'suspended': 'Suspendido'
+      'active': t('subscription.statusActive', 'Activo'),
+      'cancelled': t('subscription.statusCancelled', 'Cancelado'),
+      'expired': t('subscription.statusExpired', 'Expirado'),
+      'pending': t('subscription.statusPending', 'Pendiente'),
+      'suspended': t('subscription.statusSuspended', 'Suspendido')
     };
     
     return statusMap[status.toLowerCase()] || status;
@@ -52,7 +58,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   
   // Obtener detalles del plan
   const planLookupKey = getPlanLookupKey(subscription.plan);
-  const planDetails = SUBSCRIPTION_PLANS[planLookupKey];
+  const planDetails = localizedPlans[planLookupKey];
   
   // Calcular días restantes
   const calculateRemainingDays = () => {
@@ -73,7 +79,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
     try {
       await cancelCurrentSubscription();
     } catch (error) {
-      console.error('Error al cancelar suscripción:', error);
+      console.error(t('subscription.cancelError', 'Error al cancelar suscripción:'), error);
     } finally {
       setProcessing(false);
     }
@@ -86,7 +92,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
           <Grid item xs={12} md={8}>
             <Box display="flex" alignItems="center" mb={2}>
               <Typography variant="h6" component="h3">
-                Plan {planDetails.name}
+                {t('subscription.planPrefix', 'Plan')} {planDetails.name}
               </Typography>
               <Chip
                 label={translateStatus(subscription.status)}
@@ -97,26 +103,32 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
             </Box>
             
             <Typography variant="body1" paragraph>
-              <strong>Precio:</strong> {planDetails.price === 0 ? 'Gratis' : `$${planDetails.price.toFixed(2)}/mes`}
+              <strong>{t('subscription.price', 'Precio')}:</strong> {planDetails.price === 0
+                ? t('subscription.free', 'Gratis')
+                : t('subscription.pricePerMonth', '${{price}}/mes', { price: planDetails.price.toFixed(2) })}
             </Typography>
             
             {/* Mostrar detalles adicionales solo para planes de pago */}
             {subscription.plan !== SubscriptionPlan.FREE && (
               <>
                 <Typography variant="body1" paragraph>
-                  <strong>Fecha de inicio:</strong> {formatDate(subscription.startDate)}
+                  <strong>{t('subscription.startDate', 'Fecha de inicio')}:</strong> {formatDate(subscription.startDate)}
                 </Typography>
                 
                 <Typography variant="body1" paragraph>
-                  <strong>Fecha de renovación:</strong> {formatDate(subscription.endDate)}
+                  <strong>{t('subscription.renewalDate', 'Fecha de renovación')}:</strong> {formatDate(subscription.endDate)}
                 </Typography>
                 
                 <Typography variant="body1" paragraph>
-                  <strong>Renovación automática:</strong> {subscription.autoRenew ? 'Activada' : 'Desactivada'}
+                  <strong>{t('subscription.autoRenewal', 'Renovación automática')}:</strong> {subscription.autoRenew
+                    ? t('subscription.enabled', 'Activada')
+                    : t('subscription.disabled', 'Desactivada')}
                 </Typography>
                 
                 <Typography variant="body1" paragraph>
-                  <strong>Método de pago:</strong> {subscription.paymentMethod === 'paypal' ? 'PayPal' : 'Tarjeta de crédito'}
+                  <strong>{t('subscription.paymentMethod', 'Método de pago')}:</strong> {subscription.paymentMethod === 'paypal'
+                    ? 'PayPal'
+                    : t('subscription.creditCard', 'Tarjeta de crédito')}
                 </Typography>
               </>
             )}
@@ -126,7 +138,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
             {subscription.plan !== SubscriptionPlan.FREE && (
               <>
                 <Typography variant="h5" color="primary" gutterBottom>
-                  {remainingDays} días restantes
+                  {t('subscription.daysRemaining', '{{days}} días restantes', { days: remainingDays })}
                 </Typography>
                 
                 <Button 
@@ -136,7 +148,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
                   disabled={processing}
                   sx={{ mt: 2 }}
                 >
-                  {processing ? <CircularProgress size={24} /> : 'Cancelar suscripción'}
+                  {processing ? <CircularProgress size={24} /> : t('subscription.cancelSubscription', 'Cancelar suscripción')}
                 </Button>
               </>
             )}
@@ -149,19 +161,18 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
       >
-        <DialogTitle>Confirmar cancelación</DialogTitle>
+        <DialogTitle>{t('subscription.confirmCancellation', 'Confirmar cancelación')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro de que deseas cancelar tu suscripción? 
-            Perderás acceso a todas las funciones premium al final del período actual.
+            {t('subscription.cancellationWarning', '¿Estás seguro de que deseas cancelar tu suscripción? Perderás acceso a todas las funciones premium al final del período actual.')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)} color="primary">
-            Volver
+            {t('subscription.back', 'Volver')}
           </Button>
           <Button onClick={handleCancelSubscription} color="error">
-            Cancelar suscripción
+            {t('subscription.cancelSubscription', 'Cancelar suscripción')}
           </Button>
         </DialogActions>
       </Dialog>

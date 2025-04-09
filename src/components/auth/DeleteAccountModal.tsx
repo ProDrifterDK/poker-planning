@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogActions,
@@ -45,6 +46,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   onConfirm,
   isSubmitting
 }) => {
+  const { t } = useTranslation('auth');
+  
   // Estados locales
   const [deletePassword, setDeletePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -75,17 +78,17 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       <DialogTitle id="delete-account-dialog-title" sx={{ bgcolor: 'error.main', color: 'white' }}>
         <Box display="flex" alignItems="center">
           <WarningIcon sx={{ mr: 1 }} />
-          Confirmación de Eliminación de Cuenta
+          {t('deleteAccountModal.title')}
         </Box>
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
         {/* Mensaje de advertencia */}
         <Typography variant="subtitle1" color="error" gutterBottom>
-          Esta acción es permanente y no se puede deshacer.
+          {t('deleteAccountModal.warning')}
         </Typography>
         
         <Typography variant="body1" paragraph>
-          Al eliminar tu cuenta, ocurrirá lo siguiente:
+          {t('deleteAccountModal.consequences')}
         </Typography>
         
         {/* Lista de consecuencias */}
@@ -95,8 +98,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <DeleteForeverIcon color="error" />
             </ListItemIcon>
             <ListItemText
-              primary="Todos tus datos personales serán eliminados permanentemente"
-              secondary="Incluyendo tu perfil, preferencias y configuraciones"
+              primary={t('deleteAccountModal.personalData')}
+              secondary={t('deleteAccountModal.personalDataDetails')}
             />
           </ListItem>
           
@@ -105,8 +108,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <DataObjectIcon color="error" />
             </ListItemIcon>
             <ListItemText
-              primary="Perderás acceso a todas las salas que hayas creado"
-              secondary="Las salas activas serán cerradas y su historial eliminado"
+              primary={t('deleteAccountModal.rooms')}
+              secondary={t('deleteAccountModal.roomsDetails')}
             />
           </ListItem>
           
@@ -115,8 +118,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <CancelIcon color="error" />
             </ListItemIcon>
             <ListItemText
-              primary="Tu participación en salas de otros usuarios será eliminada"
-              secondary="Tu nombre y votos serán removidos de todas las sesiones"
+              primary={t('deleteAccountModal.participation')}
+              secondary={t('deleteAccountModal.participationDetails')}
             />
           </ListItem>
           
@@ -125,20 +128,20 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <PaymentIcon color="error" />
             </ListItemIcon>
             <ListItemText
-              primary="Todas tus suscripciones activas serán canceladas automáticamente"
-              secondary="No se te realizarán más cargos por suscripciones en PayPal"
+              primary={t('deleteAccountModal.subscriptions')}
+              secondary={t('deleteAccountModal.subscriptionsDetails')}
             />
           </ListItem>
         </List>
         
         {/* Instrucciones para confirmar */}
         <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
-          Para confirmar la eliminación de tu cuenta, por favor ingresa tu contraseña:
+          {t('deleteAccountModal.confirmInstructions')}
         </Typography>
         
         {/* Campo de contraseña */}
         <TextField
-          label="Contraseña"
+          label={t('deleteAccountModal.password')}
           type={showPassword ? "text" : "password"}
           fullWidth
           value={deletePassword}
@@ -166,7 +169,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           variant="outlined"
           startIcon={<CancelIcon />}
         >
-          Cancelar
+          {t('deleteAccountModal.cancel')}
         </Button>
         <Button 
           onClick={handleConfirm} 
@@ -175,7 +178,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           disabled={!deletePassword || isSubmitting}
           startIcon={<DeleteForeverIcon />}
         >
-          {isSubmitting ? <CircularProgress size={24} /> : "Eliminar mi cuenta permanentemente"}
+          {isSubmitting ? <CircularProgress size={24} /> : t('deleteAccountModal.confirm')}
         </Button>
       </DialogActions>
     </Dialog>

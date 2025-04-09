@@ -1,0 +1,516 @@
+{
+  "appName": "Poker Planning Pro",
+  "welcome": "Bienvenido a Poker Planning Pro",
+  "description": "La herramienta perfecta para estimar tareas en equipo de forma ágil y efectiva, sin importar dónde se encuentren los miembros del equipo.",
+  "login": "Iniciar Sesión",
+  "signup": "Registrarse",
+  "startNow": "Comenzar Ahora",
+  "features": {
+    "title": "¿Por qué usar Poker Planning Pro?",
+    "realtime": "Estimación en tiempo real",
+    "realtimeDescription": "Todos los miembros del equipo pueden votar simultáneamente y ver los resultados en tiempo real, facilitando la discusión y el consenso.",
+    "remote": "Trabajo remoto sin problemas",
+    "remoteDescription": "Soportamos Fibonacci, T-shirt Sizing, Powers of 2 y más, adaptándose a la metodología preferida de tu equipo.",
+    "analytics": "Análisis detallado de estimaciones",
+    "analyticsDescription": "Obtén estadísticas detalladas de las estimaciones para mejorar la precisión en futuros sprints."
+  },
+  "plans": {
+    "free": "Plan Gratuito",
+    "pro": "Plan Pro",
+    "enterprise": "Plan Enterprise"
+  },
+  "planNames": {
+    "free": "Gratuito",
+    "pro": "Pro",
+    "enterprise": "Enterprise",
+    "proMonthly": "Pro (Mensual)",
+    "enterpriseMonthly": "Enterprise (Mensual)",
+    "proYearly": "Pro (Anual)",
+    "enterpriseYearly": "Enterprise (Anual)"
+  },
+  "cta": {
+    "title": "¿Listo para mejorar tus sesiones de Planning Poker?",
+    "description": "Regístrate hoy y comienza a disfrutar de todas las ventajas de Poker Planning Pro.",
+    "button": "Comenzar Ahora"
+  },
+  "testimonials": {
+    "title": "Lo que dicen nuestros usuarios"
+  },
+  "plansSection": {
+    "title": "Planes disponibles",
+    "free": {
+      "title": "Plan Free",
+      "price": "$0 / mes",
+      "description": "Ideal para equipos pequeños o para probar la plataforma.",
+      "features": [
+        "Hasta 5 participantes por sala",
+        "1 sala activa",
+        "Funcionalidades básicas"
+      ]
+    },
+    "pro": {
+      "title": "Plan Pro",
+      "price": "$9.99 / mes",
+      "description": "Para equipos medianos con necesidades avanzadas.",
+      "features": [
+        "Hasta 15 participantes por sala",
+        "5 salas activas",
+        "Exportación de datos",
+        "Estadísticas avanzadas"
+      ]
+    },
+    "enterprise": {
+      "title": "Plan Enterprise",
+      "price": "$29.99 / mes",
+      "description": "Solución completa para equipos grandes y empresas.",
+      "features": [
+        "Hasta 100 participantes por sala",
+        "20 salas activas",
+        "Integraciones con Jira, Trello, GitHub",
+        "Personalización de marca"
+      ]
+    }
+  },
+  "demo": {
+    "title": "Vea Poker Planning Pro en acción",
+    "subtitle": "Flujo completo de una sesión de Planning Poker",
+    "description": "Observe cómo un equipo crea una sala, añade issues, vota y revela las estimaciones en tiempo real. Experimente la simplicidad y eficiencia de Poker Planning Pro."
+  },
+  "guest": {
+    "title": "¡Gracias por probar Poker Planning Pro!",
+    "description": "Como usuario invitado, puedes unirte a salas existentes usando un código de invitación, pero no puedes crear nuevas salas.",
+    "registerPrompt": "Regístrate para desbloquear todas las funcionalidades:",
+    "joinRoomTitle": "¿Tienes un código de sala?",
+    "joinRoomDescription": "Puedes unirte a una sala existente usando el código que te compartieron.",
+    "joinRoomButton": "Unirse a una Sala",
+    "alert": "Has ingresado como invitado. Para crear salas o acceder a todas las funcionalidades, necesitas registrarte."
+  },
+  "navigation": {
+    "home": "Inicio",
+    "rooms": "Salas",
+    "join": "Unirse",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "subscription": "Suscripción",
+    "logout": "Cerrar Sesión"
+  },
+  "language": "Idioma",
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "switchTo": "Cambiar a {{mode}}"
+  },
+  "menu": {
+    "guestUser": "Usuario invitado",
+    "plan": "Plan",
+    "myProfile": "Mi Perfil",
+    "settings": "Configuración",
+    "subscription": "Suscripción",
+    "integrations": "Integraciones",
+    "adminPanel": "Panel de Administración",
+    "logout": "Cerrar Sesión"
+  },
+  "footer": {
+    "allRightsReserved": "Todos los derechos reservados",
+    "privacyPolicy": "Política de Privacidad",
+    "termsOfService": "Términos de Servicio",
+    "builtBy": "Construido por Resyst Softwares"
+  },
+  "errors": {
+    "retry": "Reintentar",
+    "checkOur": "Consulta nuestra",
+    "troubleshootingGuide": "guía de solución de problemas",
+    "toSolveThisProblem": "para resolver este problema",
+    "autoJoinFailed": "Error al unirse automáticamente. Puedes intentar unirte manualmente.",
+    "determineNameFailed": "No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.",
+    "joinRoomFailed": "Error al unirse a la sala. Por favor, intenta nuevamente.",
+    "cannotChangeEstimation": "No puedes cambiar tu estimación hasta una nueva votación.",
+    "leaveRoomFailed": "Error al salir de la sala. Por favor, intenta nuevamente."
+  },
+  "adBlocker": {
+    "detected": "Bloqueador de anuncios detectado",
+    "message": "Parece que estás usando un bloqueador de anuncios que podría estar interfiriendo con la funcionalidad de la aplicación.",
+    "forFullExperience": "Para una experiencia completa, por favor:",
+    "disableForThisSite": "Desactiva el bloqueador para este sitio",
+    "addException": "O añade una excepción para este dominio"
+  },
+  "home": "Inicio",
+  "directJoin": {
+    "roomClosed": "Esta sala ha sido cerrada porque todos los participantes la abandonaron.",
+    "invalidRoomCode": "Código de sala no válido",
+    "mustSignIn": "Debes iniciar sesión para unirte a una sala",
+    "nameNotDetermined": "No se pudo determinar tu nombre. Por favor, inicia sesión nuevamente.",
+    "roomLimitReached": "Esta sala ha alcanzado su límite de participantes. El creador de la sala necesita actualizar su plan para permitir más participantes.",
+    "errorJoiningRoom": "Error al unirse a la sala",
+    "noValidRoomCode": "No se ha proporcionado un código de sala válido.",
+    "backToHome": "Volver al inicio",
+    "joinRoom": "Unirse a la Sala",
+    "roomCode": "Código de sala: ",
+    "aboutToJoin": "Estás a punto de unirte a la sala con el nombre:",
+    "joiningAs": "Uniéndote a la sala como"
+  },
+  "clientJoin": {
+    "roomClosed": "Esta sala ha sido cerrada porque todos los participantes la abandonaron.",
+    "invalidRoomCode": "Código de sala no válido",
+    "enterName": "Debes ingresar tu nombre",
+    "joinRoom": "Unirse a la Sala",
+    "roomCode": "Código de sala: ",
+    "joiningAutomatically": "Uniéndote automáticamente como",
+    "yourName": "Tu nombre"
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Gestiona tus preferencias y configura integraciones con herramientas externas.",
+    "configure": "Configurar",
+    "comingSoon": "Próximamente",
+    "integrations": {
+      "title": "Integraciones",
+      "description": "Configura integraciones con Jira, Trello, GitHub y más"
+    },
+    "profile": {
+      "title": "Perfil",
+      "description": "Gestiona tu información de perfil y preferencias"
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "description": "Personaliza la apariencia y comportamiento de la aplicación"
+    },
+    "security": {
+      "title": "Seguridad",
+      "description": "Gestiona la seguridad de tu cuenta"
+    }
+  },
+  "subscription": {
+    "plan": "Plan",
+    "rooms": "Salas",
+    "maxRoomsTooltip": "Número máximo de salas activas",
+    "participants": "Participantes",
+    "maxParticipantsTooltip": "Número máximo de participantes por sala",
+    "upgrade": "Mejorar",
+    "loading": "Cargando información de suscripción...",
+    "current": "Tu suscripción actual",
+    "monthlyPlans": "Planes Mensuales",
+    "yearlyPlans": "Planes Anuales (Ahorra más de 15%)",
+    "paymentHistory": "Historial de pagos",
+    "info": "Información sobre suscripciones",
+    "renewalInfo": "Las suscripciones se renuevan automáticamente al final de cada período. Puedes cancelar tu suscripción en cualquier momento.",
+    "supportInfo": "Si tienes alguna pregunta sobre tu suscripción, por favor contacta a nuestro equipo de soporte.",
+    "contactSupport": "Contactar soporte",
+    "canceled": "Suscripción cancelada",
+    "cancelMessage": "Has cancelado el proceso de suscripción. No se ha realizado ningún cargo.",
+    "supportMessage": "Si tuviste algún problema durante el proceso o necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.",
+    "backToSubscriptions": "Volver a suscripciones",
+    "goToHome": "Ir al inicio",
+    "noSubscriptionId": "No se encontró el ID de suscripción",
+    "unknownError": "Error desconocido al procesar suscripción",
+    "processing": "Procesando tu suscripción...",
+    "processingMessage": "Esto puede tomar unos momentos. Por favor, no cierres esta ventana.",
+    "processingError": "Error al procesar la suscripción",
+    "successTitle": "¡Suscripción completada con éxito!",
+    "successMessage": "Tu suscripción ha sido procesada correctamente. Ya puedes disfrutar de todas las funciones premium.",
+    "planDetails": "Detalles del plan",
+    "price": "Precio",
+    "viewDetails": "Ver detalles de suscripción",
+    "currentPlan": "Plan Actual",
+    "free": "Gratis",
+    "pricePerMonth": "${{price}}/mes",
+    "pricePerYear": "${{price}}/año",
+    "maxParticipantsPerRoom": "Hasta {{count}} participantes por sala",
+    "activeRooms": "{{count}} {{roomText}}",
+    "singleRoom": "sala activa",
+    "multipleRooms": "salas activas",
+    "dataExport": "Exportación de datos",
+    "advancedStats": "Estadísticas avanzadas",
+    "votingTimer": "Temporizador para votaciones",
+    "fullHistory": "Historial completo",
+    "integrations": "Integraciones con Jira, Trello, GitHub",
+    "branding": "Personalización de marca",
+    "prioritySupport": "Soporte prioritario",
+    "payWithPayPal": "Pagar con PayPal",
+    "cancel": "Cancelar",
+    "useFreePlan": "Usar Plan Gratuito",
+    "subscribe": "Suscribirse",
+    "confirmDowngrade": "Confirmar cambio a plan gratuito",
+    "downgradeWarning": "Al cambiar a un plan gratuito, perderás acceso a todas las funciones premium inmediatamente. ¿Estás seguro de que deseas continuar?",
+    "confirm": "Confirmar",
+    "statusActive": "Activo",
+    "statusCancelled": "Cancelado",
+    "statusExpired": "Expirado",
+    "statusPending": "Pendiente",
+    "statusSuspended": "Suspendido",
+    "cancelError": "Error al cancelar suscripción:",
+    "planPrefix": "Plan",
+    "startDate": "Fecha de inicio",
+    "renewalDate": "Fecha de renovación",
+    "autoRenewal": "Renovación automática",
+    "enabled": "Activada",
+    "disabled": "Desactivada",
+    "paymentMethod": "Método de pago",
+    "creditCard": "Tarjeta de crédito",
+    "daysRemaining": "{{days}} días restantes",
+    "cancelSubscription": "Cancelar suscripción",
+    "confirmCancellation": "Confirmar cancelación",
+    "cancellationWarning": "¿Estás seguro de que deseas cancelar tu suscripción? Perderás acceso a todas las funciones premium al final del período actual.",
+    "back": "Volver"
+  },
+  "tutorial": {
+    "viewAgain": "Ver tutorial de nuevo",
+    "interactive": "Tutorial interactivo"
+  },
+  "integrations": {
+    "title": "Integraciones",
+    "description": "Configura integraciones con herramientas externas para enviar los resultados de las estimaciones.",
+    "configured": "Integraciones Configuradas",
+    "add": "Añadir Integración",
+    "noIntegrations": "No hay integraciones configuradas. Haz clic en \"Añadir Integración\" para comenzar.",
+    "type": "Tipo: {{type}}",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "enable": "Habilitar",
+    "disable": "Deshabilitar",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar esta integración?",
+    "unknown": "Desconocido",
+    "name": "Nombre de la Integración",
+    "editIntegration": "Editar Integración",
+    "addIntegration": "Añadir Integración",
+    "typeHelp": "Selecciona el tipo de integración",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "errors": {
+      "nameRequired": "El nombre es requerido",
+      "jiraFieldsRequired": "Todos los campos de Jira son requeridos",
+      "trelloFieldsRequired": "Todos los campos de Trello son requeridos",
+      "githubFieldsRequired": "Todos los campos de GitHub son requeridos",
+      "unsupportedType": "Tipo de integración no soportado"
+    },
+    "jira": {
+      "domain": "Dominio de Jira",
+      "domainHelp": "Ejemplo: mycompany (para mycompany.atlassian.net)",
+      "email": "Email",
+      "emailHelp": "Email asociado a tu cuenta de Jira",
+      "apiToken": "Token API",
+      "apiTokenHelp": "Token API de Jira (se puede generar en la configuración de tu cuenta)",
+      "projectKey": "Clave del Proyecto",
+      "projectKeyHelp": "Ejemplo: PROJ"
+    },
+    "trello": {
+      "apiKey": "API Key",
+      "apiKeyHelp": "API Key de Trello (se puede obtener en https://trello.com/power-ups/admin)",
+      "token": "Token",
+      "tokenHelp": "Token de Trello (se puede generar desde la página de API Key)",
+      "boardId": "ID del Tablero",
+      "boardIdHelp": "ID del tablero de Trello (se puede obtener de la URL del tablero)",
+      "listId": "ID de la Lista",
+      "listIdHelp": "ID de la lista donde se crearán las tarjetas"
+    },
+    "github": {
+      "token": "Token de Acceso Personal",
+      "tokenHelp": "Token de acceso personal de GitHub (con permisos para issues)",
+      "owner": "Propietario del Repositorio",
+      "ownerHelp": "Nombre de usuario o organización propietaria del repositorio",
+      "repo": "Nombre del Repositorio",
+      "repoHelp": "Nombre del repositorio donde se crearán los issues"
+    }
+  },
+  "room": {
+    "code": "Código",
+    "leaveRoom": "Salir de la sala",
+    "joiningRoom": "Uniéndose a la Sala...",
+    "joinManually": "Unirse Manualmente",
+    "closeSidebar": "Cerrar panel lateral",
+    "openSidebar": "Abrir panel lateral",
+    "moderator": "moderador",
+    "revealEstimations": "Revelar Estimaciones",
+    "voteAgain": "Volver a Votar",
+    "estimationDetails": "Detalle de estimaciones",
+    "estimationAverage": "Promedio de estimaciones",
+    "issueSidebar": "Panel de gestión de issues",
+    "vote": "Voto",
+    "votes": "Votos",
+    "defaultRoomTitle": "Sala {{roomId}}",
+    "joiningAs": "Estás ingresando como",
+    "guestUser": "Usuario invitado"
+  },
+  "votingTimer": {
+    "disableTimer": "Deshabilitar temporizador",
+    "enableTimer": "Habilitar temporizador",
+    "startTimer": "Iniciar temporizador",
+    "stopTimer": "Detener temporizador",
+    "restartTimer": "Reiniciar temporizador",
+    "noVotes": "Sin votos",
+    "votesNeeded": "Faltan votos"
+  },
+  "participantCounter": {
+    "roomAllows": "Esta sala permite hasta {{maxParticipants}} participantes (Basado en el plan {{planName}} del creador de la sala)",
+    "full": "Lleno",
+    "almostFull": "Casi lleno"
+  },
+  "protectedRoute": {
+    "pleaseEnterName": "Por favor ingresa tu nombre",
+    "guestUserError": "Error al crear usuario invitado. Por favor intenta nuevamente.",
+    "roomAccess": "Acceso a la sala",
+    "accessDescription": "Puedes iniciar sesión con tu cuenta o continuar como invitado para acceder a esta sala.",
+    "yourName": "Tu nombre",
+    "namePlaceholder": "Ej: Juan Pérez",
+    "signIn": "Iniciar sesión",
+    "continueAsGuest": "Continuar como invitado"
+  },
+  "terms": {
+    "title": "Términos de Servicio",
+    "lastUpdated": "Última actualización: 5 de Abril, 2025",
+    "section1Title": "1. Aceptación de los Términos",
+    "section1Content": "Al acceder o utilizar Poker Planning Pro (\"la aplicación\"), usted acepta estar sujeto a estos Términos de Servicio. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder a la aplicación.",
+    "section2Title": "2. Descripción del Servicio",
+    "section2Content": "Poker Planning Pro es una aplicación web que permite a los equipos realizar sesiones de Planning Poker para estimar tareas en proyectos ágiles. Ofrecemos diferentes planes de suscripción con distintas características y limitaciones.",
+    "section3Title": "3. Cuentas de Usuario",
+    "section3Content": "Para acceder a ciertas funciones de la aplicación, debe crear una cuenta. Usted es responsable de mantener la confidencialidad de su cuenta y contraseña, y acepta la responsabilidad de todas las actividades que ocurran bajo su cuenta.",
+    "section4Title": "4. Planes de Suscripción y Pagos",
+    "section4Content1": "Ofrecemos un plan gratuito y planes de pago (Pro y Enterprise). Los pagos se procesan a través de proveedores de servicios de pago de terceros. Al suscribirse a un plan de pago, acepta pagar todas las tarifas asociadas con su plan.",
+    "section4Content2": "Las suscripciones se renuevan automáticamente a menos que las cancele antes de la fecha de renovación. Puede cancelar su suscripción en cualquier momento desde la configuración de su cuenta.",
+    "section5Title": "5. Publicidad",
+    "section5Content": "Los usuarios del plan gratuito verán anuncios proporcionados por Google AdSense. Estos anuncios están sujetos a la política de privacidad de Google. Los planes de pago incluyen la característica \"Sin anuncios\".",
+    "section6Title": "6. Propiedad Intelectual",
+    "section6Content": "La aplicación y su contenido original, características y funcionalidad son propiedad de Resyst Softwares y están protegidos por leyes internacionales de derechos de autor, marcas registradas, patentes, secretos comerciales y otras leyes de propiedad intelectual.",
+    "section7Title": "7. Contenido del Usuario",
+    "section7Content": "Usted conserva todos los derechos sobre el contenido que crea, sube o comparte a través de la aplicación. Al proporcionar contenido, nos otorga una licencia mundial, no exclusiva, libre de regalías para usar, reproducir, modificar, adaptar, publicar, transmitir y mostrar dicho contenido.",
+    "section8Title": "8. Conducta Prohibida",
+    "section8Content": "Usted acepta no utilizar la aplicación para:",
+    "section8List": [
+      "Violar cualquier ley aplicable",
+      "Infringir los derechos de propiedad intelectual de terceros",
+      "Transmitir material ilegal, abusivo, difamatorio, obsceno o de otro modo objetable",
+      "Transmitir virus, troyanos u otro código malicioso",
+      "Interferir con el funcionamiento normal de la aplicación"
+    ],
+    "section9Title": "9. Limitación de Responsabilidad",
+    "section9Content": "En ningún caso Resyst Softwares, sus directores, empleados o agentes serán responsables de cualquier daño directo, indirecto, incidental, especial, punitivo o consecuente que surja del uso de la aplicación.",
+    "section10Title": "10. Modificaciones",
+    "section10Content": "Nos reservamos el derecho de modificar o reemplazar estos términos en cualquier momento. Le notificaremos cualquier cambio significativo publicando los nuevos Términos de Servicio en esta página.",
+    "section11Title": "11. Ley Aplicable",
+    "section11Content": "Estos términos se regirán e interpretarán de acuerdo con las leyes de Chile, sin tener en cuenta sus disposiciones sobre conflictos de leyes.",
+    "section12Title": "12. Contacto",
+    "section12Content": "Si tiene preguntas sobre estos Términos de Servicio, contáctenos en:",
+    "contactEmail": "Email: alan.resyst@gmail.com"
+  },
+  "privacy": {
+    "title": "Política de Privacidad",
+    "lastUpdated": "Última actualización: 5 de Abril, 2025",
+    "section1Title": "1. Introducción",
+    "section1Content": "Poker Planning Pro (\"nosotros\", \"nuestro\", o \"la aplicación\") se compromete a proteger su privacidad. Esta Política de Privacidad explica cómo recopilamos, usamos, divulgamos y protegemos su información cuando utiliza nuestra aplicación web.",
+    "section2Title": "2. Información que Recopilamos",
+    "section2Content": "Recopilamos varios tipos de información, incluyendo:",
+    "section2List": [
+      {
+        "title": "Información de cuenta:",
+        "content": "Cuando se registra, recopilamos su nombre, dirección de correo electrónico y contraseña."
+      },
+      {
+        "title": "Información de perfil:",
+        "content": "Foto de perfil, cargo, empresa y otra información que decida proporcionar."
+      },
+      {
+        "title": "Información de uso:",
+        "content": "Datos sobre cómo interactúa con nuestra aplicación, incluyendo las salas que crea o a las que se une, las estimaciones que realiza, etc."
+      },
+      {
+        "title": "Información técnica:",
+        "content": "Dirección IP, tipo de navegador, dispositivo, sistema operativo, y datos similares."
+      }
+    ],
+    "section3Title": "3. Uso de Google AdSense",
+    "section3Content": "Utilizamos Google AdSense, un servicio de publicidad proporcionado por Google LLC, para mostrar anuncios en nuestra aplicación. Google AdSense utiliza cookies y tecnologías similares para mostrar anuncios relevantes a los usuarios.",
+    "section3Content2": "Google AdSense puede utilizar la siguiente información:",
+    "section3List": [
+      "Cookies para rastrear su actividad de navegación y mostrar anuncios personalizados.",
+      "Su dirección IP para aproximar su ubicación y asegurar que los anuncios sean relevantes para su región.",
+      "Información sobre su dispositivo y navegador para optimizar la visualización de anuncios."
+    ],
+    "section3Content3": "Puede optar por no utilizar la cookie de DART para publicidad basada en intereses visitando la",
+    "section3Link1": "página de Configuración de anuncios de Google",
+    "section3Content4": "Para más información sobre cómo Google utiliza la información recopilada a través de AdSense, visite la",
+    "section3Link2": "página de Políticas de Privacidad de Google",
+    "section4Title": "4. Planes de Suscripción y Anuncios",
+    "section4Content": "Ofrecemos diferentes planes de suscripción:",
+    "section4List": [
+      {
+        "title": "Plan Free:",
+        "content": "Los usuarios del plan gratuito verán anuncios proporcionados por Google AdSense."
+      },
+      {
+        "title": "Planes Pro y Enterprise:",
+        "content": "Estos planes de pago incluyen la característica \"Sin anuncios\", lo que significa que los usuarios con estos planes no verán anuncios en la aplicación."
+      }
+    ],
+    "section5Title": "5. Cookies y Tecnologías Similares",
+    "section5Content": "Utilizamos cookies y tecnologías similares para mejorar su experiencia, analizar el tráfico y personalizar el contenido. Al utilizar nuestra aplicación, acepta el uso de estas tecnologías.",
+    "section6Title": "6. Compartir Información",
+    "section6Content": "Podemos compartir su información en las siguientes circunstancias:",
+    "section6List": [
+      {
+        "title": "Proveedores de servicios:",
+        "content": "Compartimos información con terceros que nos ayudan a operar, proporcionar, mejorar, integrar, personalizar y promocionar nuestra aplicación."
+      },
+      {
+        "title": "Cumplimiento legal:",
+        "content": "Podemos divulgar información si creemos de buena fe que es necesario para cumplir con la ley, proteger nuestros derechos o prevenir fraudes o abusos."
+      }
+    ],
+    "section7Title": "7. Sus Derechos",
+    "section7Content": "Dependiendo de su ubicación, puede tener ciertos derechos relacionados con sus datos personales, como:",
+    "section7List": [
+      "Acceder a sus datos personales",
+      "Corregir datos inexactos",
+      "Eliminar sus datos",
+      "Oponerse al procesamiento de sus datos",
+      "Solicitar la portabilidad de sus datos"
+    ],
+    "section8Title": "8. Seguridad",
+    "section8Content": "Implementamos medidas de seguridad diseñadas para proteger su información. Sin embargo, ningún sistema es completamente seguro, y no podemos garantizar la seguridad absoluta de su información.",
+    "section9Title": "9. Cambios a esta Política",
+    "section9Content": "Podemos actualizar esta Política de Privacidad periódicamente. Le notificaremos cualquier cambio significativo publicando la nueva Política de Privacidad en esta página.",
+    "section10Title": "10. Contacto",
+    "section10Content": "Si tiene preguntas sobre esta Política de Privacidad, contáctenos en:",
+    "contactEmail": "Email: alan.resyst@gmail.com"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "¡Bienvenido a Poker Planning Pro!",
+      "description": "Este tutorial te guiará a través de las principales funcionalidades de la aplicación. Puedes saltarlo en cualquier momento y retomarlo después desde el menú de ayuda."
+    },
+    "createRoom": {
+      "title": "Crear una sala",
+      "description": "Puedes crear una nueva sala de Planning Poker seleccionando una serie de estimación y haciendo clic en \"Crear Sala\"."
+    },
+    "joinRoom": {
+      "title": "Unirse a una sala",
+      "description": "También puedes unirte a una sala existente introduciendo el código de la sala y tu nombre."
+    },
+    "selectCard": {
+      "title": "Seleccionar una carta",
+      "description": "Una vez en la sala, puedes seleccionar una carta para estimar la tarea actual. Haz clic en la carta que represente tu estimación."
+    },
+    "revealCards": {
+      "title": "Revelar cartas",
+      "description": "Cuando todos los participantes hayan votado, el moderador puede revelar las cartas para ver todas las estimaciones."
+    },
+    "manageIssues": {
+      "title": "Gestionar issues",
+      "description": "Puedes gestionar los issues a estimar desde el panel lateral. Añade, edita o elimina issues según sea necesario."
+    },
+    "completed": {
+      "title": "¡Tutorial completado!",
+      "description": "Has completado el tutorial básico. Ahora puedes comenzar a utilizar Poker Planning Pro para tus estimaciones ágiles. Si necesitas ayuda adicional, consulta la documentación o contacta con soporte."
+    },
+    "buttons": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "start": "Comenzar",
+      "finish": "Finalizar"
+    }
+  },
+  "featureGuard": {
+    "requiresHigherPlan": "Esta función requiere un plan superior",
+    "upgradePlan": "Actualizar Plan"
+  }
+}

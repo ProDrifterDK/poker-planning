@@ -183,19 +183,16 @@ export async function cancelSubscription(
     
     const subscription = subscriptionDoc.data() as Omit<UserSubscription, 'id'>;
     
-    // Actualizar estado de la suscripción
+    // Actualizar estado de la suscripción pero mantener el plan activo hasta la fecha de finalización
     await updateDoc(subscriptionRef, {
       status: SubscriptionStatus.CANCELLED,
       cancelReason: reason,
-      cancelDate: new Date().toISOString()
+      cancelDate: new Date().toISOString(),
+      autoRenew: false // Asegurarse de que no se renueve automáticamente
     });
     
-    // Actualizar el plan del usuario a FREE
-    const userRef = doc(firestore, USERS_COLLECTION, subscription.userId);
-    await updateDoc(userRef, { 
-      subscriptionPlan: SubscriptionPlan.FREE,
-      subscriptionId: null
-    });
+    // No actualizar el plan del usuario a FREE inmediatamente
+    // El usuario seguirá teniendo acceso a las características premium hasta la fecha de finalización
     
     return true;
   } catch (error) {
@@ -216,7 +213,27 @@ export async function hasFeatureAccess(
     const subscription = await getUserSubscription(userId);
     
     // Si no tiene suscripción, usar plan FREE
-    const plan = subscription?.plan || SubscriptionPlan.FREE;
+    if (!subscription) {
+      return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
+    }
+    
+    // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      // Verificar si la fecha de finalización aún no ha llegado
+      const endDate = new Date(subscription.endDate);
+      const now = new Date();
+      
+      // Si la fecha de finalización ya pasó, usar plan FREE
+      if (endDate < now) {
+        return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
+      }
+      
+      // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+      console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
+    }
+    
+    // Usar el plan actual
+    const plan = subscription.plan;
     
     // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
     const planLookupKey = getPlanLookupKey(plan);
@@ -308,7 +325,27 @@ export async function canCreateRoom(userId: string): Promise<boolean> {
     const subscription = await getUserSubscription(userId);
     
     // Si no tiene suscripción, usar plan FREE
-    const plan = subscription?.plan || SubscriptionPlan.FREE;
+    if (!subscription) {
+      return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features.maxActiveRooms > 0;
+    }
+    
+    // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      // Verificar si la fecha de finalización aún no ha llegado
+      const endDate = new Date(subscription.endDate);
+      const now = new Date();
+      
+      // Si la fecha de finalización ya pasó, usar plan FREE
+      if (endDate < now) {
+        return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features.maxActiveRooms > 0;
+      }
+      
+      // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+      console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
+    }
+    
+    // Usar el plan actual
+    const plan = subscription.plan;
     
     // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
     const planLookupKey = getPlanLookupKey(plan);
@@ -336,6 +373,7 @@ export async function canAddParticipant(roomId: string): Promise<boolean> {
   try {
     console.log(`Checking if room ${roomId} can add more participants`);
     let plan = SubscriptionPlan.FREE;
+    let creatorId = '';
     
     // Primero intentar obtener el plan del creador desde la Realtime Database
     try {
@@ -350,13 +388,17 @@ export async function canAddParticipant(roomId: string): Promise<boolean> {
           console.log(`Found creator plan in RTDB: ${rtdbRoomData.creatorPlan}`);
           plan = rtdbRoomData.creatorPlan;
         }
+        
+        if (rtdbRoomData.createdBy || rtdbRoomData.creatorId) {
+          creatorId = rtdbRoomData.createdBy || rtdbRoomData.creatorId;
+        }
       }
     } catch (rtdbError) {
       console.error('Error checking RTDB for room data:', rtdbError);
     }
     
     // Si no se encontró en RTDB, intentar con Firestore
-    if (plan === SubscriptionPlan.FREE) {
+    if (plan === SubscriptionPlan.FREE || !creatorId) {
       try {
         // Obtener información de la sala desde Firestore
         const roomRef = doc(firestore, 'rooms', roomId);
@@ -370,27 +412,52 @@ export async function canAddParticipant(roomId: string): Promise<boolean> {
           if (roomData.creatorPlan) {
             console.log(`Found creator plan in Firestore: ${roomData.creatorPlan}`);
             plan = roomData.creatorPlan;
-          } else {
-            // Si no está en los metadatos (para salas antiguas), obtenerlo del usuario creador
-            const creatorId = roomData.createdBy || roomData.creatorId;
-            
-            if (creatorId) {
-              console.log(`Looking up creator (${creatorId}) subscription`);
-              // Obtener la suscripción del creador
-              const subscription = await getUserSubscription(creatorId);
-              
-              // Si no tiene suscripción, usar plan FREE
-              if (subscription) {
-                console.log(`Found creator subscription: ${subscription.plan}`);
-                plan = subscription.plan;
-              } else {
-                console.log('No subscription found for creator, using FREE plan');
-              }
-            }
+          }
+          
+          // Obtener el ID del creador si no lo tenemos aún
+          if (!creatorId) {
+            creatorId = roomData.createdBy || roomData.creatorId;
           }
         }
       } catch (firestoreError) {
         console.error('Error checking Firestore for room data:', firestoreError);
+      }
+    }
+    
+    // Si tenemos el ID del creador, verificar su suscripción actual
+    if (creatorId) {
+      try {
+        console.log(`Looking up creator (${creatorId}) subscription`);
+        // Obtener la suscripción del creador
+        const subscription = await getUserSubscription(creatorId);
+        
+        // Si tiene una suscripción, verificar su estado
+        if (subscription) {
+          console.log(`Found creator subscription: ${subscription.plan}, status: ${subscription.status}`);
+          
+          // Si la suscripción está cancelada, verificar si aún está dentro del período de facturación
+          if (subscription.status === SubscriptionStatus.CANCELLED) {
+            const endDate = new Date(subscription.endDate);
+            const now = new Date();
+            
+            if (endDate > now) {
+              // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+              console.log(`Subscription cancelled but still active until ${endDate.toLocaleDateString()}`);
+              plan = subscription.plan;
+            } else {
+              // Si la fecha de finalización ya pasó, usar plan FREE
+              console.log(`Subscription cancelled and expired on ${endDate.toLocaleDateString()}`);
+              plan = SubscriptionPlan.FREE;
+            }
+          } else {
+            // Si la suscripción está activa, usar su plan
+            plan = subscription.plan;
+          }
+        } else {
+          console.log('No subscription found for creator, using FREE plan');
+        }
+      } catch (error) {
+        console.error('Error looking up creator subscription:', error);
       }
     }
     
@@ -480,10 +547,11 @@ export async function updateSubscriptionStatus(
         await updateDoc(subscriptionRef, {
           status: SubscriptionStatus.CANCELLED,
           cancelReason: 'Cancelled by PayPal webhook',
-          cancelDate: new Date().toISOString()
+          cancelDate: new Date().toISOString(),
+          autoRenew: false // Asegurarse de que no se renueve automáticamente
         });
         
-        console.log(`Suscripción ${subscriptionId} cancelada por webhook de PayPal`);
+        console.log(`Suscripción ${subscriptionId} cancelada por webhook de PayPal, pero se mantiene activa hasta ${subscription.endDate}`);
         return true;
       } else {
         // Si no es un webhook, usar la función existente que también actualiza el documento del usuario
@@ -512,15 +580,10 @@ export async function updateSubscriptionStatus(
       
       await updateDoc(subscriptionRef, {
         status: newStatus,
-        updatedAt: new Date().toISOString()
+        lastUpdated: new Date().toISOString()
       });
       
-      // Si el estado es 'failed', podríamos enviar una notificación al usuario
-      if (status === 'failed') {
-        // TODO: Implementar notificación al usuario sobre el fallo del pago
-        console.log(`Pago fallido para la suscripción ${subscriptionId}. Notificar al usuario.`);
-      }
-      
+      console.log(`Suscripción ${subscriptionId} actualizada a estado: ${newStatus}`);
       return true;
     }
   } catch (error) {

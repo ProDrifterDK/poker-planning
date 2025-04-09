@@ -1,8 +1,11 @@
 'use client';
 
 import { Box, Typography, Link } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
+    const { t } = useTranslation('common');
+    
     return (
         <Box
             component="footer"
@@ -14,19 +17,19 @@ export default function Footer() {
             }}
         >
             <Typography variant="body1">
-                © {new Date().getFullYear()} Poker Planning Pro. Todos los derechos reservados.
+                © {new Date().getFullYear()} {t('appName')}. {t('footer.allRightsReserved')}.
             </Typography>
             <Typography variant="body2">
                 <Link href="/privacy-policy" color="inherit" underline="hover">
-                    Política de Privacidad
+                    {t('footer.privacyPolicy')}
                 </Link>
                 {' | '}
                 <Link href="/terms" color="inherit" underline="hover">
-                    Términos de Servicio
+                    {t('footer.termsOfService')}
                 </Link>
             </Typography>
             <Typography variant="caption">
-                Construido por Resyst Softwares
+                {t('footer.builtBy')}
             </Typography>
         </Box>
     );

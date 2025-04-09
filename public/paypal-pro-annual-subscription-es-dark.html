@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripción Plan Pro Anual - Planning Poker Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            color: #90caf9;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .plan-details {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196f3;
+        }
+        .plan-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #90caf9;
+            margin-bottom: 10px;
+        }
+        .plan-price {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        .plan-features {
+            list-style-type: none;
+            padding: 0;
+        }
+        .plan-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #444;
+        }
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+        .plan-features li::before {
+            content: "✓";
+            color: #81c784;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        #paypal-button-container {
+            margin-top: 30px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #333;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+        .back-button:hover {
+            background-color: #444;
+        }
+        .savings {
+            background-color: #1b5e20;
+            color: #a5d6a7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Suscripción a Planning Poker Pro</h1>
+        
+        <div class="plan-details">
+            <div class="plan-name">Plan Pro Anual</div>
+            <div class="plan-price">$99.99/año</div>
+            <div class="savings">¡Ahorra más de 15% comparado con la facturación mensual!</div>
+            <ul class="plan-features">
+                <li>Hasta 15 participantes por sala</li>
+                <li>5 salas activas</li>
+                <li>Exportación de datos</li>
+                <li>Estadísticas avanzadas</li>
+                <li>Temporizador para votaciones</li>
+                <li>Historial completo</li>
+            </ul>
+        </div>
+        
+        <div id="paypal-button-container"></div>
+        
+        <a href="/es/settings/subscription" class="back-button">Volver a los planes</a>
+    </div>
+    
+    <script>
+        // Plan details
+        const selectedPlan = {
+            name: 'Plan Pro Anual',
+            id: 'pro-year',
+            price: '99.99'
+        };
+        
+        // Function to render PayPal button
+        function renderPayPalButton() {
+            // Clear container
+            const container = document.getElementById('paypal-button-container');
+            container.innerHTML = '';
+            
+            // Check if PayPal is loaded
+            if (!window.paypal) {
+                console.error('PayPal SDK not loaded');
+                container.innerHTML = '<p style="color: #ff6b6b;">Error: No se pudo cargar PayPal. Por favor, inténtelo de nuevo más tarde.</p>';
+                return;
+            }
+            
+            console.log('Rendering PayPal button for plan:', selectedPlan);
+            
+            // Render PayPal button
+            window.paypal.Buttons({
+                style: {
+                    shape: 'rect',
+                    color: 'blue',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    console.log('Creating subscription for plan:', selectedPlan);
+                    
+                    return actions.subscription.create({
+                        'plan_id': 'P-6SB704566L0364918M7YIXKY',
+                        'application_context': {
+                            'shipping_preference': 'NO_SHIPPING',
+                            'user_action': 'SUBSCRIBE_NOW',
+                            'return_url': 'https://poker-planning-pro.vercel.app/settings/subscription/success',
+                            'cancel_url': 'https://poker-planning-pro.vercel.app/settings/subscription'
+                        }
+                    });
+                },
+                onApprove: function(data, actions) {
+                    console.log('Subscription approved:', data);
+                    
+                    // Save subscription data to localStorage
+                    localStorage.setItem('pendingSubscription', JSON.stringify({
+                        subscriptionId: data.subscriptionID,
+                        planName: selectedPlan.name,
+                        planPrice: selectedPlan.price,
+                        planInterval: 'YEAR',
+                        plan: 'pro-year' // Ensure the plan ID is explicitly set to 'pro-year'
+                    }));
+                    
+                    // Save theme preference
+                    localStorage.setItem('theme-mode', 'dark');
+                    
+                    // Redirect to success page with explicit plan parameter
+                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=YEAR&plan=pro-year&from_paypal_sdk=false`;
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    container.innerHTML = `<p style="color: #ff6b6b;">Error: ${err.message || 'Ocurrió un error al procesar el pago.'}</p>`;
+                }
+            }).render('#paypal-button-container');
+        }
+        
+        // Load PayPal SDK
+        function loadPayPalScript() {
+            console.log('Loading PayPal SDK...');
+            
+            // Remove any existing PayPal script
+            const existingScript = document.querySelector('script[src*="paypal.com/sdk/js"]');
+            if (existingScript) {
+                document.body.removeChild(existingScript);
+            }
+            
+            // Create new script element
+            const script = document.createElement('script');
+            script.src = 'https://www.paypal.com/sdk/js?client-id=Ad6FjYnXb1rFqI-SkBVRji5cXWe9bBaVyTaBGTrPo5Dlwh_lK4dLsMRJplfL12yoyMcIwK-AWGX4jzXR&vault=true&intent=subscription&currency=USD';
+            script.async = true;
+            
+            // Handle script load events
+            script.onload = function() {
+                console.log('PayPal SDK loaded successfully');
+                renderPayPalButton();
+            };
+            
+            script.onerror = function(e) {
+                console.error('Error loading PayPal SDK:', e);
+                const container = document.getElementById('paypal-button-container');
+                container.innerHTML = '<p style="color: #ff6b6b;">Error: No se pudo cargar PayPal. Por favor, inténtelo de nuevo más tarde.</p>';
+            };
+            
+            // Add script to document
+            document.body.appendChild(script);
+        }
+        
+        // Load PayPal SDK when page loads
+        window.addEventListener('load', loadPayPalScript);
+    </script>
+</body>
+</html>

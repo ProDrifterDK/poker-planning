@@ -1,0 +1,59 @@
+{
+  "title": "Settings",
+  "profile": {
+    "title": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "updateProfile": "Update profile",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "updatePassword": "Update password",
+    "deleteAccount": "Delete account",
+    "deleteAccountWarning": "This action is permanent and cannot be undone.",
+    "deleteAccountConfirm": "I am sure I want to delete my account",
+    "enterPassword": "Enter your password to confirm",
+    "profileUpdated": "Profile updated successfully",
+    "passwordUpdated": "Password updated successfully"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentPlan": "Current plan",
+    "freePlan": "Free Plan",
+    "proPlan": "Pro Plan",
+    "enterprisePlan": "Enterprise Plan",
+    "upgradePlan": "Upgrade plan",
+    "managePlan": "Manage plan",
+    "cancelPlan": "Cancel plan",
+    "renewalDate": "Renewal date",
+    "paymentHistory": "Payment history",
+    "date": "Date",
+    "amount": "Amount",
+    "status": "Status",
+    "noPayments": "No payments recorded",
+    "features": "Included features",
+    "upgradeToAccess": "Upgrade your plan to access this feature",
+    "confirmCancel": "Are you sure you want to cancel your subscription?",
+    "cancelWarning": "Your subscription will remain active until the end of the current billing period.",
+    "subscriptionCanceled": "Subscription canceled successfully"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "language": "Language",
+    "spanish": "Spanish",
+    "english": "English"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "email": "Email notifications",
+    "push": "Push notifications",
+    "roomInvites": "Room invitations",
+    "roomUpdates": "Room updates",
+    "systemUpdates": "System updates"
+  }
+}

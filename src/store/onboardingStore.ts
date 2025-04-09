@@ -21,6 +21,7 @@ export interface StepConfig {
     element?: string; // Selector CSS del elemento a resaltar
     position?: "top" | "right" | "bottom" | "left";
     action?: string; // Acción que debe realizar el usuario para avanzar
+    lang?: string; // Idioma actual para evitar actualizaciones innecesarias
 }
 
 // Definir el tipo para el estado del store
@@ -43,6 +44,9 @@ interface OnboardingState {
     goToStep: (step: OnboardingStep) => void;
     markStepAsCompleted: (step: OnboardingStep) => void;
     resetOnboarding: (keepCompletionStatus?: boolean) => void;
+    
+    // Traducción
+    setStepTranslations: (translatedSteps: Record<OnboardingStep, StepConfig>) => void;
 }
 
 // Crear el store con persistencia
@@ -195,6 +199,10 @@ export const useOnboardingStore = create<OnboardingState>()(
                     completedSteps: [],
                     hasCompletedOnboarding: keepCompletionStatus ? get().hasCompletedOnboarding : false,
                 }),
+                
+            // Función para actualizar las traducciones de los pasos
+            setStepTranslations: (translatedSteps: Record<OnboardingStep, StepConfig>) =>
+                set({ steps: translatedSteps }),
         }),
         {
             name: "onboarding-storage", // Nombre para localStorage

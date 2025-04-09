@@ -16,6 +16,33 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
+
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+  // Intentar obtener el idioma de i18next primero (cliente)
+  let lang = 'es'; // Valor por defecto
+
+  if (typeof window !== 'undefined') {
+    // Estamos en el cliente, podemos acceder a i18next
+    const i18nLang = window.localStorage.getItem('i18nextLng');
+
+    if (i18nLang && supportedLocales.includes(i18nLang)) {
+      lang = i18nLang;
+    } else {
+      // Fallback a la URL si no hay idioma en i18next
+      const urlLang = window.location.pathname.split('/')[1];
+      if (supportedLocales.includes(urlLang)) {
+        lang = urlLang;
+      }
+    }
+  }
+
+  return `/${lang}${route}`;
+};
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,20 +52,21 @@ const SignIn: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const { signIn, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
+  const { t, i18n } = useTranslation('auth');
 
   // Redireccionar si el usuario está autenticado o si el inicio de sesión fue exitoso
   useEffect(() => {
     if (currentUser || success) {
       // Verificar si hay una suscripción pendiente en localStorage
       const pendingSubscription = typeof window !== 'undefined' ? localStorage.getItem('pendingSubscription') : null;
-      
+
       // Verificar si hay una URL de redirección guardada en sessionStorage (para salas)
       const redirectAfterAuth = typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterAuth') : null;
-      
+
       // Obtener la URL de retorno de los parámetros de la URL si existe
       const urlParams = new URLSearchParams(window.location.search);
       const returnUrl = urlParams.get('returnUrl');
-      
+
       // Pequeño retraso para mostrar el mensaje de éxito
       const timer = setTimeout(() => {
         // Prioridad de redirección:
@@ -46,7 +74,7 @@ const SignIn: React.FC = () => {
         // 2. URL guardada en sessionStorage (para salas)
         // 3. Página de suscripción si hay una pendiente
         // 4. Página de inicio
-        
+
         if (returnUrl) {
           console.log('Redirigiendo a URL de retorno:', returnUrl);
           router.push(returnUrl);
@@ -57,11 +85,11 @@ const SignIn: React.FC = () => {
           sessionStorage.removeItem('redirectAfterAuth');
         } else if (pendingSubscription) {
           console.log('Encontrada suscripción pendiente, redirigiendo a página de éxito');
-          router.push('/settings/subscription');
+          router.push(getLocalizedRoute('/settings/subscription'));
         } else {
           // Si no hay ninguna redirección específica, ir a la página de inicio
           console.log('Redirigiendo a página de inicio');
-          router.push('/');
+          router.push(getLocalizedRoute(''));
         }
       }, 1500);
 
@@ -83,11 +111,11 @@ const SignIn: React.FC = () => {
 
   const validateForm = () => {
     if (!email.trim()) {
-      setFormError('El correo electrónico es obligatorio');
+      setFormError(t('errors.emailRequired'));
       return false;
     }
     if (!password) {
-      setFormError('La contraseña es obligatoria');
+      setFormError(t('errors.passwordRequired'));
       return false;
     }
     return true;
@@ -102,7 +130,7 @@ const SignIn: React.FC = () => {
     try {
       await signIn(email, password);
       setSuccess(true); // Establecer estado de éxito
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
       // No registramos el error en la consola por razones de seguridad
@@ -145,12 +173,12 @@ const SignIn: React.FC = () => {
         }}
       >
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
-          Iniciar Sesión
+          {t('signin.title')}
         </Typography>
 
         {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            ¡Inicio de sesión exitoso! Redirigiendo...
+            {t('signin.success', 'Sign in successful! Redirecting...')}
           </Alert>
         )}
 
@@ -162,7 +190,7 @@ const SignIn: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Correo electrónico"
+            label={t('signin.email')}
             type="email"
             fullWidth
             margin="normal"
@@ -174,7 +202,7 @@ const SignIn: React.FC = () => {
           />
 
           <TextField
-            label="Contraseña"
+            label={t('signin.password')}
             type="password"
             fullWidth
             margin="normal"
@@ -188,11 +216,11 @@ const SignIn: React.FC = () => {
           <Box sx={{ mt: 1, mb: 2, textAlign: 'right' }}>
             <MuiLink
               component={Link}
-              href="/auth/reset-password"
+              href={getLocalizedRoute('/auth/reset-password')}
               underline="hover"
               variant="body2"
             >
-              ¿Olvidaste tu contraseña?
+              {t('signin.forgotPassword')}
             </MuiLink>
           </Box>
 
@@ -205,11 +233,10 @@ const SignIn: React.FC = () => {
             disabled={isSubmitting}
             sx={{ mb: 2, textTransform: "none" }}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('signin.submit')}
           </Button>
         </form>
-
-        <Divider sx={{ my: 2 }}>o</Divider>
+        <Divider sx={{ my: 2 }}>{t('signin.or')}</Divider>
 
         <Button
           fullWidth
@@ -219,18 +246,18 @@ const SignIn: React.FC = () => {
           disabled={isSubmitting}
           sx={{ mb: 2, textTransform: "none" }}
         >
-          Continuar con Google
+          {t('signin.continueWithGoogle', 'Continue with Google')}
         </Button>
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="body2">
-            ¿No tienes una cuenta?{' '}
+            {t('signin.noAccount')}{' '}
             <MuiLink
               component={Link}
-              href="/auth/signup"
+              href={getLocalizedRoute('/auth/signup')}
               underline="hover"
             >
-              Regístrate
+              {t('signin.createAccount')}
             </MuiLink>
           </Typography>
         </Box>

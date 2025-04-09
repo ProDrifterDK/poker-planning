@@ -14,6 +14,33 @@ import {
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
+// Lista de idiomas soportados
+const supportedLocales = ['es', 'en'];
+
+// Función auxiliar para obtener la ruta con el idioma
+const getLocalizedRoute = (route: string): string => {
+  // Intentar obtener el idioma de i18next primero (cliente)
+  let lang = 'es'; // Valor por defecto
+  
+  if (typeof window !== 'undefined') {
+    // Estamos en el cliente, podemos acceder a i18next
+    const i18nLang = window.localStorage.getItem('i18nextLng');
+    
+    if (i18nLang && supportedLocales.includes(i18nLang)) {
+      lang = i18nLang;
+    } else {
+      // Fallback a la URL si no hay idioma en i18next
+      const urlLang = window.location.pathname.split('/')[1];
+      if (supportedLocales.includes(urlLang)) {
+        lang = urlLang;
+      }
+    }
+  }
+  
+  return `/${lang}${route}`;
+};
 
 const ResetPassword: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,12 +49,13 @@ const ResetPassword: React.FC = () => {
   const [resetSent, setResetSent] = useState(false);
   const { resetUserPassword, error, clearError } = useAuth();
   const router = useRouter();
+  const { t, i18n } = useTranslation('auth');
   
   // Redireccionar después de un tiempo si se envió el correo
   useEffect(() => {
     if (resetSent) {
       const timer = setTimeout(() => {
-        router.push('/auth/signin');
+        router.push(getLocalizedRoute('/auth/signin'));
       }, 5000); // Dar más tiempo para leer el mensaje
       
       return () => clearTimeout(timer);
@@ -42,7 +70,7 @@ const ResetPassword: React.FC = () => {
 
   const validateForm = () => {
     if (!email.trim()) {
-      setFormError('El correo electrónico es obligatorio');
+      setFormError(t('errors.emailRequired'));
       return false;
     }
     return true;
@@ -85,29 +113,28 @@ const ResetPassword: React.FC = () => {
         }}
       >
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
-          Restablecer Contraseña
+          {t('resetPassword.title')}
         </Typography>
         
         {resetSent ? (
           <>
             <Alert severity="success" sx={{ mb: 2 }}>
-              Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.
-              Serás redirigido a la página de inicio de sesión en unos segundos...
+              {t('resetPassword.emailSent', 'An email has been sent with instructions to reset your password. You will be redirected to the login page in a few seconds...')}
             </Alert>
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <MuiLink
                 component={Link}
-                href="/auth/signin"
+                href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
-                Volver a Iniciar Sesión
+                {t('forgotPassword.backToLogin')}
               </MuiLink>
             </Box>
           </>
         ) : (
           <>
             <Typography variant="body1" paragraph>
-              Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.
+              {t('forgotPassword.instructions')}
             </Typography>
             
             {(error || formError) && (
@@ -118,7 +145,7 @@ const ResetPassword: React.FC = () => {
             
             <form onSubmit={handleSubmit}>
               <TextField
-                label="Correo electrónico"
+                label={t('forgotPassword.email')}
                 type="email"
                 fullWidth
                 margin="normal"
@@ -138,17 +165,17 @@ const ResetPassword: React.FC = () => {
                 disabled={isSubmitting}
                 sx={{ mt: 2, mb: 2, textTransform: "none" }}
               >
-                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Enviar instrucciones'}
+                {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('forgotPassword.submit')}
               </Button>
             </form>
             
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <MuiLink
                 component={Link}
-                href="/auth/signin"
+                href={getLocalizedRoute('/auth/signin')}
                 underline="hover"
               >
-                Volver a iniciar sesión
+                {t('forgotPassword.backToLogin')}
               </MuiLink>
             </Box>
           </>

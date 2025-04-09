@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, Snackbar, Button, Box, Typography, Link } from "@mui/material";
 import { useErrorStore, ErrorType } from "@/store/errorStore";
 import NextLink from 'next/link';
@@ -25,10 +26,15 @@ export default function ErrorDisplay({
   useSnackbar = true,
   duration = 6000,
   showRecoveryButton = true,
-  recoveryButtonText = "Reintentar",
+  recoveryButtonText,
   showDetails = false,
 }: ErrorDisplayProps) {
   const { currentError, clearError } = useErrorStore();
+  const { t } = useTranslation('common');
+  
+  // Si no se proporciona un texto para el botón de recuperación, usar el valor por defecto traducido
+  const defaultRecoveryButtonText = t('errors.retry');
+  const finalRecoveryButtonText = recoveryButtonText || defaultRecoveryButtonText;
 
   // Limpiar el error cuando el componente se desmonte
   useEffect(() => {
@@ -86,11 +92,11 @@ export default function ErrorDisplay({
       {isAdBlockerRelatedError() && (
         <Box sx={{ mt: 1 }}>
           <Typography variant="body2">
-            Consulta nuestra{' '}
+            {t('errors.checkOur')}{' '}
             <Link component={NextLink} href="/docs/troubleshooting" color="primary" underline="always">
-              guía de solución de problemas
+              {t('errors.troubleshootingGuide')}
             </Link>
-            {' '}para resolver este problema.
+            {' '}{t('errors.toSolveThisProblem')}.
           </Typography>
         </Box>
       )}
@@ -104,7 +110,7 @@ export default function ErrorDisplay({
           size="small"
           sx={{ mt: 1 }}
         >
-          {recoveryButtonText}
+          {finalRecoveryButtonText}
         </Button>
       )}
     </React.Fragment>

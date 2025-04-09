@@ -2,7 +2,9 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/authContext';
+import { getLocalizedRoute } from '@/utils/routeUtils';
 import { Box, CircularProgress, Button, TextField, Typography, Paper, Modal } from '@mui/material';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebaseConfig';
@@ -14,8 +16,9 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  redirectTo = '/auth/signin'
+  redirectTo = '/auth/signin' // This will be localized when used
 }) => {
+  const { t } = useTranslation('common');
   const { currentUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +31,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const [processingAuth, setProcessingAuth] = useState(false);
   
   // Verificar si la ruta actual es una página de sala
-  const isRoomPage = pathname?.startsWith('/room/') && pathname?.length > 6;
+  // Soporta tanto /room/ como /{lang}/room/
+  const isRoomPage = (pathname?.includes('/room/') && pathname?.length > 6) ||
+                     (pathname?.match(/\/[a-z]{2}\/room\//) && pathname?.length > 9);
   
   // Guardar la URL actual para redirección después del inicio de sesión
   useEffect(() => {
@@ -45,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         setOpenGuestModal(true);
       } else {
         // Para otras páginas protegidas, redirigir normalmente
-        router.push(`${redirectTo}?returnUrl=${encodeURIComponent(pathname || '/')}`);
+        router.push(getLocalizedRoute(`${redirectTo}?returnUrl=${encodeURIComponent(pathname || '/')}`));
       }
     }
   }, [currentUser, loading, redirectTo, router, isRoomPage, pathname, processingAuth]);
@@ -53,7 +58,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Función para continuar como invitado
   const handleContinueAsGuest = async () => {
     if (!guestName.trim()) {
-      setGuestError('Por favor ingresa tu nombre');
+      setGuestError(t('protectedRoute.pleaseEnterName'));
       return;
     }
     
@@ -89,7 +94,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       
     } catch (error) {
       console.error('Error al crear usuario invitado:', error);
-      setGuestError('Error al crear usuario invitado. Por favor intenta nuevamente.');
+      setGuestError(t('protectedRoute.guestUserError'));
       setProcessingAuth(false); // Resetear el estado si hay un error
     } finally {
       setIsSubmitting(false);
@@ -100,7 +105,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const handleGoToSignIn = () => {
     setOpenGuestModal(false);
     setProcessingAuth(true); // Marcar que estamos procesando la autenticación
-    router.push(`${redirectTo}?returnUrl=${encodeURIComponent(pathname || '/')}`);
+    router.push(getLocalizedRoute(`${redirectTo}?returnUrl=${encodeURIComponent(pathname || '/')}`));
   };
 
   if (loading) {
@@ -140,11 +145,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           }}
         >
           <Typography id="guest-access-modal-title" variant="h5" component="h2" gutterBottom>
-            Acceso a la sala
+            {t('protectedRoute.roomAccess')}
           </Typography>
           
           <Typography id="guest-access-modal-description" sx={{ mt: 2, mb: 3 }}>
-            Puedes iniciar sesión con tu cuenta o continuar como invitado para acceder a esta sala.
+            {t('protectedRoute.accessDescription')}
           </Typography>
           
           {guestError && (
@@ -154,7 +159,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           )}
           
           <TextField
-            label="Tu nombre"
+            label={t('protectedRoute.yourName')}
             fullWidth
             value={guestName}
             onChange={(e) => {
@@ -163,7 +168,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             }}
             margin="normal"
             disabled={isSubmitting}
-            placeholder="Ej: Juan Pérez"
+            placeholder={t('protectedRoute.namePlaceholder')}
           />
           
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
@@ -173,7 +178,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               disabled={isSubmitting}
               sx={{ flex: 1 }}
             >
-              Iniciar sesión
+              {t('protectedRoute.signIn')}
             </Button>
             
             <Button
@@ -183,7 +188,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               disabled={isSubmitting}
               sx={{ flex: 1 }}
             >
-              {isSubmitting ? <CircularProgress size={24} /> : 'Continuar como invitado'}
+              {isSubmitting ? <CircularProgress size={24} /> : t('protectedRoute.continueAsGuest')}
             </Button>
           </Box>
         </Paper>

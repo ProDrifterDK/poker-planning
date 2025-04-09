@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, LinearProgress, Tooltip, Chip } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import { useRoomStore } from '@/store/roomStore';
@@ -19,6 +20,7 @@ interface ParticipantCounterProps {
  * Component to display the current participant count and limit
  */
 export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCounterProps) {
+  const { t } = useTranslation('common');
   const { participants, roomId } = useRoomStore();
   const [creatorPlan, setCreatorPlan] = useState<SubscriptionPlan>(SubscriptionPlan.FREE);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,7 +153,10 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
   
   return (
     <Tooltip
-      title={`Esta sala permite hasta ${maxParticipants} participantes (Basado en el plan ${SUBSCRIPTION_PLANS[planLookupKey].name} del creador de la sala)`}
+      title={t('participantCounter.roomAllows', {
+        maxParticipants,
+        planName: SUBSCRIPTION_PLANS[planLookupKey].name
+      })}
       placement="top"
     >
       <Box
@@ -180,7 +185,7 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
         {/* Show a small chip if almost at capacity */}
         {percentage > 80 && (
           <Chip 
-            label={percentage >= 100 ? "Lleno" : "Casi lleno"} 
+            label={percentage >= 100 ? t('participantCounter.full') : t('participantCounter.almostFull')}
             size="small" 
             color={percentage >= 100 ? "error" : "warning"}
             sx={{ 
