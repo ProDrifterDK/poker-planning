@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { Box } from '@mui/material';
+import { useThemeMode } from '@/context/themeContext';
 
 /**
  * Componente para cambiar el idioma sin recargar la página
@@ -13,6 +14,7 @@ import { Box } from '@mui/material';
 export default function ClientLanguageSwitch() {
   const pathname = usePathname();
   const { i18n } = useTranslation();
+  const { mode } = useThemeMode(); // Obtener el tema actual
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
   
   // Efecto para evitar múltiples cambios de idioma simultáneos
@@ -89,15 +91,21 @@ export default function ClientLanguageSwitch() {
   const thumbColor = isEnglish ? '#dc002e' : '#ffdf00';
   
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+    <Box sx={{
+      display: 'flex',
+      alignItems: 'center',
       gap: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)', // Much whiter background
+      backgroundColor: mode === 'dark'
+        ? 'rgba(30, 30, 30, 0.9)' // Fondo oscuro para tema oscuro
+        : 'rgba(255, 255, 255, 0.9)', // Fondo claro para tema claro
       padding: '4px 8px',
       borderRadius: '8px',
-      border: '1px solid rgba(0, 0, 0, 0.1)', // Subtle border
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add a subtle shadow
+      border: mode === 'dark'
+        ? '1px solid rgba(255, 255, 255, 0.1)' // Borde sutil para tema oscuro
+        : '1px solid rgba(0, 0, 0, 0.1)', // Borde sutil para tema claro
+      boxShadow: mode === 'dark'
+        ? '0 2px 4px rgba(0, 0, 0, 0.3)' // Sombra más pronunciada para tema oscuro
+        : '0 2px 4px rgba(0, 0, 0, 0.1)', // Sombra sutil para tema claro
     }}>
       <Box 
         sx={{

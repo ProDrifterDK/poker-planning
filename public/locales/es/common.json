@@ -508,5 +508,9 @@
       "start": "Comenzar",
       "finish": "Finalizar"
     }
+  },
+  "featureGuard": {
+    "requiresHigherPlan": "Esta función requiere un plan superior",
+    "upgradePlan": "Actualizar Plan"
   }
 }

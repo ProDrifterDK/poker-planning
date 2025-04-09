@@ -275,7 +275,7 @@ export default function Card({
                                 alt="Planning Poker Pro Logo"
                                 fill
                                 style={{
-                                    objectFit: 'cover',
+                                    objectFit: 'fill',
                                     width: '100%',
                                     height: '100%'
                                 }}

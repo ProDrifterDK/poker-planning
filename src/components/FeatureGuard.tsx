@@ -5,6 +5,7 @@ import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Box, Typography, Button } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { PlanFeatures } from '@/types/subscription';
+import { useTranslation } from 'react-i18next';
 
 interface FeatureGuardProps {
   feature: keyof PlanFeatures;
@@ -28,6 +29,8 @@ interface FeatureGuardProps {
  */
 export default function FeatureGuard({ feature, children, fallback }: FeatureGuardProps) {
   const { canUserAccessFeature } = useSubscriptionStore();
+  const { t, i18n } = useTranslation('common');
+  const currentLang = i18n.language || 'es'; // Usar 'es' como valor predeterminado si no hay idioma
   
   const hasAccess = canUserAccessFeature(feature);
   
@@ -58,15 +61,15 @@ export default function FeatureGuard({ feature, children, fallback }: FeatureGua
     >
       <LockIcon color="action" sx={{ mb: 1 }} />
       <Typography variant="body2" color="text.secondary" align="center" gutterBottom>
-        Esta función requiere un plan superior
+        {t('featureGuard.requiresHigherPlan', 'Esta función requiere un plan superior')}
       </Typography>
-      <Button 
-        variant="outlined" 
-        size="small" 
-        href="/settings/subscription" 
+      <Button
+        variant="outlined"
+        size="small"
+        href={`/${currentLang}/settings/subscription`}
         sx={{ mt: 1 }}
       >
-        Actualizar Plan
+        {t('featureGuard.upgradePlan', 'Actualizar Plan')}
       </Button>
     </Box>
   );

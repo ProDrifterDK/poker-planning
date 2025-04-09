@@ -508,5 +508,9 @@
       "start": "Start",
       "finish": "Finish"
     }
+  },
+  "featureGuard": {
+    "requiresHigherPlan": "This feature requires a higher plan",
+    "upgradePlan": "Upgrade Plan"
   }
 }
