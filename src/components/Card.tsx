@@ -4,6 +4,7 @@ import { SxProps, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import Image from 'next/image';
 
 // Creamos versiones de motion de los componentes que necesitamos
 const MotionBox = motion.create(Box);
@@ -251,8 +252,36 @@ export default function Card({
                         aria-hidden="false"
                         role="img"
                         aria-label={t('cards.backOfCard')}
+                        style={{
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
                     >
-                        PPP
+                        {/* Logo SVG como imagen a pantalla completa */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            padding: '0' // Eliminamos el padding para que ocupe todo el espacio
+                        }}>
+                            <Image
+                                src="/images/logo/logo.svg"
+                                alt="Planning Poker Pro Logo"
+                                fill
+                                style={{
+                                    objectFit: 'cover',
+                                    width: '100%',
+                                    height: '100%'
+                                }}
+                                priority
+                            />
+                        </div>
                         {/* Texto oculto para lectores de pantalla */}
                         <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>
                             {t('cards.backOfCard')}
