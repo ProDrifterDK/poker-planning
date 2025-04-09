@@ -13,6 +13,38 @@ interface FeatureGuardProps {
   fallback?: ReactNode;
 }
 
+// Mapa de nombres legibles para cada característica
+const featureNames: Record<string, Record<keyof PlanFeatures, string>> = {
+  es: {
+    maxParticipants: "Participantes máximos",
+    maxActiveRooms: "Salas activas máximas",
+    exportData: "Exportación de datos",
+    advancedStats: "Estadísticas avanzadas",
+    timer: "Temporizador",
+    fullHistory: "Historial completo",
+    integrations: "Integraciones",
+    branding: "Personalización de marca",
+    advancedRoles: "Roles avanzados",
+    prioritySupport: "Soporte prioritario",
+    api: "API",
+    adFree: "Sin anuncios"
+  },
+  en: {
+    maxParticipants: "Maximum participants",
+    maxActiveRooms: "Maximum active rooms",
+    exportData: "Data export",
+    advancedStats: "Advanced statistics",
+    timer: "Timer",
+    fullHistory: "Full history",
+    integrations: "Integrations",
+    branding: "Branding",
+    advancedRoles: "Advanced roles",
+    prioritySupport: "Priority support",
+    api: "API",
+    adFree: "Ad-free"
+  }
+};
+
 /**
  * FeatureGuard component that checks if the user has access to a feature
  * based on their subscription plan.
@@ -31,24 +63,28 @@ export default function FeatureGuard({ feature, children, fallback }: FeatureGua
   const { canUserAccessFeature } = useSubscriptionStore();
   const { t, i18n } = useTranslation('common');
   const currentLang = i18n.language || 'es'; // Usar 'es' como valor predeterminado si no hay idioma
-  
+
   const hasAccess = canUserAccessFeature(feature);
-  
+
   if (hasAccess) {
     return <>{children}</>;
   }
-  
+
   if (fallback) {
     return <>{fallback}</>;
   }
-  
+
+  // Obtener el nombre legible de la característica
+  const langKey = currentLang.startsWith('es') ? 'es' : 'en';
+  const featureName = featureNames[langKey][feature] || feature;
+
   // Default fallback UI
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
         p: 2,
         border: '1px dashed',
@@ -60,7 +96,10 @@ export default function FeatureGuard({ feature, children, fallback }: FeatureGua
       }}
     >
       <LockIcon color="action" sx={{ mb: 1 }} />
-      <Typography variant="body2" color="text.secondary" align="center" gutterBottom>
+      <Typography variant="body1" color="initial">
+        {featureName}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" align="center" gutterBottom>
         {t('featureGuard.requiresHigherPlan', 'Esta función requiere un plan superior')}
       </Typography>
       <Button
