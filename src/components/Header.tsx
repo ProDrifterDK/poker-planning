@@ -10,7 +10,9 @@ import {
     Avatar,
     Menu,
     MenuItem,
-    Divider
+    Divider,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import ThemeToggleButton from './ThemeToggleButton';
@@ -70,6 +72,8 @@ export default function Header() {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     const { t } = useTranslation('common');
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     
     // Verificar si el usuario es invitado
     const isGuest = isGuestUser();
@@ -184,7 +188,7 @@ export default function Header() {
                     </Typography>
                 </LanguageAwareComponent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ClientLanguageSwitch />
+                    {!isMobile && <ClientLanguageSwitch />}
                     <OnboardingButton variant="icon" color="inherit" />
                     <ThemeToggleButton />
                     
@@ -255,6 +259,16 @@ export default function Header() {
                                         </Box>
                                     </MenuItem>
                                     <Divider />
+                                    
+                                    {isMobile && (
+                                        <>
+                                            <ClientLanguageSwitch
+                                                variant="menu"
+                                                onLanguageChange={handleClose}
+                                            />
+                                            <Divider />
+                                        </>
+                                    )}
                                     {!isGuest && (
                                         <>
                                             <MenuItem onClick={handleProfile}>
