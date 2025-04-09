@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,26 +20,70 @@ import {
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { PlanDetails, SubscriptionPlan, BillingInterval } from '@/types/subscription';
+import { PlanDetails, SubscriptionPlan, BillingInterval, getLocalizedSubscriptionPlans } from '@/types/subscription';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import PayPalSubscriptionButton from './PayPalSubscriptionButton';
 import PayPalTest from './PayPalTest';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
+import { useThemeMode } from '@/context/themeContext';
 
 interface PlanCardProps {
   plan: PlanDetails;
+  planKey?: string; // Clave para identificar el plan (ej: "pro-month")
   isCurrentPlan: boolean;
   userId: string;
 }
 
-export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps) {
+export default function PlanCard({ plan: initialPlan, planKey, isCurrentPlan, userId }: PlanCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showPayPalButton, setShowPayPalButton] = useState(false);
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const params = useParams();
-  const { lang } = params as { lang: string };
+  const [currentLang, setCurrentLang] = useState(params.lang as string);
+  const [plan, setPlan] = useState(initialPlan);
+  const { mode } = useThemeMode(); // Obtener el tema actual
+  
+  // Escuchar cambios de idioma
+  useEffect(() => {
+    const handleLanguageChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.language) {
+        const newLang = customEvent.detail.language;
+        setCurrentLang(newLang);
+        
+        // Si tenemos una clave de plan, actualizar el plan con las traducciones correctas
+        if (planKey) {
+          const localizedPlans = getLocalizedSubscriptionPlans(newLang);
+          if (localizedPlans[planKey]) {
+            setPlan(localizedPlans[planKey]);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+    };
+  }, [planKey]);
+  
+  // Actualizar el idioma cuando cambia i18n
+  useEffect(() => {
+    if (i18n.language !== currentLang) {
+      setCurrentLang(i18n.language);
+      
+      // Si tenemos una clave de plan, actualizar el plan con las traducciones correctas
+      if (planKey) {
+        const localizedPlans = getLocalizedSubscriptionPlans(i18n.language);
+        if (localizedPlans[planKey]) {
+          setPlan(localizedPlans[planKey]);
+        }
+      }
+    }
+  }, [i18n.language, currentLang, planKey]);
 
   const { subscribeToPlan, cancelCurrentSubscription, fetchUserSubscription } = useSubscriptionStore();
 
@@ -76,7 +120,7 @@ export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps)
       // Crear suscripción en nuestra base de datos
       await subscribeToPlan(userId, plan.id, subscriptionId);
       // Redirigir a la página de éxito con indicador de que viene del SDK de PayPal
-      window.location.href = `/${lang}/settings/subscription/success?subscription_id=${subscriptionId}&plan_name=${plan.name}&plan_price=${plan.price}&plan_interval=${plan.billingInterval.toUpperCase()}&from_paypal_sdk=true`;
+      window.location.href = `/${currentLang}/settings/subscription/success?subscription_id=${subscriptionId}&plan_name=${plan.name}&plan_price=${plan.price}&plan_interval=${plan.billingInterval.toUpperCase()}&from_paypal_sdk=true`;
     } catch (error) {
       console.error('Error al procesar suscripción de PayPal:', error);
       setProcessing(false);
@@ -237,11 +281,11 @@ export default function PlanCard({ plan, isCurrentPlan, userId }: PlanCardProps)
                     href={
                       plan.id === SubscriptionPlan.PRO
                         ? plan.billingInterval === BillingInterval.MONTH
-                          ? '/paypal-pro-subscription.html'
-                          : '/paypal-pro-annual-subscription.html'
+                          ? `/paypal-pro-subscription-${currentLang}${mode === 'dark' ? '-dark' : ''}.html`
+                          : `/paypal-pro-annual-subscription-${currentLang}${mode === 'dark' ? '-dark' : ''}.html`
                         : plan.billingInterval === BillingInterval.MONTH
-                          ? '/paypal-enterprise-subscription.html'
-                          : '/paypal-enterprise-annual-subscription.html'
+                          ? `/paypal-enterprise-subscription-${currentLang}${mode === 'dark' ? '-dark' : ''}.html`
+                          : `/paypal-enterprise-annual-subscription-${currentLang}${mode === 'dark' ? '-dark' : ''}.html`
                     }
                     target="_blank"
                     fullWidth

@@ -10,24 +10,24 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #121212;
+            color: #e0e0e0;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background-color: #fff;
+            background-color: #1e1e1e;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
         h1 {
-            color: #2196f3;
+            color: #90caf9;
             text-align: center;
             margin-bottom: 30px;
         }
         .plan-details {
-            background-color: #f9f9f9;
+            background-color: #2d2d2d;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 30px;
@@ -36,13 +36,14 @@
         .plan-name {
             font-size: 24px;
             font-weight: bold;
-            color: #2196f3;
+            color: #90caf9;
             margin-bottom: 10px;
         }
         .plan-price {
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 20px;
+            color: #fff;
         }
         .plan-features {
             list-style-type: none;
@@ -50,14 +51,14 @@
         }
         .plan-features li {
             padding: 8px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #444;
         }
         .plan-features li:last-child {
             border-bottom: none;
         }
         .plan-features li::before {
             content: "✓";
-            color: #4caf50;
+            color: #81c784;
             margin-right: 10px;
             font-weight: bold;
         }
@@ -68,18 +69,18 @@
             display: inline-block;
             margin-top: 20px;
             padding: 10px 15px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #333;
+            color: #e0e0e0;
             text-decoration: none;
             border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #555;
         }
         .back-button:hover {
-            background-color: #e0e0e0;
+            background-color: #444;
         }
         .savings {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+            background-color: #1b5e20;
+            color: #a5d6a7;
             padding: 10px;
             border-radius: 4px;
             margin-top: 10px;
@@ -90,7 +91,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Annual Subscription to Planning Poker Pro</h1>
+        <h1>Subscription to Planning Poker Pro</h1>
         
         <div class="plan-details">
             <div class="plan-name">Pro Plan Annual</div>
@@ -128,7 +129,7 @@
             // Check if PayPal is loaded
             if (!window.paypal) {
                 console.error('PayPal SDK not loaded');
-                container.innerHTML = '<p style="color: red;">Error: Could not load PayPal. Please try again later.</p>';
+                container.innerHTML = '<p style="color: #ff6b6b;">Error: Could not load PayPal. Please try again later.</p>';
                 return;
             }
             
@@ -167,12 +168,15 @@
                         plan: 'pro-year' // Ensure the plan ID is explicitly set to 'pro-year'
                     }));
                     
+                    // Save theme preference
+                    localStorage.setItem('theme-mode', 'dark');
+                    
                     // Redirect to success page with explicit plan parameter
                     window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=YEAR&plan=pro-year&from_paypal_sdk=false`;
                 },
                 onError: function(err) {
                     console.error('PayPal error:', err);
-                    container.innerHTML = `<p style="color: red;">Error: ${err.message || 'An error occurred while processing the payment.'}</p>`;
+                    container.innerHTML = `<p style="color: #ff6b6b;">Error: ${err.message || 'An error occurred while processing the payment.'}</p>`;
                 }
             }).render('#paypal-button-container');
         }
@@ -201,7 +205,7 @@
             script.onerror = function(e) {
                 console.error('Error loading PayPal SDK:', e);
                 const container = document.getElementById('paypal-button-container');
-                container.innerHTML = '<p style="color: red;">Error: Could not load PayPal. Please try again later.</p>';
+                container.innerHTML = '<p style="color: #ff6b6b;">Error: Could not load PayPal. Please try again later.</p>';
             };
             
             // Add script to document

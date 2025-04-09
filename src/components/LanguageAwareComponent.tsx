@@ -2,6 +2,7 @@
 
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useLanguage } from '@/context/languageContext';
+import { useTranslation } from 'react-i18next';
 
 interface LanguageAwareComponentProps {
   children: ReactNode;
@@ -16,12 +17,18 @@ interface LanguageAwareComponentProps {
  */
 export default function LanguageAwareComponent({ children, render }: LanguageAwareComponentProps) {
   const { language } = useLanguage();
-  const [, setRenderKey] = useState(0);
+  const [renderKey, setRenderKey] = useState(0);
+  const { i18n } = useTranslation();
+  const lastLanguageRef = React.useRef(i18n.language);
 
-  // Forzar re-renderizado cuando cambia el idioma
+  // Usar un solo efecto para manejar todos los cambios de idioma
   useEffect(() => {
-    setRenderKey(prev => prev + 1);
-  }, [language]);
+    // Evitar actualizaciones duplicadas
+    if (lastLanguageRef.current !== i18n.language) {
+      lastLanguageRef.current = i18n.language;
+      setRenderKey(prev => prev + 1);
+    }
+  }, [i18n.language, language]);
 
   // Si se proporciona una función render, usarla para renderizar el contenido
   if (render) {

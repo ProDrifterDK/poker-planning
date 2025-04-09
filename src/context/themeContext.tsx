@@ -13,10 +13,25 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
-    const [mode, setMode] = useState<'light' | 'dark'>('light');
+    // Inicializar el tema desde localStorage o usar 'light' como valor predeterminado
+    const [mode, setMode] = useState<'light' | 'dark'>(() => {
+        // Solo ejecutar en el cliente
+        if (typeof window !== 'undefined') {
+            const savedTheme = localStorage.getItem('theme-mode');
+            return (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : 'light';
+        }
+        return 'light';
+    });
 
     const toggleTheme = () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+        setMode((prevMode) => {
+            const newMode = prevMode === 'light' ? 'dark' : 'light';
+            // Guardar en localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('theme-mode', newMode);
+            }
+            return newMode;
+        });
     };
 
     const theme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode]);

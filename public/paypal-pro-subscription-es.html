@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Plan Annual Subscription - Planning Poker Pro</title>
+    <title>Suscripción Plan Pro - Planning Poker Pro</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,46 +77,36 @@
         .back-button:hover {
             background-color: #e0e0e0;
         }
-        .savings {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            font-weight: bold;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Annual Subscription to Planning Poker Pro</h1>
+        <h1>Suscripción a Planning Poker Pro</h1>
         
         <div class="plan-details">
-            <div class="plan-name">Pro Plan Annual</div>
-            <div class="plan-price">$99.99/year</div>
-            <div class="savings">Save over 15% compared to monthly billing!</div>
+            <div class="plan-name">Plan Pro</div>
+            <div class="plan-price">$9.99/mes</div>
             <ul class="plan-features">
-                <li>Up to 15 participants per room</li>
-                <li>5 active rooms</li>
-                <li>Data export</li>
-                <li>Advanced statistics</li>
-                <li>Voting timer</li>
-                <li>Complete history</li>
+                <li>Hasta 15 participantes por sala</li>
+                <li>5 salas activas</li>
+                <li>Exportación de datos</li>
+                <li>Estadísticas avanzadas</li>
+                <li>Temporizador para votaciones</li>
+                <li>Historial completo</li>
             </ul>
         </div>
         
         <div id="paypal-button-container"></div>
         
-        <a href="/en/settings/subscription" class="back-button">Back to plans</a>
+        <a href="/es/settings/subscription" class="back-button">Volver a los planes</a>
     </div>
     
     <script>
         // Plan details
         const selectedPlan = {
-            name: 'Pro Plan Annual',
-            id: 'pro-year',
-            price: '99.99'
+            name: 'Plan Pro',
+            id: 'pro',
+            price: '9.99'
         };
         
         // Function to render PayPal button
@@ -128,7 +118,7 @@
             // Check if PayPal is loaded
             if (!window.paypal) {
                 console.error('PayPal SDK not loaded');
-                container.innerHTML = '<p style="color: red;">Error: Could not load PayPal. Please try again later.</p>';
+                container.innerHTML = '<p style="color: red;">Error: No se pudo cargar PayPal. Por favor, inténtelo de nuevo más tarde.</p>';
                 return;
             }
             
@@ -146,7 +136,7 @@
                     console.log('Creating subscription for plan:', selectedPlan);
                     
                     return actions.subscription.create({
-                        'plan_id': 'P-6SB704566L0364918M7YIXKY',
+                        'plan_id': 'P-9A328530RT196135VM7YIXKQ',
                         'application_context': {
                             'shipping_preference': 'NO_SHIPPING',
                             'user_action': 'SUBSCRIBE_NOW',
@@ -163,16 +153,16 @@
                         subscriptionId: data.subscriptionID,
                         planName: selectedPlan.name,
                         planPrice: selectedPlan.price,
-                        planInterval: 'YEAR',
-                        plan: 'pro-year' // Ensure the plan ID is explicitly set to 'pro-year'
+                        planInterval: 'MONTH',
+                        plan: 'pro' // Ensure the plan ID is explicitly set to 'pro'
                     }));
                     
                     // Redirect to success page with explicit plan parameter
-                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=YEAR&plan=pro-year&from_paypal_sdk=false`;
+                    window.location.href = `/settings/subscription/success?subscription_id=${data.subscriptionID}&plan_name=${selectedPlan.name}&plan_price=${selectedPlan.price}&plan_interval=MONTH&plan=pro&from_paypal_sdk=false`;
                 },
                 onError: function(err) {
                     console.error('PayPal error:', err);
-                    container.innerHTML = `<p style="color: red;">Error: ${err.message || 'An error occurred while processing the payment.'}</p>`;
+                    container.innerHTML = `<p style="color: red;">Error: ${err.message || 'Ocurrió un error al procesar el pago.'}</p>`;
                 }
             }).render('#paypal-button-container');
         }
@@ -201,7 +191,7 @@
             script.onerror = function(e) {
                 console.error('Error loading PayPal SDK:', e);
                 const container = document.getElementById('paypal-button-container');
-                container.innerHTML = '<p style="color: red;">Error: Could not load PayPal. Please try again later.</p>';
+                container.innerHTML = '<p style="color: red;">Error: No se pudo cargar PayPal. Por favor, inténtelo de nuevo más tarde.</p>';
             };
             
             // Add script to document

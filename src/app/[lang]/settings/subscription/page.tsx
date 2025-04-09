@@ -11,6 +11,7 @@ import CurrentSubscription from '@/components/subscription/CurrentSubscription';
 import PaymentHistory from '@/components/subscription/PaymentHistory';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
+import LanguageAwareComponent from '@/components/LanguageAwareComponent';
 
 // Lista de idiomas soportados
 const supportedLocales = ['es', 'en'];
@@ -45,18 +46,34 @@ export default function SubscriptionPage() {
   const { t, i18n } = useTranslation(['common']);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const localizedPlans = getLocalizedSubscriptionPlans(lang);
+  const [localizedPlans, setLocalizedPlans] = useState(getLocalizedSubscriptionPlans(lang));
   
   // Force a re-render when the language changes
   React.useEffect(() => {
     // This is just to ensure the component re-renders when the language changes
     console.log('SubscriptionPage - Current language:', i18n.language);
     
-    // Force i18n to use the language from the URL
-    if (i18n.language !== lang) {
-      i18n.changeLanguage(lang);
-    }
-  }, [i18n, lang]);
+    // Update localized plans when language changes
+    setLocalizedPlans(getLocalizedSubscriptionPlans(i18n.language));
+  }, [i18n.language]);
+  
+  // Listen for language change events
+  React.useEffect(() => {
+    const handleLanguageChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.language) {
+        const newLang = customEvent.detail.language;
+        console.log('Language changed to:', newLang);
+        setLocalizedPlans(getLocalizedSubscriptionPlans(newLang));
+      }
+    };
+    
+    window.addEventListener('languageChanged', handleLanguageChange);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+    };
+  }, []);
   
   const { 
     currentSubscription,
@@ -121,95 +138,105 @@ export default function SubscriptionPage() {
   
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {t('menu.subscription', 'Suscripción')}
-      </Typography>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {/* Mostrar suscripción actual si existe */}
-      {currentSubscription && (
-        <Box mb={4}>
-          <Typography variant="h5" gutterBottom>
-            {t('subscription.current', 'Tu suscripción actual')}
-          </Typography>
-          <CurrentSubscription subscription={currentSubscription} />
-        </Box>
-      )}
+      <LanguageAwareComponent>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {t('menu.subscription', 'Suscripción')}
+        </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+        
+        {/* Mostrar suscripción actual si existe */}
+        {currentSubscription && (
+          <Box mb={4}>
+            <Typography variant="h5" gutterBottom>
+              {t('subscription.current', 'Tu suscripción actual')}
+            </Typography>
+            <CurrentSubscription subscription={currentSubscription} />
+          </Box>
+        )}
+      </LanguageAwareComponent>
       
       {/* Planes de suscripción */}
-      <Box mb={4}>
-        <Typography variant="h5" gutterBottom>
-          {t('plansSection.title', 'Planes disponibles')}
-        </Typography>
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          {t('subscription.monthlyPlans', 'Planes Mensuales')}
-        </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {Object.values(localizedPlans)
-            .filter(plan => plan.billingInterval === 'month')
-            .map((plan) => (
-              <Grid item xs={12} md={4} key={plan.id + '-' + plan.billingInterval}>
-                <PlanCard
-                  plan={plan}
-                  isCurrentPlan={
-                    currentSubscription?.plan === plan.id
-                  }
-                  userId={userId || ''}
-                />
-              </Grid>
-            ))}
-        </Grid>
-        
-        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-          {t('subscription.yearlyPlans', 'Planes Anuales (Ahorra más de 15%)')}
-        </Typography>
-        <Grid container spacing={3}>
-          {Object.values(localizedPlans)
-            .filter(plan => plan.billingInterval === 'year' && plan.id !== SubscriptionPlan.FREE)
-            .map((plan) => (
-              <Grid item xs={12} md={4} key={plan.id + '-' + plan.billingInterval}>
-                <PlanCard
-                  plan={plan}
-                  isCurrentPlan={
-                    currentSubscription?.plan === plan.id
-                  }
-                  userId={userId || ''}
-                />
-              </Grid>
-            ))}
-        </Grid>
-      </Box>
-      
-      {/* Historial de pagos */}
-      {paymentHistory.length > 0 && (
+      <LanguageAwareComponent>
         <Box mb={4}>
           <Typography variant="h5" gutterBottom>
-            {t('subscription.paymentHistory', 'Historial de pagos')}
+            {t('plansSection.title', 'Planes disponibles')}
           </Typography>
-          <PaymentHistory payments={paymentHistory} />
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            {t('subscription.monthlyPlans', 'Planes Mensuales')}
+          </Typography>
+          
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {Object.entries(localizedPlans)
+              .filter(([key, plan]) => plan.billingInterval === 'month')
+              .map(([key, plan]) => (
+                <Grid item xs={12} md={4} key={key}>
+                  <PlanCard
+                    plan={plan}
+                    planKey={key}
+                    isCurrentPlan={
+                      currentSubscription?.plan === plan.id
+                    }
+                    userId={userId || ''}
+                  />
+                </Grid>
+              ))}
+          </Grid>
+          
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+            {t('subscription.yearlyPlans', 'Planes Anuales (Ahorra más de 15%)')}
+          </Typography>
+          
+          <Grid container spacing={3}>
+            {Object.entries(localizedPlans)
+              .filter(([key, plan]) => plan.billingInterval === 'year' && plan.id !== SubscriptionPlan.FREE)
+              .map(([key, plan]) => (
+                <Grid item xs={12} md={4} key={key}>
+                  <PlanCard
+                    plan={plan}
+                    planKey={key}
+                    isCurrentPlan={
+                      currentSubscription?.plan === plan.id
+                    }
+                    userId={userId || ''}
+                  />
+                </Grid>
+              ))}
+          </Grid>
         </Box>
-      )}
+      </LanguageAwareComponent>
       
-      {/* Información adicional */}
-      <Paper sx={{ p: 3, mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          {t('subscription.info', 'Información sobre suscripciones')}
-        </Typography>
-        <Typography variant="body1" paragraph>
-          {t('subscription.renewalInfo', 'Las suscripciones se renuevan automáticamente al final de cada período. Puedes cancelar tu suscripción en cualquier momento.')}
-        </Typography>
-        <Typography variant="body1" paragraph>
-          {t('subscription.supportInfo', 'Si tienes alguna pregunta sobre tu suscripción, por favor contacta a nuestro equipo de soporte.')}
-        </Typography>
-        <Button variant="outlined" href="mailto:support@planningpokerpro.com">
-          {t('subscription.contactSupport', 'Contactar soporte')}
-        </Button>
-      </Paper>
+      {/* Historial de pagos y información adicional */}
+      <LanguageAwareComponent>
+        {paymentHistory.length > 0 && (
+          <Box mb={4}>
+            <Typography variant="h5" gutterBottom>
+              {t('subscription.paymentHistory', 'Historial de pagos')}
+            </Typography>
+            <PaymentHistory payments={paymentHistory} />
+          </Box>
+        )}
+        
+        {/* Información adicional */}
+        <Paper sx={{ p: 3, mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            {t('subscription.info', 'Información sobre suscripciones')}
+          </Typography>
+          <Typography variant="body1" paragraph>
+            {t('subscription.renewalInfo', 'Las suscripciones se renuevan automáticamente al final de cada período. Puedes cancelar tu suscripción en cualquier momento.')}
+          </Typography>
+          <Typography variant="body1" paragraph>
+            {t('subscription.supportInfo', 'Si tienes alguna pregunta sobre tu suscripción, por favor contacta a nuestro equipo de soporte.')}
+          </Typography>
+          <Button variant="outlined" href="mailto:support@planningpokerpro.com">
+            {t('subscription.contactSupport', 'Contactar soporte')}
+          </Button>
+        </Paper>
+      </LanguageAwareComponent>
     </Container>
   );
 }

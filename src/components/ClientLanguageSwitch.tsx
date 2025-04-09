@@ -31,11 +31,16 @@ export default function ClientLanguageSwitch() {
     if (isChangingLanguage) return;
     setIsChangingLanguage(true);
     
+    console.log(`Changing language to ${newLocale} from ${i18n.language}`);
+    
     // Cambiar el idioma en i18next
     i18n.changeLanguage(newLocale);
     
     // Guardar la preferencia en una cookie
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    
+    // Guardar también en localStorage para mayor compatibilidad
+    localStorage.setItem('i18nextLng', newLocale);
     
     // Disparar un evento personalizado para notificar a los componentes que el idioma ha cambiado
     const event = new CustomEvent('languageChanged', { detail: { language: newLocale } });
@@ -50,16 +55,25 @@ export default function ClientLanguageSwitch() {
           segments[1] = newLocale;
           const newPath = segments.join('/');
           
+          console.log(`Updating URL from ${pathname} to ${newPath}`);
+          
           // Usar window.history.replaceState para cambiar la URL sin recargar la página
           window.history.replaceState({ locale: newLocale }, '', newPath);
         } else {
           // Si no hay segmento de idioma, simplemente añadirlo
-          window.history.replaceState({ locale: newLocale }, '', `/${newLocale}${pathname}`);
+          const newPath = `/${newLocale}${pathname}`;
+          console.log(`Updating URL from ${pathname} to ${newPath}`);
+          window.history.replaceState({ locale: newLocale }, '', newPath);
         }
       } catch (error) {
         console.error('Error al actualizar la URL:', error);
       }
     }
+    
+    // Desbloquear cambios después de un tiempo
+    setTimeout(() => {
+      setIsChangingLanguage(false);
+    }, 500);
   };
   
   // Manejar el cambio del switch
