@@ -776,9 +776,8 @@ export default function RoomPage() {
                                 data-onboarding="card-deck"
                                 display="flex"
                                 flexWrap={{ xs: 'nowrap', sm: 'wrap' }}
-                                justifyContent="flex-start" // Alinear al inicio para mostrar todas las cartas
+                                justifyContent="flex-start"
                                 marginTop={4}
-                                gap={{ xs: 2, sm: 3, md: 4 }}
                                 sx={{
                                     width: '100%',
                                     maxWidth: '100%',
@@ -795,7 +794,7 @@ export default function RoomPage() {
                                     right: { xs: 0, sm: 'auto' },
                                     zIndex: { xs: 10, sm: 1 },
                                     backgroundColor: { xs: theme.palette.background.default, sm: 'transparent' },
-                                    boxShadow: { xs: '0px -2px 10px rgba(0,0,0,0.1)', sm: 'none' },
+                                    boxShadow: {sm: 'none' },
                                     // Mejorar experiencia de scroll
                                     WebkitOverflowScrolling: 'touch',
                                     scrollbarWidth: 'none',
@@ -806,19 +805,37 @@ export default function RoomPage() {
                                     pt: { xs: 2, sm: 4 },
                                     // Espacio para el footer
                                     mb: { xs: 2, sm: 0 },
-                                    // Asegurar que las cartas mantengan su tamaño
+                                    // Efecto de mazo de cartas
                                     '& > *': {
                                         flexShrink: 0,
+                                        // Posición relativa para permitir superposición
+                                        position: 'relative',
+                                        // Margen negativo para crear superposición
+                                        marginLeft: { xs: '-10px', sm: '-15px' },
+                                        // El primer elemento no tiene margen negativo
+                                        '&:first-of-type': {
+                                            marginLeft: 0,
+                                        },
+                                        // Efecto de elevación al hacer hover
+                                        '&:hover': {
+                                            zIndex: 2,
+                                            transform: 'translateY(-10px)',
+                                            transition: 'transform 0.2s ease-out',
+                                        },
+                                        // Transición suave para todos los elementos
+                                        transition: 'transform 0.2s ease-out, margin-left 0.1s ease-out',
                                     },
-                                    // Añadir padding al inicio para mostrar todas las cartas
-                                    paddingLeft: { xs: '20px', sm: 0 },
                                     // Centrar el contenido en desktop
                                     justifyContent: { xs: 'flex-start', sm: 'center' },
                                     // Scroll inicial a la izquierda
                                     scrollLeft: 0,
+                                    // Añadir padding al inicio para mostrar todas las cartas
+                                    paddingLeft: { xs: '20px', sm: '40px' },
+                                    // Añadir padding al final para mostrar todas las cartas
+                                    paddingRight: { xs: '20px', sm: '40px' },
                                 }}
                             >
-                                {estimationOptions.map((value) => (
+                                {estimationOptions.map((value, index) => (
                                     <Card
                                         key={String(value)}
                                         value={value}
@@ -826,6 +843,16 @@ export default function RoomPage() {
                                         onClick={() => handleSelectEstimation(value)}
                                         flipped={false}
                                         noSelection={false}
+                                        sx={{
+                                            // Aplicar rotación aleatoria sutil para efecto de mazo
+                                            transform: `rotate(${(index % 3 - 1) * 1.5}deg)`,
+                                            // Aumentar z-index cuando está seleccionada
+                                            zIndex: selectedEstimation === value ? 3 : 1,
+                                            // Elevar ligeramente la carta seleccionada
+                                            ...(selectedEstimation === value && {
+                                                marginTop: '-10px',
+                                            }),
+                                        }}
                                     />
                                 ))}
                             </Box>
@@ -835,7 +862,10 @@ export default function RoomPage() {
                                 {allParticipantsHaveEstimated && !reveal && (
                                     <Button
                                         data-onboarding="reveal-button"
-                                        onClick={revealEstimations}
+                                        onClick={() => {
+                                            revealEstimations();
+                                            setSelectedEstimation(null);
+                                        }}
                                         sx={{
                                             padding: { xs: '8px 16px', sm: '10px 20px' },
                                             fontSize: { xs: '14px', sm: '16px' },
