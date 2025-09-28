@@ -97,19 +97,19 @@ export const lightTheme = createTheme({
     h3: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
-      fontSize: '2.25rem', // 36px desktop
+      fontSize: '1.5rem', // 24px desktop
       lineHeight: 1.3,
       '@media (max-width:600px)': {
-        fontSize: '1.5rem', // 24px mobile
+        fontSize: '2.25rem', // 36px mobile
       },
     },
     h4: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
-      fontSize: '1.5rem', // 24px desktop
+      fontSize: '1.25rem', // 20px desktop
       lineHeight: 1.4,
       '@media (max-width:600px)': {
-        fontSize: '1.25rem', // 20px mobile
+        fontSize: '1.5rem', // 24px mobile
       },
     },
     h5: {
@@ -392,19 +392,19 @@ export const darkTheme = createTheme({
     h3: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
-      fontSize: '2.25rem', // 36px desktop
+      fontSize: '1.5rem', // 24px desktop
       lineHeight: 1.3,
       '@media (max-width:600px)': {
-        fontSize: '1.5rem', // 24px mobile
+        fontSize: '2.25rem', // 36px mobile
       },
     },
     h4: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
-      fontSize: '1.5rem', // 24px desktop
+      fontSize: '1.25rem', // 20px desktop
       lineHeight: 1.4,
       '@media (max-width:600px)': {
-        fontSize: '1.25rem', // 20px mobile
+        fontSize: '1.5rem', // 24px mobile
       },
     },
     h5: {

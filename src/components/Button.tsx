@@ -37,8 +37,8 @@ export const PrimaryButton = styled(BaseButton)`
 
   &:hover:not(:disabled) {
     background: linear-gradient(45deg, ${emotionTheme.colors.primary.dark} 30%, ${emotionTheme.colors.primary.main} 90%);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.4), 0 4px 12px rgba(18, 151, 253, 0.2);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 4px 15px rgba(18, 151, 253, 0.25), 0 2px 8px rgba(18, 151, 253, 0.15);
   }
 
   &:active:not(:disabled) {
@@ -63,8 +63,8 @@ export const SecondaryButton = styled(BaseButton)`
   &:hover:not(:disabled) {
     background: ${emotionTheme.colors.primary.main};
     color: ${emotionTheme.colors.text.primary};
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.35), 0 4px 12px rgba(18, 151, 253, 0.2);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 4px 15px rgba(18, 151, 253, 0.25), 0 2px 8px rgba(18, 151, 253, 0.15);
   }
 
   &:active:not(:disabled) {
@@ -94,6 +94,7 @@ export const TertiaryButton = styled(BaseButton)`
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-thickness: 2px;
+    box-shadow: 0 2px 8px rgba(18, 151, 253, 0.15), 0 1px 4px rgba(18, 151, 253, 0.1);
   }
 
   &:active:not(:disabled) {

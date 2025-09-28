@@ -7,6 +7,8 @@ import { LanguageProvider } from '../context/languageContext';
 import ClientOnly from '@/components/ClientOnly';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n-client';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 export default function Providers({
     children,
@@ -70,12 +72,21 @@ export default function Providers({
                 const newPath = segments.join('/');
                 // Usar replaceState para evitar recargar la página
                 window.history.replaceState(null, '', newPath);
-                
+
                 // Disparar un evento personalizado para notificar a los componentes que el idioma ha cambiado
                 const event = new CustomEvent('languageChanged', { detail: { language: targetLang } });
                 window.dispatchEvent(event);
             }
         }
+
+        // Initialize AOS (Animate On Scroll)
+        AOS.init({
+            duration: 600,
+            easing: 'ease-out-cubic',
+            once: true,
+            offset: 100,
+            delay: 0,
+        });
     }, [lang]);
     
     return (

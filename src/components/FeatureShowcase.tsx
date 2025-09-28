@@ -5,13 +5,13 @@ import { InformationCard } from './InfoCard';
 import { emotionTheme } from '../styles/theme';
 import AnimatedSection from './AnimatedSection';
 import {
-  People,
-  Speed,
-  Analytics,
-  IntegrationInstructions,
+  User,
+  Flash,
+  Activity,
+  Github,
   Cloud,
-  History
-} from '@mui/icons-material';
+  FloppyDiskArrowIn
+} from 'iconoir-react';
 
 // Styled container for the entire feature showcase section
 const ShowcaseContainer = styled.section`
@@ -199,25 +199,25 @@ export const FeatureShowcase: React.FC = () => {
   const features: Feature[] = [
     {
       key: 'realtime',
-      icon: <People />,
+      icon: <User />,
       titleKey: 'featureShowcase.features.realtime.title',
       descriptionKey: 'featureShowcase.features.realtime.description'
     },
     {
       key: 'flexible',
-      icon: <Speed />,
+      icon: <Flash />,
       titleKey: 'featureShowcase.features.flexible.title',
       descriptionKey: 'featureShowcase.features.flexible.description'
     },
     {
       key: 'analytics',
-      icon: <Analytics />,
+      icon: <Activity />,
       titleKey: 'featureShowcase.features.analytics.title',
       descriptionKey: 'featureShowcase.features.analytics.description'
     },
     {
       key: 'integrations',
-      icon: <IntegrationInstructions />,
+      icon: <Github />,
       titleKey: 'featureShowcase.features.integrations.title',
       descriptionKey: 'featureShowcase.features.integrations.description'
     },
@@ -229,7 +229,7 @@ export const FeatureShowcase: React.FC = () => {
     },
     {
       key: 'history',
-      icon: <History />,
+      icon: <FloppyDiskArrowIn />,
       titleKey: 'featureShowcase.features.history.title',
       descriptionKey: 'featureShowcase.features.history.description'
     }
