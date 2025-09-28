@@ -7,7 +7,6 @@ import ErrorDisplay from '../../components/ErrorDisplay';
 import { OnboardingTooltip } from '../../components/Onboarding';
 import AdBlockerWarning from '../../components/AdBlockerWarning';
 import OnboardingWrapper from '../../components/Onboarding/OnboardingWrapper';
-import Script from 'next/script';
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;

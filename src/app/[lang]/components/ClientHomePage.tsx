@@ -20,7 +20,6 @@ import FeatureShowcase from '@/components/FeatureShowcase';
 import InteractiveDemo from '@/components/InteractiveDemo';
 import PricingTable from '@/components/PricingTable';
 import FinalCTA from '@/components/FinalCTA';
-import Footer from '@/components/Footer';
 
 // No longer need the ClientHomePageProps interface as we're using useTranslation
 
@@ -163,9 +162,6 @@ export default function ClientHomePage({ lang }: { lang: string }) {
       <InteractiveDemo />
       <PricingTable />
       <FinalCTA />
-
-      {/* Footer que cierra el contenido */}
-      <Footer />
     </>
   );
 }
