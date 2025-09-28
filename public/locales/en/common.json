@@ -38,37 +38,59 @@
   },
   "plansSection": {
     "title": "Available Plans",
+    "subtitle": "Choose the perfect plan for your team's needs",
+    "billingToggle": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "save": "Save up to 20%"
+    },
     "free": {
       "title": "Free Plan",
-      "price": "$0 / month",
+      "subtitle": "Perfect for getting started",
+      "monthlyPrice": "$0",
+      "yearlyPrice": "$0",
       "description": "Ideal for small teams or to try the platform.",
       "features": [
         "Up to 5 participants per room",
         "1 active room",
-        "Basic features"
-      ]
+        "Basic features",
+        "Community support"
+      ],
+      "cta": "Get Started Free",
+      "popular": false
     },
     "pro": {
       "title": "Pro Plan",
-      "price": "$9.99 / month",
+      "subtitle": "For growing teams",
+      "monthlyPrice": "$9.99",
+      "yearlyPrice": "$7.99",
       "description": "For medium-sized teams with advanced needs.",
       "features": [
         "Up to 15 participants per room",
         "5 active rooms",
         "Data export",
-        "Advanced statistics"
-      ]
+        "Advanced statistics",
+        "Priority support"
+      ],
+      "cta": "Start Pro Trial",
+      "popular": true
     },
     "enterprise": {
       "title": "Enterprise Plan",
-      "price": "$29.99 / month",
+      "subtitle": "For large organizations",
+      "monthlyPrice": "$29.99",
+      "yearlyPrice": "$24.99",
       "description": "Complete solution for large teams and companies.",
       "features": [
         "Up to 100 participants per room",
         "20 active rooms",
         "Integrations with Jira, Trello, GitHub",
-        "Brand customization"
-      ]
+        "Brand customization",
+        "Dedicated support",
+        "SSO integration"
+      ],
+      "cta": "Contact Sales",
+      "popular": false
     }
   },
   "demo": {
@@ -473,6 +495,10 @@
     "cta": "Start Free Trial",
     "visualTitle": "Real-time Collaboration",
     "visualDescription": "See team estimates update live as everyone votes. No more waiting for responses or manual tallying."
+  },
+  "interactiveDemo": {
+    "title": "Experience Poker Planning Pro Live",
+    "description": "Watch how our intuitive interface makes collaborative estimation sessions smooth and engaging. See real-time voting, instant results, and seamless team interaction in action."
   },
   "featureShowcase": {
     "title": "Why Poker Planning Pro?",

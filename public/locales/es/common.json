@@ -38,37 +38,59 @@
   },
   "plansSection": {
     "title": "Planes disponibles",
+    "subtitle": "Elige el plan perfecto para las necesidades de tu equipo",
+    "billingToggle": {
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "save": "Ahorra hasta 20%"
+    },
     "free": {
-      "title": "Plan Free",
-      "price": "$0 / mes",
+      "title": "Plan Gratuito",
+      "subtitle": "Perfecto para comenzar",
+      "monthlyPrice": "$0",
+      "yearlyPrice": "$0",
       "description": "Ideal para equipos pequeños o para probar la plataforma.",
       "features": [
         "Hasta 5 participantes por sala",
         "1 sala activa",
-        "Funcionalidades básicas"
-      ]
+        "Funcionalidades básicas",
+        "Soporte comunitario"
+      ],
+      "cta": "Comenzar Gratis",
+      "popular": false
     },
     "pro": {
       "title": "Plan Pro",
-      "price": "$9.99 / mes",
+      "subtitle": "Para equipos en crecimiento",
+      "monthlyPrice": "$9.99",
+      "yearlyPrice": "$7.99",
       "description": "Para equipos medianos con necesidades avanzadas.",
       "features": [
         "Hasta 15 participantes por sala",
         "5 salas activas",
         "Exportación de datos",
-        "Estadísticas avanzadas"
-      ]
+        "Estadísticas avanzadas",
+        "Soporte prioritario"
+      ],
+      "cta": "Comenzar Prueba Pro",
+      "popular": true
     },
     "enterprise": {
       "title": "Plan Enterprise",
-      "price": "$29.99 / mes",
+      "subtitle": "Para grandes organizaciones",
+      "monthlyPrice": "$29.99",
+      "yearlyPrice": "$24.99",
       "description": "Solución completa para equipos grandes y empresas.",
       "features": [
         "Hasta 100 participantes por sala",
         "20 salas activas",
         "Integraciones con Jira, Trello, GitHub",
-        "Personalización de marca"
-      ]
+        "Personalización de marca",
+        "Soporte dedicado",
+        "Integración SSO"
+      ],
+      "cta": "Contactar Ventas",
+      "popular": false
     }
   },
   "demo": {
@@ -479,6 +501,10 @@
     "cta": "Comenzar Prueba Gratuita",
     "visualTitle": "Colaboración en Tiempo Real",
     "visualDescription": "Ve las estimaciones del equipo actualizarse en vivo mientras todos votan. No más esperas de respuestas o recuentos manuales."
+  },
+  "interactiveDemo": {
+    "title": "Experimenta Poker Planning Pro en Vivo",
+    "description": "Observa cómo nuestra interfaz intuitiva hace que las sesiones de estimación colaborativa sean fluidas y atractivas. Ve la votación en tiempo real, resultados instantáneos e interacción perfecta del equipo en acción."
   },
   "featureShowcase": {
     "title": "¿Por qué Poker Planning Pro?",
