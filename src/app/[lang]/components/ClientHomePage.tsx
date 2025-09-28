@@ -13,7 +13,6 @@ import { useAuth } from '@/context/authContext';
 import RoomManager from '@/components/RoomManager';
 import SessionPersistence from '@/components/SessionPersistence';
 import { useTranslation } from 'react-i18next';
-import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import TrustBar from '@/components/TrustBar';
 import FeatureShowcase from '@/components/FeatureShowcase';
@@ -151,9 +150,6 @@ export default function ClientHomePage({ lang }: { lang: string }) {
     <>
       {/* Componente de persistencia de sesión */}
       <SessionPersistence />
-
-      {/* Header que enmarca todo el contenido */}
-      <Header />
 
       {/* Secciones de la landing page en orden narrativo */}
       <HeroSection />
