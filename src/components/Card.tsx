@@ -1,7 +1,7 @@
 'use client';
 
 import { SxProps, Typography, useTheme, useMediaQuery } from '@mui/material';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
@@ -49,14 +49,14 @@ export default function Card({
             y: 0,
             transition: {
                 duration: 0.3,
-                ease: "easeOut"
+                ease: easeOut
             }
         },
         hover: {
             y: -10,
             transition: {
                 duration: 0.2,
-                ease: "easeOut"
+                ease: easeOut
             }
         },
         tap: {
