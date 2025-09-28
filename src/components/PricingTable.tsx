@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { emotionTheme } from '../styles/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AnimatedSection from './AnimatedSection';
 
 // Styled container for the pricing section
 const PricingSection = styled.section`
@@ -349,42 +350,56 @@ export const PricingTable: React.FC = () => {
 
   return (
     <PricingSection>
-      <SectionTitle>{t('plansSection.title')}</SectionTitle>
-      <SectionSubtitle>{t('plansSection.subtitle')}</SectionSubtitle>
+      <AnimatedSection animation="fade-up" delay={0.1}>
+        <SectionTitle>{t('plansSection.title')}</SectionTitle>
+      </AnimatedSection>
 
-      <BillingToggleContainer>
-        <span style={{ color: emotionTheme.colors.text.secondary }}>
-          {t('plansSection.billingToggle.monthly')}
-        </span>
-        <BillingToggle isYearly={isYearly}>
-          <ToggleOption
-            active={!isYearly}
-            onClick={() => handleBillingToggle(false)}
-          >
+      <AnimatedSection animation="fade-up" delay={0.2}>
+        <SectionSubtitle>{t('plansSection.subtitle')}</SectionSubtitle>
+      </AnimatedSection>
+
+      <AnimatedSection animation="fade-up" delay={0.3}>
+        <BillingToggleContainer>
+          <span style={{ color: emotionTheme.colors.text.secondary }}>
             {t('plansSection.billingToggle.monthly')}
-          </ToggleOption>
-          <ToggleOption
-            active={isYearly}
-            onClick={() => handleBillingToggle(true)}
-          >
-            {t('plansSection.billingToggle.yearly')}
-          </ToggleOption>
-        </BillingToggle>
-        {isYearly && (
-          <SavingsBadge>{t('plansSection.billingToggle.save')}</SavingsBadge>
-        )}
-      </BillingToggleContainer>
+          </span>
+          <BillingToggle isYearly={isYearly}>
+            <ToggleOption
+              active={!isYearly}
+              onClick={() => handleBillingToggle(false)}
+            >
+              {t('plansSection.billingToggle.monthly')}
+            </ToggleOption>
+            <ToggleOption
+              active={isYearly}
+              onClick={() => handleBillingToggle(true)}
+            >
+              {t('plansSection.billingToggle.yearly')}
+            </ToggleOption>
+          </BillingToggle>
+          {isYearly && (
+            <SavingsBadge>{t('plansSection.billingToggle.save')}</SavingsBadge>
+          )}
+        </BillingToggleContainer>
+      </AnimatedSection>
 
-      <PricingGrid>
-        {plans.map((plan) => (
-          <PricingCard
-            key={plan.key}
-            planKey={plan.key}
-            popular={plan.popular}
-            isYearly={isYearly}
-          />
-        ))}
-      </PricingGrid>
+      <AnimatedSection animation="fade-up" delay={0.4}>
+        <PricingGrid>
+          {plans.map((plan, index) => (
+            <AnimatedSection
+              key={plan.key}
+              animation="scale-up"
+              delay={0.5 + (index * 0.1)}
+            >
+              <PricingCard
+                planKey={plan.key}
+                popular={plan.popular}
+                isYearly={isYearly}
+              />
+            </AnimatedSection>
+          ))}
+        </PricingGrid>
+      </AnimatedSection>
     </PricingSection>
   );
 };

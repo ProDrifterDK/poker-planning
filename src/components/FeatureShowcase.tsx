@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { InformationCard } from './InfoCard';
 import { emotionTheme } from '../styles/theme';
+import AnimatedSection from './AnimatedSection';
 import {
   People,
   Speed,
@@ -161,9 +162,22 @@ const FeatureIcon = styled.div`
   background-color: ${emotionTheme.colors.primary.main};
   color: ${emotionTheme.colors.primary.contrastText};
   margin-bottom: ${emotionTheme.spacing(4)};
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
 
   svg {
     font-size: 32px;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  &:hover {
+    background-color: ${emotionTheme.colors.primary.dark};
+    transform: translateY(-2px) scale(1.1);
+    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.4), 0 4px 12px rgba(18, 151, 253, 0.2);
+  }
+
+  &:hover svg {
+    transform: scale(1.1);
   }
 
   @media (max-width: 600px) {
@@ -233,24 +247,34 @@ export const FeatureShowcase: React.FC = () => {
 
   return (
     <ShowcaseContainer>
-      <SectionTitle>{t('featureShowcase.title')}</SectionTitle>
+      <AnimatedSection animation="fade-up" delay={0.1}>
+        <SectionTitle>{t('featureShowcase.title')}</SectionTitle>
+      </AnimatedSection>
 
-      <BentoGrid>
-        {gridConfigs.map((config) => {
-          const feature = features[config.featureIndex];
-          if (!feature) return null;
+      <AnimatedSection animation="fade-up" delay={0.2}>
+        <BentoGrid>
+          {gridConfigs.map((config, index) => {
+            const feature = features[config.featureIndex];
+            if (!feature) return null;
 
-          return (
-            <GridItem key={feature.key} size={config.size}>
-              <InformationCard
-                icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
-                title={t(feature.titleKey)}
-                text={t(feature.descriptionKey)}
-              />
-            </GridItem>
-          );
-        })}
-      </BentoGrid>
+            return (
+              <AnimatedSection
+                key={feature.key}
+                animation="scale-up"
+                delay={0.3 + (index * 0.1)}
+              >
+                <GridItem size={config.size}>
+                  <InformationCard
+                    icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
+                    title={t(feature.titleKey)}
+                    text={t(feature.descriptionKey)}
+                  />
+                </GridItem>
+              </AnimatedSection>
+            );
+          })}
+        </BentoGrid>
+      </AnimatedSection>
     </ShowcaseContainer>
   );
 };

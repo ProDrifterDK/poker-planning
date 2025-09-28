@@ -37,8 +37,8 @@ export const PrimaryButton = styled(BaseButton)`
 
   &:hover:not(:disabled) {
     background: linear-gradient(45deg, ${emotionTheme.colors.primary.dark} 30%, ${emotionTheme.colors.primary.main} 90%);
-    transform: translateY(-2px);
-    box-shadow: ${emotionTheme.shadows.primaryGlow};
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.4), 0 4px 12px rgba(18, 151, 253, 0.2);
   }
 
   &:active:not(:disabled) {
@@ -63,8 +63,8 @@ export const SecondaryButton = styled(BaseButton)`
   &:hover:not(:disabled) {
     background: ${emotionTheme.colors.primary.main};
     color: ${emotionTheme.colors.text.primary};
-    transform: translateY(-2px);
-    box-shadow: 0px 4px 12px rgba(18, 151, 253, 0.25);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.35), 0 4px 12px rgba(18, 151, 253, 0.2);
   }
 
   &:active:not(:disabled) {

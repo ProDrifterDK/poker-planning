@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
+import AnimatedSection from './AnimatedSection';
 
 // Spacious section container that commands attention
 const DemoSection = styled.section`
@@ -212,49 +213,57 @@ export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({ className }) =
   return (
     <DemoSection className={className}>
       <BackgroundElement />
-      <DemoContent>
-        <DemoHeading>
-          {t('interactiveDemo.title')}
-        </DemoHeading>
+      <AnimatedSection animation="fade-up" delay={0.1}>
+        <DemoContent>
+          <AnimatedSection animation="fade-down" delay={0.2}>
+            <DemoHeading>
+              {t('interactiveDemo.title')}
+            </DemoHeading>
+          </AnimatedSection>
 
-        <DemoDescription>
-          {t('interactiveDemo.description')}
-        </DemoDescription>
+          <AnimatedSection animation="fade-up" delay={0.3}>
+            <DemoDescription>
+              {t('interactiveDemo.description')}
+            </DemoDescription>
+          </AnimatedSection>
 
-        <DemoContainer>
-          <DemoPlaceholder
-            onClick={handleDemoClick}
-            role="button"
-            tabIndex={0}
-            aria-label="Interactive demo placeholder - click to interact"
-            onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleDemoClick();
-              }
-            }}
-          >
-            <PlaceholderIcon>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          <AnimatedSection animation="scale-up" delay={0.4}>
+            <DemoContainer>
+              <DemoPlaceholder
+                onClick={handleDemoClick}
+                role="button"
+                tabIndex={0}
+                aria-label="Interactive demo placeholder - click to interact"
+                onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleDemoClick();
+                  }
+                }}
               >
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-10 5L2 7" />
-              </svg>
-            </PlaceholderIcon>
+                <PlaceholderIcon>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-10 5L2 7" />
+                  </svg>
+                </PlaceholderIcon>
 
-            <PlaceholderText>
-              Interactive Demo Placeholder
-              <br />
-              <small>Click to launch demo experience</small>
-            </PlaceholderText>
-          </DemoPlaceholder>
-        </DemoContainer>
-      </DemoContent>
+                <PlaceholderText>
+                  Interactive Demo Placeholder
+                  <br />
+                  <small>Click to launch demo experience</small>
+                </PlaceholderText>
+              </DemoPlaceholder>
+            </DemoContainer>
+          </AnimatedSection>
+        </DemoContent>
+      </AnimatedSection>
     </DemoSection>
   );
 };

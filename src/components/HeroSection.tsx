@@ -4,6 +4,7 @@ import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import { Button } from './Button';
 import { InformationCard } from './InfoCard';
+import AnimatedSection from './AnimatedSection';
 
 // Full-page hero container
 const HeroContainer = styled.section`
@@ -145,51 +146,57 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ className }) => {
   return (
     <HeroContainer className={className}>
       <BackgroundGlow />
-      <HeroContent>
-        <TextContent>
-          <HeroHeadline>
-            {t('hero.headline')}
-          </HeroHeadline>
-          <HeroSubheadline>
-            {t('hero.subheadline')}
-          </HeroSubheadline>
-          <CTASection>
-            <Button
-              variant="primary"
-              onClick={handleCTAClick}
-              aria-label={t('hero.cta')}
-            >
-              {t('hero.cta')}
-            </Button>
-          </CTASection>
-        </TextContent>
-
-        <VisualContent>
-          <VisualPlaceholder>
-            <InformationCard
-              title={t('hero.visualTitle')}
-              text={t('hero.visualDescription')}
-              icon={
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={emotionTheme.colors.primary.main}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+      <AnimatedSection animation="fade-up" delay={0.1}>
+        <HeroContent>
+          <AnimatedSection animation="fade-right" delay={0.2}>
+            <TextContent>
+              <HeroHeadline>
+                {t('hero.headline')}
+              </HeroHeadline>
+              <HeroSubheadline>
+                {t('hero.subheadline')}
+              </HeroSubheadline>
+              <CTASection>
+                <Button
+                  variant="primary"
+                  onClick={handleCTAClick}
+                  aria-label={t('hero.cta')}
                 >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              }
-            />
-          </VisualPlaceholder>
-        </VisualContent>
-      </HeroContent>
+                  {t('hero.cta')}
+                </Button>
+              </CTASection>
+            </TextContent>
+          </AnimatedSection>
+
+          <AnimatedSection animation="fade-left" delay={0.4}>
+            <VisualContent>
+              <VisualPlaceholder>
+                <InformationCard
+                  title={t('hero.visualTitle')}
+                  text={t('hero.visualDescription')}
+                  icon={
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={emotionTheme.colors.primary.main}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  }
+                />
+              </VisualPlaceholder>
+            </VisualContent>
+          </AnimatedSection>
+        </HeroContent>
+      </AnimatedSection>
     </HeroContainer>
   );
 };

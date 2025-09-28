@@ -114,13 +114,31 @@ const SocialLink = styled.a`
   border-radius: ${emotionTheme.borderRadius.medium};
   color: ${emotionTheme.colors.text.secondary};
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(18, 151, 253, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
 
   &:hover {
     background-color: ${emotionTheme.colors.primary.main};
     border-color: ${emotionTheme.colors.primary.main};
     color: ${emotionTheme.colors.text.primary};
-    transform: translateY(-2px);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 25px rgba(18, 151, 253, 0.3), 0 4px 12px rgba(18, 151, 253, 0.2);
   }
 `;
 

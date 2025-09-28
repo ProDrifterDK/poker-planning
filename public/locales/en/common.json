@@ -619,6 +619,11 @@
       "finish": "Finish"
     }
   },
+  "finalCTA": {
+    "headline": "Ready to Transform Your Team's Planning?",
+    "cta": "Start Free Trial",
+    "testimonial": "\"Poker Planning Pro revolutionized how our distributed team estimates projects. We've seen a 40% improvement in estimation accuracy and our sprint planning meetings are now 60% faster. It's an absolute game-changer for remote collaboration.\""
+  },
   "featureGuard": {
     "requiresHigherPlan": "This feature requires a higher plan",
     "upgradePlan": "Upgrade Plan"

@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
+import AnimatedSection from './AnimatedSection';
 
 // TrustBar container - full width section below hero
 const TrustBarContainer = styled.section`
@@ -116,21 +117,27 @@ export const TrustBar: React.FC<TrustBarProps> = ({ className }) => {
 
   return (
     <TrustBarContainer className={className}>
-      <TrustBarContent>
-        <TrustBarHeading>
-          {t('trustBar.heading')}
-        </TrustBarHeading>
+      <AnimatedSection animation="fade-up" delay={0.1}>
+        <TrustBarContent>
+          <AnimatedSection animation="fade-down" delay={0.2}>
+            <TrustBarHeading>
+              {t('trustBar.heading')}
+            </TrustBarHeading>
+          </AnimatedSection>
 
-        <LogoGrid>
-          {placeholderLogos.map((logo, index) => (
-            <LogoPlaceholder key={index}>
-              <LogoContent>
-                {logo}
-              </LogoContent>
-            </LogoPlaceholder>
-          ))}
-        </LogoGrid>
-      </TrustBarContent>
+          <AnimatedSection animation="scale-up" delay={0.4}>
+            <LogoGrid>
+              {placeholderLogos.map((logo, index) => (
+                <LogoPlaceholder key={index}>
+                  <LogoContent>
+                    {logo}
+                  </LogoContent>
+                </LogoPlaceholder>
+              ))}
+            </LogoGrid>
+          </AnimatedSection>
+        </TrustBarContent>
+      </AnimatedSection>
     </TrustBarContainer>
   );
 };
