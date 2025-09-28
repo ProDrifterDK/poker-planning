@@ -565,6 +565,12 @@
       "termsOfService": "Terms of Service",
       "cookies": "Cookie Policy",
       "security": "Security"
+    },
+    "legacy": {
+      "allRightsReserved": "All rights reserved",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "builtBy": "Built by Resyst Softwares"
     }
   },
   "header": {

@@ -133,12 +133,6 @@
     "adminPanel": "Panel de Administración",
     "logout": "Cerrar Sesión"
   },
-  "footer": {
-    "allRightsReserved": "Todos los derechos reservados",
-    "privacyPolicy": "Política de Privacidad",
-    "termsOfService": "Términos de Servicio",
-    "builtBy": "Construido por Resyst Softwares"
-  },
   "errors": {
     "retry": "Reintentar",
     "checkOur": "Consulta nuestra",
@@ -571,6 +565,12 @@
       "termsOfService": "Términos de Servicio",
       "cookies": "Política de Cookies",
       "security": "Seguridad"
+    },
+    "legacy": {
+      "allRightsReserved": "Todos los derechos reservados",
+      "privacyPolicy": "Política de Privacidad",
+      "termsOfService": "Términos de Servicio",
+      "builtBy": "Construido por Resyst Softwares"
     }
   },
   "header": {

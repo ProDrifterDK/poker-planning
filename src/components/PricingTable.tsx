@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
-import { InformationCard } from './InfoCard';
 import { Button } from './Button';
 import { emotionTheme } from '../styles/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -301,6 +300,7 @@ export const PricingTable: React.FC = () => {
   
   // PricingCard component
   const PricingCard: React.FC<PricingCardProps> = ({ planKey, popular, isYearly }) => {
+    const { t } = useTranslation();
     const priceDisplay = getPriceDisplay(planKey);
   
     return (
@@ -320,6 +320,12 @@ export const PricingTable: React.FC = () => {
               <PricePeriod>{priceDisplay.period}</PricePeriod>
             )}
           </PriceDisplay>
+  
+          {isYearly && planKey !== 'free' && (
+            <SavingsBadge>
+              {t('plansSection.billingToggle.save')}
+            </SavingsBadge>
+          )}
   
           <FeaturesList>
             {(t(`plansSection.${planKey}.features`, { returnObjects: true }) as string[]).map((feature, index) => (
