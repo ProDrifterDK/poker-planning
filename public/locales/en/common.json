@@ -474,6 +474,38 @@
     "visualTitle": "Real-time Collaboration",
     "visualDescription": "See team estimates update live as everyone votes. No more waiting for responses or manual tallying."
   },
+  "featureShowcase": {
+    "title": "Why Poker Planning Pro?",
+    "features": {
+      "realtime": {
+        "title": "Real-time Collaboration",
+        "description": "See estimates update instantly as team members vote simultaneously. No more waiting or manual tallying required."
+      },
+      "flexible": {
+        "title": "Flexible Estimation Methods",
+        "description": "Support for Fibonacci, T-shirt sizing, powers of 2, and custom sequences to match your team's preferred methodology."
+      },
+      "analytics": {
+        "title": "Detailed Analytics",
+        "description": "Track estimation accuracy, team velocity, and historical data to continuously improve your planning process."
+      },
+      "integrations": {
+        "title": "Seamless Integrations",
+        "description": "Connect with Jira, Trello, GitHub and other tools to automatically sync estimation results with your workflow."
+      },
+      "remote": {
+        "title": "Remote-First Design",
+        "description": "Built for distributed teams with intuitive interface that works perfectly whether your team is together or apart."
+      },
+      "history": {
+        "title": "Complete History",
+        "description": "Access full estimation history, review past sessions, and analyze trends to make better planning decisions."
+      }
+    }
+  },
+  "trustBar": {
+    "heading": "Trusted by the world's most innovative teams."
+  },
   "footer": {
     "companyName": "Poker Planning Pro",
     "companyDescription": "Streamline your agile planning sessions with real-time collaboration, accurate estimations, and seamless integrations.",

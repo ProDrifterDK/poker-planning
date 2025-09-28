@@ -480,6 +480,38 @@
     "visualTitle": "Colaboración en Tiempo Real",
     "visualDescription": "Ve las estimaciones del equipo actualizarse en vivo mientras todos votan. No más esperas de respuestas o recuentos manuales."
   },
+  "featureShowcase": {
+    "title": "¿Por qué Poker Planning Pro?",
+    "features": {
+      "realtime": {
+        "title": "Colaboración en Tiempo Real",
+        "description": "Ve las estimaciones actualizarse instantáneamente mientras los miembros del equipo votan simultáneamente. No más esperas o recuentos manuales."
+      },
+      "flexible": {
+        "title": "Métodos de Estimación Flexibles",
+        "description": "Soporte para Fibonacci, tallas de camiseta, potencias de 2 y secuencias personalizadas para adaptarse a la metodología preferida de tu equipo."
+      },
+      "analytics": {
+        "title": "Análisis Detallado",
+        "description": "Rastrea la precisión de estimaciones, velocidad del equipo e historial para mejorar continuamente tu proceso de planificación."
+      },
+      "integrations": {
+        "title": "Integraciones Perfectas",
+        "description": "Conecta con Jira, Trello, GitHub y otras herramientas para sincronizar automáticamente los resultados de estimación con tu flujo de trabajo."
+      },
+      "remote": {
+        "title": "Diseño Primero Remoto",
+        "description": "Construido para equipos distribuidos con interfaz intuitiva que funciona perfectamente ya sea que tu equipo esté junto o separado."
+      },
+      "history": {
+        "title": "Historial Completo",
+        "description": "Accede al historial completo de estimaciones, revisa sesiones pasadas y analiza tendencias para tomar mejores decisiones de planificación."
+      }
+    }
+  },
+  "trustBar": {
+    "heading": "Confían en nosotros los equipos más innovadores del mundo."
+  },
   "footer": {
     "companyName": "Poker Planning Pro",
     "companyDescription": "Optimiza tus sesiones de planificación ágil con colaboración en tiempo real, estimaciones precisas e integraciones perfectas.",
