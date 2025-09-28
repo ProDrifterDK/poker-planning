@@ -1,20 +1,235 @@
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    box-sizing: border-box;
-}
-  
-body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+/* globals.css */
+
+/* CSS Custom Properties (Variables) - Sleek Innovator Color Palette */
+:root {
+  /* Colors */
+  --color-primary-main: #1297FD;
+  --color-secondary-main: #6F4C6C;
+  --color-background-default: #121212;
+  --color-background-paper: #1E1E1E;
+  --color-text-primary: #FCFCFC;
+  --color-text-secondary: #C3C3C5;
+  --color-border-main: #353536;
+
+  /* Typography */
+  --font-family-heading: "Montserrat", sans-serif;
+  --font-family-body: "Inter", sans-serif;
+
+  /* Font Sizes - Desktop */
+  --font-size-h1: 4.5rem; /* 72px */
+  --font-size-h2: 3rem;   /* 48px */
+  --font-size-h3: 1.5rem; /* 24px */
+  --font-size-h4: 1.25rem; /* 20px */
+  --font-size-body: 1.125rem; /* 18px */
+  --font-size-label: 0.875rem; /* 14px */
+  --font-size-caption: 0.75rem; /* 12px */
+
+  /* Font Sizes - Mobile */
+  --font-size-h1-mobile: 2.5rem; /* 40px */
+  --font-size-h2-mobile: 2rem;   /* 32px */
+  --font-size-h3-mobile: 2.25rem; /* 36px */
+  --font-size-h4-mobile: 1.5rem;  /* 24px */
+  --font-size-body-mobile: 1rem;  /* 16px */
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-heading: 1.2;
+  --line-height-body: 1.6;
+  --line-height-label: 1.5;
+  --line-height-caption: 1.5;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem; /* 4px */
+  --spacing-sm: 0.5rem;  /* 8px */
+  --spacing-md: 1rem;    /* 16px */
+  --spacing-lg: 1.5rem;  /* 24px */
+  --spacing-xl: 2rem;    /* 32px */
+  --spacing-xxl: 3rem;   /* 48px */
+
+  /* Border Radius */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0px 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(18, 151, 253, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease-in-out;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
 }
 
-main {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+/* Modern CSS Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-  
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-default);
+  overflow-x: hidden;
+}
+
+/* Remove list styles on ul, ol elements with a list role */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+}
+
+/* Set core root defaults */
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+}
+
+/* Set core body defaults */
+main {
+  display: block;
+}
+
+/* Remove text decoration from links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Make buttons interactive by default */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Remove default table styles */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Base styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0;
+}
+
+p {
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary-main);
+  outline-offset: 2px;
+}
+
+/* Responsive Design Base */
+@media (max-width: 768px) {
+  body {
+    font-size: var(--font-size-body-mobile);
+  }
+
+  h1 {
+    font-size: var(--font-size-h1-mobile);
+  }
+
+  h2 {
+    font-size: var(--font-size-h2-mobile);
+  }
+
+  h3 {
+    font-size: var(--font-size-h3-mobile);
+  }
+
+  h4 {
+    font-size: var(--font-size-h4-mobile);
+  }
+}
+
+/* Print styles */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+
+  img {
+    page-break-inside: avoid;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}

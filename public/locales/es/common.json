@@ -473,6 +473,58 @@
     "section10Content": "Si tiene preguntas sobre esta Política de Privacidad, contáctenos en:",
     "contactEmail": "Email: alan.resyst@gmail.com"
   },
+  "hero": {
+    "headline": "Transforma la Planificación de Equipos con Colaboración Sin Esfuerzo",
+    "subheadline": "Optimiza tus sesiones de planificación de sprint con poker planning colaborativo en tiempo real. Realiza estimaciones más rápidas y precisas, y mantiene a tu equipo alineado con nuestras intuitivas herramientas de planificación.",
+    "cta": "Comenzar Prueba Gratuita",
+    "visualTitle": "Colaboración en Tiempo Real",
+    "visualDescription": "Ve las estimaciones del equipo actualizarse en vivo mientras todos votan. No más esperas de respuestas o recuentos manuales."
+  },
+  "footer": {
+    "companyName": "Poker Planning Pro",
+    "companyDescription": "Optimiza tus sesiones de planificación ágil con colaboración en tiempo real, estimaciones precisas e integraciones perfectas.",
+    "productTitle": "Producto",
+    "companyTitle": "Empresa",
+    "resourcesTitle": "Recursos",
+    "followUsTitle": "Síguenos",
+    "copyright": "Todos los derechos reservados",
+    "navigation": {
+      "features": "Características",
+      "pricing": "Precios",
+      "demo": "Demo",
+      "integrations": "Integraciones",
+      "about": "Acerca de",
+      "blog": "Blog",
+      "careers": "Carreras",
+      "contact": "Contacto",
+      "docs": "Documentación",
+      "help": "Centro de Ayuda",
+      "community": "Comunidad",
+      "api": "Referencia API"
+    },
+    "social": {
+      "twitter": "Twitter",
+      "github": "GitHub",
+      "linkedin": "LinkedIn",
+      "discord": "Discord"
+    },
+    "legal": {
+      "privacyPolicy": "Política de Privacidad",
+      "termsOfService": "Términos de Servicio",
+      "cookies": "Política de Cookies",
+      "security": "Seguridad"
+    }
+  },
+  "header": {
+    "logoAlt": "Poker Planning Pro",
+    "navigation": {
+      "features": "Características",
+      "pricing": "Precios",
+      "about": "Acerca de",
+      "contact": "Contacto"
+    },
+    "cta": "Comenzar"
+  },
   "onboarding": {
     "welcome": {
       "title": "¡Bienvenido a Poker Planning Pro!",

@@ -111,12 +111,6 @@
     "adminPanel": "Admin Panel",
     "logout": "Log Out"
   },
-  "footer": {
-    "allRightsReserved": "All rights reserved",
-    "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service",
-    "builtBy": "Built by Resyst Softwares"
-  },
   "errors": {
     "retry": "Retry",
     "checkOur": "Check our",
@@ -472,6 +466,58 @@
     "section10Title": "10. Contact",
     "section10Content": "If you have questions about this Privacy Policy, please contact us at:",
     "contactEmail": "Email: alan.resyst@gmail.com"
+  },
+  "hero": {
+    "headline": "Transform Team Planning with Effortless Collaboration",
+    "subheadline": "Streamline your sprint planning sessions with real-time collaborative poker planning. Make faster, more accurate estimations and keep your team aligned with our intuitive planning tools.",
+    "cta": "Start Free Trial",
+    "visualTitle": "Real-time Collaboration",
+    "visualDescription": "See team estimates update live as everyone votes. No more waiting for responses or manual tallying."
+  },
+  "footer": {
+    "companyName": "Poker Planning Pro",
+    "companyDescription": "Streamline your agile planning sessions with real-time collaboration, accurate estimations, and seamless integrations.",
+    "productTitle": "Product",
+    "companyTitle": "Company",
+    "resourcesTitle": "Resources",
+    "followUsTitle": "Follow Us",
+    "copyright": "All rights reserved",
+    "navigation": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "demo": "Demo",
+      "integrations": "Integrations",
+      "about": "About Us",
+      "blog": "Blog",
+      "careers": "Careers",
+      "contact": "Contact",
+      "docs": "Documentation",
+      "help": "Help Center",
+      "community": "Community",
+      "api": "API Reference"
+    },
+    "social": {
+      "twitter": "Twitter",
+      "github": "GitHub",
+      "linkedin": "LinkedIn",
+      "discord": "Discord"
+    },
+    "legal": {
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "cookies": "Cookie Policy",
+      "security": "Security"
+    }
+  },
+  "header": {
+    "logoAlt": "Poker Planning Pro",
+    "navigation": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "about": "About",
+      "contact": "Contact"
+    },
+    "cta": "Get Started"
   },
   "onboarding": {
     "welcome": {
