@@ -15,13 +15,23 @@ import {
 
 // Styled container for the entire feature showcase section
 const ShowcaseContainer = styled.section`
-  padding: ${emotionTheme.spacing(16)} ${emotionTheme.spacing(6)};
+  padding: ${emotionTheme.spacing(20)} 0 ${emotionTheme.spacing(24)} 0;
   background-color: ${emotionTheme.colors.background.default};
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 
   @media (max-width: 900px) {
-    padding: ${emotionTheme.spacing(12)} ${emotionTheme.spacing(4)};
+    padding: ${emotionTheme.spacing(16)} 0 ${emotionTheme.spacing(20)} 0;
+  }
+`;
+
+// Content wrapper to maintain max-width constraint for content
+const ShowcaseContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 ${emotionTheme.spacing(6)};
+
+  @media (max-width: 900px) {
+    padding: 0 ${emotionTheme.spacing(4)};
   }
 `;
 
@@ -246,35 +256,37 @@ export const FeatureShowcase: React.FC = () => {
   ];
 
   return (
-    <ShowcaseContainer>
-      <AnimatedSection animation="fade-up" delay={0.1}>
-        <SectionTitle>{t('featureShowcase.title')}</SectionTitle>
-      </AnimatedSection>
+    <ShowcaseContainer id="features">
+      <ShowcaseContent>
+        <AnimatedSection animation="fade-up" delay={0.1}>
+          <SectionTitle>{t('featureShowcase.title')}</SectionTitle>
+        </AnimatedSection>
 
-      <AnimatedSection animation="fade-up" delay={0.2}>
-        <BentoGrid>
-          {gridConfigs.map((config, index) => {
-            const feature = features[config.featureIndex];
-            if (!feature) return null;
+        <AnimatedSection animation="fade-up" delay={0.2}>
+          <BentoGrid>
+            {gridConfigs.map((config, index) => {
+              const feature = features[config.featureIndex];
+              if (!feature) return null;
 
-            return (
-              <AnimatedSection
-                key={feature.key}
-                animation="scale-up"
-                delay={0.3 + (index * 0.1)}
-              >
-                <GridItem size={config.size}>
-                  <InformationCard
-                    icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
-                    title={t(feature.titleKey)}
-                    text={t(feature.descriptionKey)}
-                  />
-                </GridItem>
-              </AnimatedSection>
-            );
-          })}
-        </BentoGrid>
-      </AnimatedSection>
+              return (
+                <AnimatedSection
+                  key={feature.key}
+                  animation="scale-up"
+                  delay={0.3 + (index * 0.1)}
+                >
+                  <GridItem size={config.size}>
+                    <InformationCard
+                      icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
+                      title={t(feature.titleKey)}
+                      text={t(feature.descriptionKey)}
+                    />
+                  </GridItem>
+                </AnimatedSection>
+              );
+            })}
+          </BentoGrid>
+        </AnimatedSection>
+      </ShowcaseContent>
     </ShowcaseContainer>
   );
 };

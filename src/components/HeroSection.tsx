@@ -32,12 +32,14 @@ const HeroContent = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: ${emotionTheme.spacing(8)};
   align-items: center;
+  justify-content: center;
   width: 100%;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: ${emotionTheme.spacing(6)};
     text-align: center;
+    justify-items: center;
   }
 `;
 
@@ -45,9 +47,14 @@ const HeroContent = styled.div`
 const TextContent = styled.div`
   z-index: 2;
   order: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
 
   @media (max-width: 768px) {
     order: 1;
+    text-align: center;
   }
 `;
 

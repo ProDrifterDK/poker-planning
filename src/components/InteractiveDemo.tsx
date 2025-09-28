@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import AnimatedSection from './AnimatedSection';
@@ -203,11 +204,13 @@ export interface InteractiveDemoProps {
 
 // Main InteractiveDemo component
 export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({ className }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
 
   const handleDemoClick = () => {
-    // Placeholder for demo interaction
-    console.log('Interactive demo clicked');
+    // Navigate to signup page with current language
+    const currentLang = i18n.language || 'en';
+    router.push(`/${currentLang}/auth/signup`);
   };
 
   return (

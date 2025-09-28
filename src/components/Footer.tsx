@@ -5,6 +5,14 @@ import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import Link from 'next/link';
+import {
+  Twitter,
+  Github,
+  Linkedin,
+  Discord
+} from 'iconoir-react';
+
+type IconComponent = React.ComponentType<{ width?: string | number; height?: string | number }>;
 
 // Styled components using the design system
 const FooterContainer = styled.footer`
@@ -86,12 +94,6 @@ const CompanyDescription = styled.p`
   line-height: 1.6;
   margin: 0;
   max-width: 300px;
-`;
-
-const SocialSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${emotionTheme.spacing(3)};
 `;
 
 const SocialLinks = styled.div`
@@ -187,14 +189,14 @@ const LegalLink = styled(Link)`
   }
 `;
 
-// Social media icon component (using simple text for now, can be replaced with icon library later)
-const SocialIcon: React.FC<{ href: string; label: string; children: React.ReactNode }> = ({
+// Social media icon component
+const SocialIcon: React.FC<{ href: string; label: string; icon: IconComponent }> = ({
   href,
   label,
-  children
+  icon: Icon
 }) => (
   <SocialLink href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
-    {children}
+    <Icon width={20} height={20} />
   </SocialLink>
 );
 
@@ -222,10 +224,10 @@ const footerData = {
     { href: '/api', labelKey: 'footer.navigation.api' },
   ],
   social: [
-    { href: 'https://twitter.com/pokerplanningpro', labelKey: 'footer.social.twitter', symbol: '𝕏' },
-    { href: 'https://github.com/pokerplanningpro', labelKey: 'footer.social.github', symbol: 'GH' },
-    { href: 'https://linkedin.com/company/pokerplanningpro', labelKey: 'footer.social.linkedin', symbol: 'in' },
-    { href: 'https://discord.gg/pokerplanningpro', labelKey: 'footer.social.discord', symbol: 'DC' },
+    { href: 'https://twitter.com/pokerplanningpro', labelKey: 'footer.social.twitter', icon: Twitter },
+    { href: 'https://github.com/pokerplanningpro', labelKey: 'footer.social.github', icon: Github },
+    { href: 'https://linkedin.com/company/pokerplanningpro', labelKey: 'footer.social.linkedin', icon: Linkedin },
+    { href: 'https://discord.gg/pokerplanningpro', labelKey: 'footer.social.discord', icon: Discord },
   ],
   legal: [
     { href: '/privacy-policy', labelKey: 'footer.legal.privacyPolicy' },
@@ -272,22 +274,21 @@ export default function Footer() {
             </FooterLink>
           ))}
         </FooterSection>
-      </FooterContent>
 
-      <SocialSection>
-        <FooterTitle>{t('footer.followUsTitle')}</FooterTitle>
-        <SocialLinks>
-          {footerData.social.map((social) => (
-            <SocialIcon
-              key={social.href}
-              href={social.href}
-              label={t(social.labelKey)}
-            >
-              {social.symbol}
-            </SocialIcon>
-          ))}
-        </SocialLinks>
-      </SocialSection>
+        <FooterSection>
+          <FooterTitle>{t('footer.followUsTitle')}</FooterTitle>
+          <SocialLinks>
+            {footerData.social.map((social) => (
+              <SocialIcon
+                key={social.href}
+                href={social.href}
+                label={t(social.labelKey)}
+                icon={social.icon}
+              />
+            ))}
+          </SocialLinks>
+        </FooterSection>
+      </FooterContent>
 
       <BottomSection>
         <Copyright>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import { Button } from './Button';
@@ -128,15 +129,17 @@ export interface FinalCTAProps {
 
 // Main FinalCTA component
 export const FinalCTA: React.FC<FinalCTAProps> = ({ className }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
 
   const handleCTAClick = () => {
-    // Placeholder for CTA action - could navigate to signup or scroll to pricing
-    console.log('Final CTA clicked');
+    // Navigate to signup page with current language
+    const currentLang = i18n.language || 'en';
+    router.push(`/${currentLang}/auth/signup`);
   };
 
   return (
-    <CTAContainer className={className}>
+    <CTAContainer id="about" className={className}>
       <BackgroundGlow />
       <AnimatedSection animation="fade-up" delay={0.1}>
         <CTAContent>

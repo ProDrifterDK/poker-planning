@@ -349,7 +349,7 @@ export const PricingTable: React.FC = () => {
   };
 
   return (
-    <PricingSection>
+    <PricingSection id="pricing">
       <AnimatedSection animation="fade-up" delay={0.1}>
         <SectionTitle>{t('plansSection.title')}</SectionTitle>
       </AnimatedSection>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import { Button } from './Button';
@@ -72,34 +73,6 @@ const Navigation = styled.nav<{ isOpen: boolean }>`
   }
 `;
 
-const NavLink = styled(Link)`
-  color: ${emotionTheme.colors.text.primary};
-  text-decoration: none;
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  font-weight: ${emotionTheme.typography.fontWeights.regular};
-  transition: color 0.2s ease;
-  position: relative;
-
-  &:hover {
-    color: ${emotionTheme.colors.primary.main};
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: ${emotionTheme.colors.primary.main};
-    transition: width 0.3s ease;
-  }
-
-  &:hover::after {
-    width: 100%;
-  }
-`;
 
 const ActionsContainer = styled.div`
   display: flex;
@@ -166,7 +139,8 @@ const navigationLinks = [
 ];
 
 export default function Header() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -175,6 +149,29 @@ export default function Header() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleSmoothScroll = (href: string) => {
+    const element = document.querySelector(href);
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+    closeMobileMenu();
+  };
+
+  const handleSignUp = () => {
+    const currentLang = i18n.language || 'en';
+    router.push(`/${currentLang}/auth/signup`);
+    closeMobileMenu();
+  };
+
+  const handleSignIn = () => {
+    const currentLang = i18n.language || 'en';
+    router.push(`/${currentLang}/auth/signin`);
+    closeMobileMenu();
   };
 
   return (
@@ -194,13 +191,31 @@ export default function Header() {
 
         <Navigation isOpen={isMobileMenuOpen}>
           {navigationLinks.map((link) => (
-            <NavLink
+            <button
               key={link.href}
-              href={link.href}
-              onClick={closeMobileMenu}
+              onClick={() => handleSmoothScroll(link.href)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: emotionTheme.colors.text.primary,
+                textDecoration: 'none',
+                fontFamily: emotionTheme.typography.fontFamily.body,
+                fontSize: emotionTheme.typography.fontSizes.body,
+                fontWeight: emotionTheme.typography.fontWeights.regular,
+                transition: 'color 0.2s ease',
+                position: 'relative',
+                cursor: 'pointer',
+                padding: 0
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = emotionTheme.colors.primary.main;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = emotionTheme.colors.text.primary;
+              }}
             >
               {t(link.labelKey)}
-            </NavLink>
+            </button>
           ))}
         </Navigation>
 
@@ -212,7 +227,11 @@ export default function Header() {
             <HamburgerIcon isOpen={isMobileMenuOpen} />
           </HamburgerButton>
 
-          <Button variant="primary">
+          <Button variant="secondary" onClick={handleSignIn}>
+            {t('login')}
+          </Button>
+
+          <Button variant="primary" onClick={handleSignUp}>
             {t('header.cta')}
           </Button>
         </ActionsContainer>
