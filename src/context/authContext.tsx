@@ -18,14 +18,28 @@ import {
 import { getUserRole, initializeUserProfile } from '@/lib/roleService';
 import { UserRole, Permission, hasPermission as checkPermission } from '@/types/roles';
 import {
-  updateUserProfileData,
-  updateUserDisplayNameAndPhoto,
-  updateUserEmail,
-  updateNotificationPreferences,
-  deleteUserAccount,
-  type NotificationPreferences,
-  type UserProfileData
-} from '@/lib/userProfileService';
+   updateUserProfileData,
+   updateUserDisplayNameAndPhoto,
+   updateUserEmail,
+   updateNotificationPreferences,
+   deleteUserAccount,
+   getUserProfile,
+   type NotificationPreferences,
+   type UserProfileData
+ } from '@/lib/userProfileService';
+
+// Interfaz para los datos del perfil de Firestore
+interface FirestoreProfileData {
+   displayName?: string;
+   photoURL?: string;
+   email?: string;
+   phoneNumber?: string;
+   jobTitle?: string;
+   company?: string;
+   notificationPreferences?: NotificationPreferences;
+   createdAt?: string;
+   updatedAt?: string;
+}
 
 // Variable para detectar si estamos en el cliente
 const isClient = typeof window !== 'undefined';
@@ -131,6 +145,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Función para combinar datos del usuario de Firebase Auth con datos del perfil de Firestore
+  const combineUserData = (authUser: User, profileData: FirestoreProfileData | null) => {
+    if (!profileData) {
+      return authUser; // Si no hay datos de perfil, usar solo los datos de Firebase Auth
+    }
+
+    // Crear un objeto combinado priorizando los datos de Firestore
+    return {
+      ...authUser,
+      displayName: profileData.displayName || authUser.displayName,
+      photoURL: profileData.photoURL || authUser.photoURL,
+      email: authUser.email, // Mantener el email de Firebase Auth (más confiable)
+    };
+  };
+
+  // Función para cargar datos del perfil del usuario desde Firestore
+  const loadUserProfile = async (user: User) => {
+    try {
+      const profileData = await getUserProfile(user.uid);
+      const combinedUser = combineUserData(user, profileData);
+      setCurrentUser(combinedUser);
+    } catch (error) {
+      console.error('Error al cargar el perfil del usuario:', error);
+      // En caso de error, usar solo los datos de Firebase Auth
+      setCurrentUser(user);
+    }
+  };
+
   // Solo ejecutar en el cliente
   useEffect(() => {
     setMounted(true);
@@ -138,17 +180,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Escuchar cambios en el estado de autenticación solo en el cliente
     if (isClient) {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setCurrentUser(user);
-        
         if (user) {
+          // Cargar datos del perfil de Firestore y combinarlos con los datos de Firebase Auth
+          await loadUserProfile(user);
           // Inicializar o actualizar el perfil del usuario
           await initializeUserProfile(user);
           // Cargar el rol del usuario
           await loadUserRole(user);
         } else {
+          setCurrentUser(null);
           setUserRole(null);
         }
-        
+
         setLoading(false);
       });
 

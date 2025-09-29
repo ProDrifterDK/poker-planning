@@ -102,11 +102,11 @@ const SignIn: React.FC = () => {
 
   const validateForm = () => {
     if (!email.trim()) {
-      setFormError(t('errors.emailRequired'));
+      setFormError(t('signin.errors.emailRequired'));
       return false;
     }
     if (!password) {
-      setFormError(t('errors.passwordRequired'));
+      setFormError(t('signin.errors.passwordRequired'));
       return false;
     }
     return true;
@@ -174,7 +174,7 @@ const SignIn: React.FC = () => {
           textAlign="center"
           sx={{ mb: 3, fontWeight: 'bold' }}
         >
-          {t('auth.signIn')}
+          {t('signin.title')}
         </Typography>
 
         {/* Alert para errores y mensajes de éxito */}
@@ -191,7 +191,7 @@ const SignIn: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <Alert
               variant="success"
-              message={t('auth.signInSuccess')}
+              message={t('signin.success')}
             />
           </Box>
         )}
@@ -202,7 +202,7 @@ const SignIn: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <Input
               type="email"
-              placeholder={t('auth.email')}
+              placeholder={t('signin.email')}
               value={email}
               onChange={handleEmailChange}
               disabled={isSubmitting}
@@ -215,7 +215,7 @@ const SignIn: React.FC = () => {
           <Box sx={{ mb: 3 }}>
             <Input
               type="password"
-              placeholder={t('auth.password')}
+              placeholder={t('signin.password')}
               value={password}
               onChange={handlePasswordChange}
               disabled={isSubmitting}
@@ -230,9 +230,9 @@ const SignIn: React.FC = () => {
               type="submit"
               variant="primary"
               isSubmitting={isSubmitting}
-              loadingText={t('auth.signingIn')}
+              loadingText={t('signin.signingIn')}
             >
-              {t('auth.signIn')}
+              {t('signin.submit')}
             </FormButton>
           </Box>
         </Box>
@@ -246,9 +246,9 @@ const SignIn: React.FC = () => {
             variant="secondary"
             onClick={handleGoogleSignIn}
             isSubmitting={isSubmitting}
-            loadingText={t('auth.signingIn')}
+            loadingText={t('signin.signingIn')}
           >
-            {t('auth.signInWithGoogle')}
+            {t('signin.continueWithGoogle')}
           </FormButton>
         </Box>
 
@@ -267,13 +267,13 @@ const SignIn: React.FC = () => {
               }
             }}
           >
-            {t('auth.forgotPassword')}
+            {t('signin.forgotPassword')}
           </Button>
         </Box>
 
         <Box sx={{ textAlign: 'center', mt: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            {t('auth.noAccount')}{' '}
+            {t('signin.noAccount')}{' '}
             <Button
               component={Link}
               href={getLocalizedRoute('/auth/signup')}
@@ -289,7 +289,7 @@ const SignIn: React.FC = () => {
                 }
               }}
             >
-              {t('auth.createAccount')}
+              {t('signin.createAccount')}
             </Button>
           </Typography>
         </Box>
