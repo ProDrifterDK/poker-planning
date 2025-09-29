@@ -19,6 +19,7 @@ import FeatureShowcase from '@/components/FeatureShowcase';
 import InteractiveDemo from '@/components/InteractiveDemo';
 import PricingTable from '@/components/PricingTable';
 import FinalCTA from '@/components/FinalCTA';
+import LoadingSpinner from '@/components/feedback/LoadingSpinner';
 
 // No longer need the ClientHomePageProps interface as we're using useTranslation
 
@@ -46,7 +47,7 @@ export default function ClientHomePage({ lang }: { lang: string }) {
 
   // Si estamos en el servidor o cargando, mostramos un estado de carga
   if (!isClient || loading) {
-    return null; // O un componente de carga si prefieres
+    return <LoadingSpinner />;
   }
 
   // Si el usuario está autenticado, mostramos el RoomManager

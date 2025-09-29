@@ -10,6 +10,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '../context/authContext';
 import UserMenu from './auth/UserMenu';
+import { Typography } from '@mui/material';
+import ThemeToggleButton from './ThemeToggleButton';
+import LanguageSelector from './LanguageSelector';
 
 // Styled components using the design system
 const HeaderContainer = styled.header`
@@ -75,12 +78,28 @@ const Navigation = styled.nav<{ isOpen: boolean }>`
   }
 `;
 
+// App title component for authenticated users
+const AppTitle = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 
 const ActionsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: ${emotionTheme.spacing(4)};
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: ${emotionTheme.spacing(2)};
+  }
 `;
 
 const HamburgerButton = styled.button`
@@ -210,56 +229,78 @@ export default function Header({ variant: propVariant }: HeaderProps) {
           </Link>
         </LogoContainer>
 
-        <Navigation isOpen={isMobileMenuOpen}>
-          {(() => {
-            // Determine which navigation links to show
-            let linksToShow;
-            if (variant === 'marketing') {
-              linksToShow = marketingNavigationLinks;
-            } else if (variant === 'app' && currentUser) {
-              linksToShow = appNavigationLinks;
-            } else {
-              linksToShow = marketingNavigationLinks;
-            }
+        {currentUser && variant === 'app' ? (
+          // Show contextual title for authenticated users in app variant
+          <AppTitle>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 'bold',
+                color: emotionTheme.colors.text.primary,
+                fontFamily: emotionTheme.typography.fontFamily.heading
+              }}
+            >
+              {t('header.appTitle')}
+            </Typography>
+          </AppTitle>
+        ) : (
+          // Show navigation for marketing variant or non-authenticated users
+          <Navigation isOpen={isMobileMenuOpen}>
+            {(() => {
+              // Determine which navigation links to show
+              let linksToShow;
+              if (variant === 'marketing') {
+                linksToShow = marketingNavigationLinks;
+              } else {
+                linksToShow = marketingNavigationLinks;
+              }
 
-            return linksToShow.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={closeMobileMenu}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: emotionTheme.colors.text.primary,
-                  textDecoration: 'none',
-                  fontFamily: emotionTheme.typography.fontFamily.body,
-                  fontSize: emotionTheme.typography.fontSizes.body,
-                  fontWeight: emotionTheme.typography.fontWeights.regular,
-                  transition: 'color 0.2s ease',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  padding: 0
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = emotionTheme.colors.primary.main;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = emotionTheme.colors.text.primary;
-                }}
-              >
-                {t(link.labelKey)}
-              </Link>
-            ));
-          })()}
-        </Navigation>
+              return linksToShow.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: emotionTheme.colors.text.primary,
+                    textDecoration: 'none',
+                    fontFamily: emotionTheme.typography.fontFamily.body,
+                    fontSize: emotionTheme.typography.fontSizes.body,
+                    fontWeight: emotionTheme.typography.fontWeights.regular,
+                    transition: 'color 0.2s ease',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = emotionTheme.colors.primary.main;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = emotionTheme.colors.text.primary;
+                  }}
+                >
+                  {t(link.labelKey)}
+                </Link>
+              ));
+            })()}
+          </Navigation>
+        )}
 
         <ActionsContainer>
           {currentUser ? (
             // Usuario autenticado
-            <UserMenu currentUser={currentUser} />
+            <>
+              <ThemeToggleButton />
+              <LanguageSelector />
+              <UserMenu currentUser={currentUser} />
+            </>
           ) : (
             // Usuario no autenticado - vista de marketing
             <>
+              <ThemeToggleButton />
+              <LanguageSelector />
+
               <HamburgerButton
                 onClick={toggleMobileMenu}
                 aria-label="Toggle mobile menu"
