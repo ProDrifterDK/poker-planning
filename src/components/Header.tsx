@@ -8,6 +8,7 @@ import { emotionTheme } from '../styles/theme';
 import { Button } from './Button';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '../context/authContext';
 
 // Styled components using the design system
 const HeaderContainer = styled.header`
@@ -141,6 +142,7 @@ const navigationLinks = [
 export default function Header() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { currentUser } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -220,20 +222,30 @@ export default function Header() {
         </Navigation>
 
         <ActionsContainer>
-          <HamburgerButton
-            onClick={toggleMobileMenu}
-            aria-label="Toggle mobile menu"
-          >
-            <HamburgerIcon isOpen={isMobileMenuOpen} />
-          </HamburgerButton>
+          {currentUser ? (
+            // Usuario autenticado
+            <div style={{ color: emotionTheme.colors.text.primary, fontSize: emotionTheme.typography.fontSizes.body }}>
+              Autenticado
+            </div>
+          ) : (
+            // Usuario no autenticado - vista de marketing
+            <>
+              <HamburgerButton
+                onClick={toggleMobileMenu}
+                aria-label="Toggle mobile menu"
+              >
+                <HamburgerIcon isOpen={isMobileMenuOpen} />
+              </HamburgerButton>
 
-          <Button variant="secondary" onClick={handleSignIn}>
-            {t('login')}
-          </Button>
+              <Button variant="secondary" onClick={handleSignIn}>
+                {t('login')}
+              </Button>
 
-          <Button variant="primary" onClick={handleSignUp}>
-            {t('header.cta')}
-          </Button>
+              <Button variant="primary" onClick={handleSignUp}>
+                {t('header.cta')}
+              </Button>
+            </>
+          )}
         </ActionsContainer>
       </HeaderContent>
     </HeaderContainer>
