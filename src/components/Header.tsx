@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import styled from '@emotion/styled';
 import { emotionTheme } from '../styles/theme';
 import { Button } from './Button';
@@ -133,18 +133,36 @@ const HamburgerIcon = styled.div<{ isOpen: boolean }>`
   `}
 `;
 
-const navigationLinks = [
+interface NavigationLink {
+  href: string;
+  labelKey: string;
+}
+
+const marketingNavigationLinks: NavigationLink[] = [
   { href: '#features', labelKey: 'header.navigation.features' },
   { href: '#pricing', labelKey: 'header.navigation.pricing' },
   { href: '#about', labelKey: 'header.navigation.about' },
   { href: '#contact', labelKey: 'header.navigation.contact' },
 ];
 
-export default function Header() {
+const appNavigationLinks: NavigationLink[] = [
+  { href: '/rooms', labelKey: 'header.navigation.myRooms' },
+  { href: '/rooms/create', labelKey: 'header.navigation.createRoom' },
+];
+
+interface HeaderProps {
+  variant?: 'marketing' | 'app';
+}
+
+export default function Header({ variant: propVariant }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const { currentUser } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Auto-detect variant based on current route if not explicitly provided
+  const variant = propVariant || (pathname === '/' || pathname.startsWith('/?') ? 'marketing' : 'app');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -193,33 +211,46 @@ export default function Header() {
         </LogoContainer>
 
         <Navigation isOpen={isMobileMenuOpen}>
-          {navigationLinks.map((link) => (
-            <button
-              key={link.href}
-              onClick={() => handleSmoothScroll(link.href)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: emotionTheme.colors.text.primary,
-                textDecoration: 'none',
-                fontFamily: emotionTheme.typography.fontFamily.body,
-                fontSize: emotionTheme.typography.fontSizes.body,
-                fontWeight: emotionTheme.typography.fontWeights.regular,
-                transition: 'color 0.2s ease',
-                position: 'relative',
-                cursor: 'pointer',
-                padding: 0
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = emotionTheme.colors.primary.main;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = emotionTheme.colors.text.primary;
-              }}
-            >
-              {t(link.labelKey)}
-            </button>
-          ))}
+          {(() => {
+            // Determine which navigation links to show
+            let linksToShow;
+            if (variant === 'marketing') {
+              linksToShow = marketingNavigationLinks;
+            } else if (variant === 'app' && currentUser) {
+              linksToShow = appNavigationLinks;
+            } else {
+              linksToShow = marketingNavigationLinks;
+            }
+
+            return linksToShow.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={closeMobileMenu}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: emotionTheme.colors.text.primary,
+                  textDecoration: 'none',
+                  fontFamily: emotionTheme.typography.fontFamily.body,
+                  fontSize: emotionTheme.typography.fontSizes.body,
+                  fontWeight: emotionTheme.typography.fontWeights.regular,
+                  transition: 'color 0.2s ease',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = emotionTheme.colors.primary.main;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = emotionTheme.colors.text.primary;
+                }}
+              >
+                {t(link.labelKey)}
+              </Link>
+            ));
+          })()}
         </Navigation>
 
         <ActionsContainer>
