@@ -11,6 +11,7 @@ const HeroContainer = styled.section`
   min-height: 100vh;
   background: linear-gradient(135deg, ${emotionTheme.colors.background.default} 0%, ${emotionTheme.colors.background.paper} 100%);
   display: flex;
+  justify-content: center;
   align-items: center;
   padding: ${emotionTheme.spacing(8)} ${emotionTheme.spacing(6)};
   position: relative;
@@ -32,8 +33,8 @@ const HeroContent = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: ${emotionTheme.spacing(8)};
   align-items: center;
-  justify-content: center;
   width: 100%;
+  justify-items: center;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
