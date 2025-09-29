@@ -1,22 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Divider,
-  Alert,
-  CircularProgress,
-  Link as MuiLink
-} from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { Box, Paper, Typography, Divider, Button } from '@mui/material';
+import { Input } from '@/components/forms/Input';
+import { FormButton } from '@/components/forms/FormButton';
+import { Alert } from '@/components/feedback/Alert';
 
 // Lista de idiomas soportados
 const supportedLocales = ['es', 'en'];
@@ -52,7 +44,7 @@ const SignIn: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const { signIn, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
-  const { t, i18n } = useTranslation('auth');
+  const { t } = useTranslation('auth');
 
   // Redireccionar si el usuario está autenticado o si el inicio de sesión fue exitoso
   useEffect(() => {
@@ -64,8 +56,7 @@ const SignIn: React.FC = () => {
       const redirectAfterAuth = typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterAuth') : null;
 
       // Obtener la URL de retorno de los parámetros de la URL si existe
-      const urlParams = new URLSearchParams(window.location.search);
-      const returnUrl = urlParams.get('returnUrl');
+      const returnUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('returnUrl') : null;
 
       // Pequeño retraso para mostrar el mensaje de éxito
       const timer = setTimeout(() => {
@@ -160,105 +151,146 @@ const SignIn: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        p: 2,
+        minHeight: '100vh',
+        padding: 2,
+        backgroundColor: 'background.default'
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          padding: 4,
           width: '100%',
           maxWidth: 400,
           borderRadius: 2,
+          backgroundColor: 'background.paper'
         }}
       >
-        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
-          {t('signin.title')}
+        {/* Título del formulario */}
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          textAlign="center"
+          sx={{ mb: 3, fontWeight: 'bold' }}
+        >
+          {t('auth.signIn')}
         </Typography>
 
+        {/* Alert para errores y mensajes de éxito */}
+        {(formError || error) && (
+          <Box sx={{ mb: 2 }}>
+            <Alert
+              variant="error"
+              message={formError || error || ''}
+            />
+          </Box>
+        )}
+
         {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {t('signin.success', 'Sign in successful! Redirecting...')}
-          </Alert>
+          <Box sx={{ mb: 2 }}>
+            <Alert
+              variant="success"
+              message={t('auth.signInSuccess')}
+            />
+          </Box>
         )}
 
-        {(error || formError) && !success && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error || formError}
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <TextField
-            label={t('signin.email')}
-            type="email"
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            value={email}
-            onChange={handleEmailChange}
-            disabled={isSubmitting}
-            required
-          />
-
-          <TextField
-            label={t('signin.password')}
-            type="password"
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            value={password}
-            onChange={handlePasswordChange}
-            disabled={isSubmitting}
-            required
-          />
-
-          <Box sx={{ mt: 1, mb: 2, textAlign: 'right' }}>
-            <MuiLink
-              component={Link}
-              href={getLocalizedRoute('/auth/reset-password')}
-              underline="hover"
-              variant="body2"
-            >
-              {t('signin.forgotPassword')}
-            </MuiLink>
+        {/* Formulario de inicio de sesión */}
+        <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+          {/* Campo de correo electrónico */}
+          <Box sx={{ mb: 2 }}>
+            <Input
+              type="email"
+              placeholder={t('auth.email')}
+              value={email}
+              onChange={handleEmailChange}
+              disabled={isSubmitting}
+              error={!!formError && !email.trim()}
+              required
+            />
           </Box>
 
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={isSubmitting}
-            sx={{ mb: 2, textTransform: "none" }}
+          {/* Campo de contraseña */}
+          <Box sx={{ mb: 3 }}>
+            <Input
+              type="password"
+              placeholder={t('auth.password')}
+              value={password}
+              onChange={handlePasswordChange}
+              disabled={isSubmitting}
+              error={!!formError && !password}
+              required
+            />
+          </Box>
+
+          {/* Botón de inicio de sesión */}
+          <Box sx={{ mb: 2 }}>
+            <FormButton
+              type="submit"
+              variant="primary"
+              isSubmitting={isSubmitting}
+              loadingText={t('auth.signingIn')}
+            >
+              {t('auth.signIn')}
+            </FormButton>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Botón de Google Sign-In */}
+        <Box sx={{ mb: 3 }}>
+          <FormButton
+            type="button"
+            variant="secondary"
+            onClick={handleGoogleSignIn}
+            isSubmitting={isSubmitting}
+            loadingText={t('auth.signingIn')}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('signin.submit')}
+            {t('auth.signInWithGoogle')}
+          </FormButton>
+        </Box>
+
+        {/* Enlaces de navegación */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Button
+            component={Link}
+            href={getLocalizedRoute('/auth/reset-password')}
+            variant="text"
+            sx={{
+              textTransform: 'none',
+              color: 'primary.main',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            {t('auth.forgotPassword')}
           </Button>
-        </form>
-        <Divider sx={{ my: 2 }}>{t('signin.or')}</Divider>
+        </Box>
 
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleSignIn}
-          disabled={isSubmitting}
-          sx={{ mb: 2, textTransform: "none" }}
-        >
-          {t('signin.continueWithGoogle', 'Continue with Google')}
-        </Button>
-
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2">
-            {t('signin.noAccount')}{' '}
-            <MuiLink
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {t('auth.noAccount')}{' '}
+            <Button
               component={Link}
               href={getLocalizedRoute('/auth/signup')}
-              underline="hover"
+              variant="text"
+              sx={{
+                textTransform: 'none',
+                color: 'primary.main',
+                padding: 0,
+                minWidth: 'auto',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline'
+                }
+              }}
             >
-              {t('signin.createAccount')}
-            </MuiLink>
+              {t('auth.createAccount')}
+            </Button>
           </Typography>
         </Box>
       </Paper>
