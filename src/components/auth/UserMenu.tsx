@@ -8,6 +8,7 @@ import { emotionTheme } from '../../styles/theme';
 import { User } from 'firebase/auth';
 import { User as UserIcon } from 'iconoir-react';
 import Image from 'next/image';
+import { useAuth } from '../../context/authContext';
 
 interface UserMenuProps {
   currentUser: User;
@@ -148,6 +149,7 @@ const MenuDivider = styled.hr`
 export default function UserMenu({ currentUser }: UserMenuProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
@@ -156,6 +158,16 @@ export default function UserMenu({ currentUser }: UserMenuProps) {
 
   const closeDropdown = () => {
     setIsDropdownOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      closeDropdown();
+      // El logout ya maneja la navegación automáticamente
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const handleMenuClick = (action: string) => {
@@ -171,8 +183,7 @@ export default function UserMenu({ currentUser }: UserMenuProps) {
         router.push(`/${currentLangSettings}/settings`);
         break;
       case 'logout':
-        // TODO: Implement logout functionality
-        console.log('Logout clicked');
+        handleLogout();
         break;
       default:
         break;

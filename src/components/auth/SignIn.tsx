@@ -153,7 +153,10 @@ const SignIn: React.FC = () => {
         alignItems: 'center',
         minHeight: '100vh',
         padding: 2,
-        backgroundColor: 'background.default'
+        backgroundColor: 'background.default',
+        '&.MuiBox-root': {
+          backgroundColor: 'background.default !important'
+        }
       }}
     >
       <Paper
@@ -163,7 +166,11 @@ const SignIn: React.FC = () => {
           width: '100%',
           maxWidth: 400,
           borderRadius: 2,
-          backgroundColor: 'background.paper'
+          backgroundColor: 'background.paper',
+          '&.MuiPaper-root': {
+            backgroundColor: 'background.paper !important',
+            backgroundImage: 'none !important'
+          }
         }}
       >
         {/* Título del formulario */}
