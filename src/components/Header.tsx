@@ -9,6 +9,7 @@ import { Button } from './Button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '../context/authContext';
+import UserMenu from './auth/UserMenu';
 
 // Styled components using the design system
 const HeaderContainer = styled.header`
@@ -224,9 +225,7 @@ export default function Header() {
         <ActionsContainer>
           {currentUser ? (
             // Usuario autenticado
-            <div style={{ color: emotionTheme.colors.text.primary, fontSize: emotionTheme.typography.fontSizes.body }}>
-              Autenticado
-            </div>
+            <UserMenu currentUser={currentUser} />
           ) : (
             // Usuario no autenticado - vista de marketing
             <>
