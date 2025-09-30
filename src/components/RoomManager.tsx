@@ -173,14 +173,14 @@ export default function RoomManager() {
       <Box
         data-onboarding="create-room"
         sx={{
-          p: 4,
+          p: (theme) => theme.spacing(4),
           width: "100%",
           maxWidth: 500,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
-          boxShadow: 3,
-          borderRadius: 2,
+          gap: (theme) => theme.spacing(2),
+          boxShadow: (theme) => theme.shadows[3],
+          borderRadius: (theme) => theme.shape.borderRadius,
           bgcolor: "background.paper",
         }}
       >
@@ -258,14 +258,14 @@ export default function RoomManager() {
       <Box
         data-onboarding="join-room"
         sx={{
-          p: 4,
+          p: (theme) => theme.spacing(4),
           width: "100%",
           maxWidth: 500,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
-          boxShadow: 3,
-          borderRadius: 2,
+          gap: (theme) => theme.spacing(2),
+          boxShadow: (theme) => theme.shadows[3],
+          borderRadius: (theme) => theme.shape.borderRadius,
           bgcolor: "background.paper",
         }}
       >

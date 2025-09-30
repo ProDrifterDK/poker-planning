@@ -100,16 +100,16 @@ const ResetPassword: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        p: 2,
+        p: theme => theme.spacing(2),
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: theme => theme.spacing(4),
           width: '100%',
           maxWidth: 400,
-          borderRadius: 2,
+          borderRadius: theme => theme.shape.borderRadius,
         }}
       >
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
@@ -118,10 +118,10 @@ const ResetPassword: React.FC = () => {
         
         {resetSent ? (
           <>
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ mb: theme => theme.spacing(2) }}>
               {t('resetPassword.emailSent', 'An email has been sent with instructions to reset your password. You will be redirected to the login page in a few seconds...')}
             </Alert>
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Box sx={{ mt: theme => theme.spacing(3), textAlign: 'center' }}>
               <MuiLink
                 component={Link}
                 href={getLocalizedRoute('/auth/signin')}
@@ -138,7 +138,7 @@ const ResetPassword: React.FC = () => {
             </Typography>
             
             {(error || formError) && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: theme => theme.spacing(2) }}>
                 {error || formError}
               </Alert>
             )}
@@ -163,13 +163,13 @@ const ResetPassword: React.FC = () => {
                 color="primary"
                 size="large"
                 disabled={isSubmitting}
-                sx={{ mt: 2, mb: 2, textTransform: "none" }}
+                sx={{ mt: theme => theme.spacing(2), mb: theme => theme.spacing(2), textTransform: "none" }}
               >
                 {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('forgotPassword.submit')}
               </Button>
             </form>
             
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Box sx={{ mt: theme => theme.spacing(3), textAlign: 'center' }}>
               <MuiLink
                 component={Link}
                 href={getLocalizedRoute('/auth/signin')}

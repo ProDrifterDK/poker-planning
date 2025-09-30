@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Typography, Paper, Divider } from '@mui/material';
+import { Typography, Paper, Divider, useTheme } from '@mui/material';
 import IntegrationsList from './IntegrationsList';
 import IntegrationForm from './IntegrationForm';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ export default function IntegrationsManager() {
   const [formOpen, setFormOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | undefined>(undefined);
   const { t, i18n } = useTranslation('common');
+  const theme = useTheme();
   
   // Force a re-render when the language changes
   React.useEffect(() => {
@@ -36,7 +37,7 @@ export default function IntegrationsManager() {
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
+    <Paper elevation={2} sx={{ p: theme.spacing(3), mb: theme.spacing(4) }}>
       <Typography variant="h5" gutterBottom>
         {t('settings.integrations.title', 'Integraciones')}
       </Typography>
@@ -44,7 +45,7 @@ export default function IntegrationsManager() {
         {t('settings.integrations.description', 'Configura integraciones con herramientas externas para enviar los resultados de las estimaciones.')}
       </Typography>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: theme.spacing(2) }} />
 
       <IntegrationsList
         onAddClick={handleAddClick}

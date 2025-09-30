@@ -87,7 +87,7 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   
   return (
     <>
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: 3, backgroundColor: 'background.paper' }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={8}>
             <Box display="flex" alignItems="center" mb={2}>

@@ -165,7 +165,7 @@ const SignIn: React.FC = () => {
           padding: 4,
           width: '100%',
           maxWidth: 400,
-          borderRadius: 2,
+          borderRadius: theme => theme.shape.borderRadius,
           backgroundColor: 'background.paper',
           '&.MuiPaper-root': {
             backgroundColor: 'background.paper !important',
@@ -179,7 +179,7 @@ const SignIn: React.FC = () => {
           component="h1"
           gutterBottom
           textAlign="center"
-          sx={{ mb: 3, fontWeight: 'bold' }}
+          sx={{ mb: 3, fontWeight: theme => theme.typography.fontWeightBold }}
         >
           {t('signin.title')}
         </Typography>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Button, Box, Menu, MenuItem, Snackbar, Alert } from '@mui/material';
+import { Button, Box, Menu, MenuItem, Snackbar, Alert, useTheme } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Participant, Issue } from '@/types/room';
 import { jsPDF } from 'jspdf';
@@ -22,6 +22,7 @@ export default function ExportData({ roomId, participants, issues, estimations }
     severity: 'success'
   });
 
+  const theme = useTheme();
   // Verificar si hay datos disponibles para exportar
   const hasExportableData = useMemo(() => {
     // Verificar si hay issues con promedio establecido
@@ -220,7 +221,10 @@ export default function ExportData({ roomId, participants, issues, estimations }
         body: tableData,
         startY: 40,
         styles: { fontSize: 10, cellPadding: 3 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        headStyles: {
+          fillColor: theme.palette.primary.main,
+          textColor: theme.palette.common.white
+        },
         columnStyles: {
           0: { cellWidth: 'auto' }, // Key
           1: { cellWidth: 'auto' }, // Summary

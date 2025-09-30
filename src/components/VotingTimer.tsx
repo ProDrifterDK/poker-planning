@@ -311,8 +311,8 @@ export default function VotingTimer() {
                 variant="caption"
                 component="div"
                 color="text.primary"
-                fontWeight="bold"
-                fontSize="0.7rem"
+                fontWeight={theme.typography.fontWeightBold}
+                fontSize={theme.typography.caption.fontSize}
               >
                 {timeLeft !== null ? formatTimeLeft(timeLeft) : formatTimeLeft(timerDuration * 1000)}
               </Typography>
@@ -332,7 +332,10 @@ export default function VotingTimer() {
               <Typography
                 variant="caption"
                 color="error"
-                sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}
+                sx={{
+                  fontSize: theme.typography.caption.fontSize,
+                  fontWeight: theme.typography.fontWeightBold,
+                }}
               >
                 {!hasAnyVotes ? t('votingTimer.noVotes') : t('votingTimer.votesNeeded')}
               </Typography>
@@ -346,7 +349,9 @@ export default function VotingTimer() {
                     onClick={handleResetTimer}
                     sx={{ ml: 0.5 }}
                   >
-                    <RestartAltIcon sx={{ fontSize: '0.9rem' }} />
+                    <RestartAltIcon
+                      sx={{ fontSize: theme.typography.body2.fontSize }}
+                    />
                   </IconButton>
                 </Tooltip>
               )}

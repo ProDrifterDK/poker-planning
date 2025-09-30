@@ -295,7 +295,7 @@ export default function ActiveRoomsList() {
                 <ListItem>
                   <ListItemText
                     primary={
-                      <Typography variant="subtitle1" fontWeight="medium">
+                      <Typography variant="subtitle1" sx={{ fontWeight: (theme) => theme.typography.fontWeightMedium }}>
                         {room.title}
                       </Typography>
                     }
@@ -332,9 +332,9 @@ export default function ActiveRoomsList() {
                     }
                   />
                   <ListItemSecondaryAction>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
+                    <Button
+                      variant="contained"
+                      color="primary"
                       onClick={() => handleJoinRoom(room.id)}
                       sx={{ textTransform: 'none' }}
                     >

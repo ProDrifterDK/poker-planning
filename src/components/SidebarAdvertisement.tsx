@@ -143,18 +143,18 @@ export default function SidebarAdvertisement({
         boxSizing: 'border-box' // Include padding in width calculation
       }}
     >
-      <Typography 
-        variant="caption" 
-        sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          backgroundColor: 'rgba(0,0,0,0.05)', 
+      <Typography
+        variant="caption"
+        sx={theme => ({
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          backgroundColor: theme.palette.action.hover,
           px: 0.5,
           borderBottomRightRadius: 4,
           color: 'text.secondary',
-          fontSize: '0.6rem'
-        }}
+          fontSize: theme.typography.caption.fontSize,
+        })}
       >
         Publicidad
       </Typography>

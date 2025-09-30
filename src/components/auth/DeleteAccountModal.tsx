@@ -75,13 +75,13 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       aria-describedby="delete-account-dialog-description"
       maxWidth="md"
     >
-      <DialogTitle id="delete-account-dialog-title" sx={{ bgcolor: 'error.main', color: 'white' }}>
+      <DialogTitle id="delete-account-dialog-title" sx={{ bgcolor: 'error.main', color: 'error.contrastText' }}>
         <Box display="flex" alignItems="center">
-          <WarningIcon sx={{ mr: 1 }} />
+          <WarningIcon sx={{ mr: theme => theme.spacing(1) }} />
           {t('deleteAccountModal.title')}
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ mt: 2 }}>
+      <DialogContent sx={{ mt: theme => theme.spacing(2) }}>
         {/* Mensaje de advertencia */}
         <Typography variant="subtitle1" color="error" gutterBottom>
           {t('deleteAccountModal.warning')}
@@ -135,7 +135,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         </List>
         
         {/* Instrucciones para confirmar */}
-        <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
+        <Typography variant="body1" sx={{ mt: theme => theme.spacing(2), mb: theme => theme.spacing(3) }}>
           {t('deleteAccountModal.confirmInstructions')}
         </Typography>
         
@@ -163,9 +163,9 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           }}
         />
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button 
-          onClick={handleCancel} 
+      <DialogActions sx={{ px: theme => theme.spacing(3), pb: theme => theme.spacing(3) }}>
+        <Button
+          onClick={handleCancel}
           variant="outlined"
           startIcon={<CancelIcon />}
         >

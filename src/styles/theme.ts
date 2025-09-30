@@ -474,6 +474,87 @@ export const darkTheme = createTheme({
   },
 });
 
+// Light theme object for use with Emotion styled components
+export const lightEmotionTheme = {
+  ...lightTheme,
+  colors: {
+    primary: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+      contrastText: "#000000",
+    },
+    secondary: {
+      main: "#6F4C6C",
+      light: "#8B6B88",
+      dark: "#523150",
+      contrastText: "#ffffff",
+    },
+    background: {
+      default: "#FCFCFC",
+      paper: "#FFFFFF",
+      alt: "#F0F0F0",
+    },
+    text: {
+      primary: "#2C2C2C",
+      secondary: "#6F6F6F",
+      disabled: "#BDBDBD",
+    },
+    border: {
+      main: "#E0E0E0",
+      light: "#F0F0F0",
+      dark: "#BDBDBD",
+    },
+    success: {
+      main: "#00C851",
+      light: "#5DFC88",
+      dark: "#009624",
+    },
+    error: {
+      main: "#FF4444",
+      light: "#FF7F7F",
+      dark: "#CC0000",
+    },
+    warning: {
+      main: "#FFBB33",
+      light: "#FFFF66",
+      dark: "#CC9900",
+    },
+    info: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+    },
+  },
+  typography: {
+    fontFamily: {
+      body: '"Inter", sans-serif',
+      heading: '"Montserrat", sans-serif',
+    },
+    fontSizes: {
+      body: '1rem',
+      caption: '0.75rem',
+    },
+    fontWeights: {
+      light: 300,
+      regular: 400,
+      medium: 500,
+      bold: 700,
+    },
+  },
+  borderRadius: {
+    small: '4px',
+    medium: '8px',
+    large: '16px',
+    circle: '50%',
+  },
+  spacing: (factor: number) => `${factor * 4}px`,
+  shadows: {
+    focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
+    focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
+  },
+};
+
 // Dark theme object for use with Emotion styled components
 export const darkEmotionTheme = {
   ...darkTheme,
@@ -527,137 +608,30 @@ export const darkEmotionTheme = {
     },
   },
   typography: {
-    ...darkTheme.typography,
     fontFamily: {
-      heading: '"Montserrat", sans-serif',
       body: '"Inter", sans-serif',
+      heading: '"Montserrat", sans-serif',
     },
     fontSizes: {
-      h1: '4.5rem',
-      h2: '3rem',
-      h3: '2.25rem',
-      h4: '1.5rem',
-      body: '1.125rem',
-      button: '0.875rem',
-      caption: '0.75rem',
+      body: '1rem', // 16px
+      caption: '0.75rem', // 12px
     },
     fontWeights: {
+      light: 300,
       regular: 400,
       medium: 500,
       bold: 700,
     },
-    lineHeights: {
-      heading: 1.2,
-      body: 1.6,
-    },
   },
-  spacing: darkTheme.spacing,
   borderRadius: {
     small: '4px',
     medium: '8px',
     large: '16px',
+    circle: '50%',
   },
+  spacing: (factor: number) => `${factor * 4}px`, // 4px base unit
   shadows: {
-    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.3)',
-    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.3)',
-    small: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
+    focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
   },
 };
-
-// Light theme object for use with Emotion styled components
-export const lightEmotionTheme = {
-  ...lightTheme,
-  colors: {
-    primary: {
-      main: "#1297FD",
-      light: "#4DB8FF",
-      dark: "#0077CC",
-      contrastText: "#ffffff",
-    },
-    secondary: {
-      main: "#6F4C6C",
-      light: "#8B6B88",
-      dark: "#523150",
-      contrastText: "#ffffff",
-    },
-    background: {
-      default: "#FCFCFC",
-      paper: "#FFFFFF",
-      alt: "#F5F5F5",
-    },
-    text: {
-      primary: "#2C2C2C",
-      secondary: "#6F6F6F",
-      disabled: "#A0A0A0",
-    },
-    border: {
-      main: "#E0E0E0",
-      light: "#F0F0F0",
-      dark: "#CCCCCC",
-    },
-    success: {
-      main: "#00C851",
-      light: "#5DFC88",
-      dark: "#009624",
-    },
-    error: {
-      main: "#FF4444",
-      light: "#FF7F7F",
-      dark: "#CC0000",
-    },
-    warning: {
-      main: "#FFBB33",
-      light: "#FFFF66",
-      dark: "#CC9900",
-    },
-    info: {
-      main: "#1297FD",
-      light: "#4DB8FF",
-      dark: "#0077CC",
-    },
-  },
-  typography: {
-    ...lightTheme.typography,
-    fontFamily: {
-      heading: '"Montserrat", sans-serif',
-      body: '"Inter", sans-serif',
-    },
-    fontSizes: {
-      h1: '4.5rem',
-      h2: '3rem',
-      h3: '2.25rem',
-      h4: '1.5rem',
-      body: '1.125rem',
-      button: '0.875rem',
-      caption: '0.75rem',
-    },
-    fontWeights: {
-      regular: 400,
-      medium: 500,
-      bold: 700,
-    },
-    lineHeights: {
-      heading: 1.2,
-      body: 1.6,
-    },
-  },
-  spacing: lightTheme.spacing,
-  borderRadius: {
-    small: '4px',
-    medium: '8px',
-    large: '16px',
-  },
-  shadows: {
-    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.15)',
-    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.15)',
-    small: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-};
-
-// Type helper for Emotion theme objects
-export type AppTheme = typeof darkEmotionTheme;
-
-// Props interface for styled components that need theme
-export interface ThemeProps {
-  theme: AppTheme;
-}

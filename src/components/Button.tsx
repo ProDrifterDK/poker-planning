@@ -1,14 +1,27 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { darkEmotionTheme } from '../styles/theme';
+
+const hexToRgb = (hex: string): string => {
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '';
+  
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+
+  return `${r}, ${g}, ${b}`;
+};
 
 // Base button styles using theme tokens
 const BaseButton = styled.button<{ disabled?: boolean }>`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
-  font-size: ${darkEmotionTheme.typography.fontSizes.button};
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
-  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(4)};
+  font-family: ${props => props.theme.typography.fontFamily.body};
+  font-weight: ${props => props.theme.typography.fontWeights.medium};
+  font-size: ${props => props.theme.typography.fontSizes.button};
+  border-radius: ${props => `${props.theme.shape.borderRadius}px`};
+  padding: ${props => `${props.theme.spacing(2)} ${props.theme.spacing(4)}`};
   border: 2px solid transparent;
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   transition: all 0.2s ease-in-out;
@@ -33,17 +46,17 @@ const BaseButton = styled.button<{ disabled?: boolean }>`
 export const PrimaryButton = styled(BaseButton)`
   background: linear-gradient(45deg, ${props => props.theme.colors.primary.main} 30%, ${props => props.theme.colors.primary.dark} 90%);
   color: ${props => props.theme.colors.text.primary};
-  box-shadow: ${darkEmotionTheme.shadows.small};
+  box-shadow: ${props => props.theme.shadows.small};
 
   &:hover:not(:disabled) {
     background: linear-gradient(45deg, ${props => props.theme.colors.primary.dark} 30%, ${props => props.theme.colors.primary.main} 90%);
     transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 4px 15px ${props => `rgba(18, 151, 253, 0.25)`}, 0 2px 8px ${props => `rgba(18, 151, 253, 0.15)`};
+    box-shadow: 0 4px 15px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.25)`}, 0 2px 8px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.15)`};
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0px 2px 4px ${props => `rgba(18, 151, 253, 0.2)`};
+    box-shadow: 0px 2px 4px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.2)`};
   }
 
   &:disabled {
@@ -58,20 +71,20 @@ export const SecondaryButton = styled(BaseButton)`
   background: transparent;
   color: ${props => props.theme.colors.primary.main};
   border-color: ${props => props.theme.colors.primary.main};
-  box-shadow: 0px 2px 4px ${props => `rgba(18, 151, 253, 0.1)`};
+  box-shadow: 0px 2px 4px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.1)`};
 
   &:hover:not(:disabled) {
     background: ${props => props.theme.colors.primary.main};
     color: ${props => props.theme.colors.text.primary};
     transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 4px 15px ${props => `rgba(18, 151, 253, 0.25)`}, 0 2px 8px ${props => `rgba(18, 151, 253, 0.15)`};
+    box-shadow: 0 4px 15px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.25)`}, 0 2px 8px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.15)`};
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
     background: ${props => props.theme.colors.primary.dark};
     border-color: ${props => props.theme.colors.primary.dark};
-    box-shadow: 0px 2px 4px ${props => `rgba(18, 151, 253, 0.15)`};
+    box-shadow: 0px 2px 4px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.15)`};
   }
 
   &:disabled {
@@ -86,7 +99,7 @@ export const TertiaryButton = styled(BaseButton)`
   background: transparent;
   color: ${props => props.theme.colors.primary.main};
   border: none;
-  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(3)};
+  padding: ${props => `${props.theme.spacing(2)} ${props.theme.spacing(3)}`};
   box-shadow: none;
 
   &:hover:not(:disabled) {
@@ -94,11 +107,11 @@ export const TertiaryButton = styled(BaseButton)`
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-thickness: 2px;
-    box-shadow: 0 2px 8px ${props => `rgba(18, 151, 253, 0.15)`}, 0 1px 4px ${props => `rgba(18, 151, 253, 0.1)`};
+    box-shadow: 0 2px 8px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.15)`}, 0 1px 4px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.1)`};
   }
 
   &:active:not(:disabled) {
-    color: #005A99;
+    color: ${props => props.theme.colors.primary.dark};
     text-decoration: underline;
     text-underline-offset: 4px;
     text-decoration-thickness: 2px;

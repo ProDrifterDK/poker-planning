@@ -125,10 +125,10 @@ const WelcomeMessage: React.FC<WelcomeMessageProps> = ({
               onClick={handleClose}
               aria-label="Cerrar mensaje"
               sx={{
-                color: theme.palette.grey[500],
+                color: 'text.secondary',
                 '&:hover': {
-                  color: theme.palette.primary.main,
-                  backgroundColor: theme.palette.grey[100]
+                  color: 'primary.main',
+                  backgroundColor: 'action.hover'
                 }
               }}
             >

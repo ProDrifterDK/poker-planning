@@ -2,7 +2,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
-import { darkEmotionTheme } from '../styles/theme';
 import AnimatedSection from './AnimatedSection';
 
 // Spacious section container that commands attention
@@ -12,18 +11,18 @@ const DemoSection = styled.section`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${darkEmotionTheme.spacing(16)} ${darkEmotionTheme.spacing(6)};
+  padding: ${({ theme }) => theme.spacing(16)} ${({ theme }) => theme.spacing(6)};
   position: relative;
   overflow: hidden;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     min-height: 70vh;
-    padding: ${darkEmotionTheme.spacing(12)} ${darkEmotionTheme.spacing(4)};
+    padding: ${({ theme }) => theme.spacing(12)} ${({ theme }) => theme.spacing(4)};
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     min-height: 60vh;
-    padding: ${darkEmotionTheme.spacing(8)} ${darkEmotionTheme.spacing(3)};
+    padding: ${({ theme }) => theme.spacing(8)} ${({ theme }) => theme.spacing(3)};
   }
 `;
 
@@ -38,41 +37,41 @@ const DemoContent = styled.div`
 
 // Section heading
 const DemoHeading = styled.h2`
-  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
-  font-size: ${darkEmotionTheme.typography.fontSizes.h2};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
-  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.h2};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  line-height: ${({ theme }) => theme.typography.lineHeights.heading};
   color: ${props => props.theme.colors.text.primary};
-  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
   background: linear-gradient(135deg, ${props => props.theme.colors.text.primary} 0%, ${props => props.theme.colors.primary.main} 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     font-size: 2.5rem;
-    margin-bottom: ${darkEmotionTheme.spacing(3)};
+    margin-bottom: ${({ theme }) => theme.spacing(3)};
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     font-size: 2rem;
   }
 `;
 
 // Descriptive paragraph
 const DemoDescription = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  line-height: ${({ theme }) => theme.typography.lineHeights.body};
   color: ${props => props.theme.colors.text.secondary};
-  margin: 0 0 ${darkEmotionTheme.spacing(12)} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing(12)} 0;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     font-size: 1rem;
-    margin-bottom: ${darkEmotionTheme.spacing(8)};
+    margin-bottom: ${({ theme }) => theme.spacing(8)};
     max-width: none;
   }
 `;
@@ -84,11 +83,11 @@ const DemoContainer = styled.div`
   margin: 0 auto;
   position: relative;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     max-width: 600px;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     max-width: none;
   }
 `;
@@ -99,7 +98,7 @@ const DemoPlaceholder = styled.div`
   height: 500px;
   background: linear-gradient(145deg, ${props => props.theme.colors.background.default} 0%, ${props => props.theme.colors.border.main} 100%);
   border: 2px dashed ${props => props.theme.colors.border.light};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
+  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,11 +119,11 @@ const DemoPlaceholder = styled.div`
     box-shadow: ${props => props.theme.shadows.primaryGlow};
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     height: 400px;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     height: 300px;
   }
 `;
@@ -133,7 +132,7 @@ const DemoPlaceholder = styled.div`
 const PlaceholderIcon = styled.div`
   width: 80px;
   height: 80px;
-  margin-bottom: ${darkEmotionTheme.spacing(4)};
+  margin-bottom: ${({ theme }) => theme.spacing(4)};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,10 +146,10 @@ const PlaceholderIcon = styled.div`
     stroke-width: 2;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     width: 60px;
     height: 60px;
-    margin-bottom: ${darkEmotionTheme.spacing(3)};
+    margin-bottom: ${({ theme }) => theme.spacing(3)};
 
     svg {
       width: 30px;
@@ -161,18 +160,18 @@ const PlaceholderIcon = styled.div`
 
 // Placeholder text
 const PlaceholderText = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
   font-size: 1.125rem;
   color: ${props => props.theme.colors.text.secondary};
   margin: 0;
   text-align: center;
   max-width: 400px;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     font-size: 1rem;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     font-size: 0.875rem;
     max-width: 250px;
   }

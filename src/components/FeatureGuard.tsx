@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { PlanFeatures } from '@/types/subscription';
 import { useTranslation } from 'react-i18next';
@@ -62,6 +62,7 @@ const featureNames: Record<string, Record<keyof PlanFeatures, string>> = {
 export default function FeatureGuard({ feature, children, fallback }: FeatureGuardProps) {
   const { canUserAccessFeature } = useSubscriptionStore();
   const { t, i18n } = useTranslation('common');
+  const theme = useTheme();
   const currentLang = i18n.language || 'es'; // Usar 'es' como valor predeterminado si no hay idioma
 
   const hasAccess = canUserAccessFeature(feature);
@@ -88,14 +89,14 @@ export default function FeatureGuard({ feature, children, fallback }: FeatureGua
         justifyContent: 'center',
         p: 2,
         border: '1px dashed',
-        borderColor: 'divider',
+        borderColor: theme.palette.divider,
         borderRadius: 1,
-        bgcolor: 'background.paper',
+        bgcolor: theme.palette.background.paper,
         minWidth: 200,
         minHeight: 100
       }}
     >
-      <LockIcon color="action" sx={{ mb: 1 }} />
+      <LockIcon color="action" sx={{ mb: 1, color: theme.palette.action.active }} />
       <Typography variant="body1" color="initial">
         {featureName}
       </Typography>

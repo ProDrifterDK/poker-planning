@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { Box, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { usePathname } from 'next/navigation';
 import { shouldShowAdsOnPage, MIN_CONTENT_HEIGHT_FOR_ADS } from '@/config/adConfig';
 // AdSense types are defined in src/types/adsense.d.ts
@@ -147,11 +148,11 @@ export default function Advertisement({
       flexDirection: 'column',
       marginLeft: { xs: 0, md: 2 },
       marginTop: { xs: 2, md: 0 },
-    }
+    },
   };
   
   return (
-    <Box 
+    <Box
       ref={adRef}
       className={`ad-container ${className || ''}`}
       sx={{
@@ -176,17 +177,17 @@ export default function Advertisement({
         boxSizing: 'border-box', // Include padding in width calculation
       }}
     >
-      <Typography 
-        variant="caption" 
-        sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          backgroundColor: 'rgba(0,0,0,0.05)', 
+      <Typography
+        variant="caption"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          backgroundColor: 'rgba(0,0,0,0.05)',
           px: 0.5,
           borderBottomRightRadius: 4,
           color: 'text.secondary',
-          fontSize: '0.6rem'
+          fontSize: '0.6rem',
         }}
       >
         Publicidad

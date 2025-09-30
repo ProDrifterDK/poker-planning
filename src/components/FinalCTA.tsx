@@ -7,8 +7,8 @@ import { Button } from './Button';
 import AnimatedSection from './AnimatedSection';
 
 const CTAContainer = styled.section`
-  background: linear-gradient(135deg, ${({ theme }) => theme.palette.background.default} 0%, ${({ theme }) => theme.palette.background.paper} 100%);
-  padding: ${({ theme }) => theme.spacing(16)} ${({ theme }) => theme.spacing(6)};
+  background: linear-gradient(135deg, ${({ theme }) => (theme as unknown as Theme).palette.background.default} 0%, ${({ theme }) => (theme as unknown as Theme).palette.background.paper} 100%);
+  padding: ${({ theme }) => (theme as unknown as Theme).spacing(16)} ${({ theme }) => (theme as unknown as Theme).spacing(6)};
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -104,13 +104,13 @@ const CTAButtonSection = styled.div`
 `;
 
 const CTAButton = styled(Button)`
-  font-size: ${({ theme }) => theme.typography.fontSizes.h4};
-  padding: ${({ theme }) => theme.spacing(4)} ${({ theme }) => theme.spacing(8)};
-  border-radius: ${({ theme }) => theme.shape.borderRadius * 2}px;
+  font-size: ${({ theme }) => (theme as unknown as Theme).typography.h4.fontSize};
+  padding: ${({ theme }) => (theme as unknown as Theme).spacing(4)} ${({ theme }) => (theme as unknown as Theme).spacing(8)};
+  border-radius: ${({ theme }) => (theme as unknown as Theme).shape.borderRadius * 2}px;
 
   @media (max-width: 768px) {
-    font-size: ${({ theme }) => theme.typography.fontSizes.body};
-    padding: ${({ theme }) => theme.spacing(3)} ${({ theme }) => theme.spacing(6)};
+    font-size: ${({ theme }) => (theme as unknown as Theme).typography.body1.fontSize};
+    padding: ${({ theme }) => (theme as unknown as Theme).spacing(3)} ${({ theme }) => (theme as unknown as Theme).spacing(6)};
   }
 `;
 

@@ -8,6 +8,7 @@ import {
     useMediaQuery,
     useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { useTranslation } from "react-i18next";
@@ -64,9 +65,9 @@ const OnboardingButton: React.FC<OnboardingButtonProps> = ({
                     textTransform: "none",
                     animation: hasCompletedOnboarding ? "none" : "pulse 2s infinite",
                     "@keyframes pulse": {
-                        "0%": { boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)" },
-                        "70%": { boxShadow: "0 0 0 10px rgba(25, 118, 210, 0)" },
-                        "100%": { boxShadow: "0 0 0 0 rgba(25, 118, 210, 0)" },
+                        "0%": { boxShadow: `0 0 0 0 ${alpha(theme.palette.primary.main, 0.4)}` },
+                        "70%": { boxShadow: `0 0 0 10px ${alpha(theme.palette.primary.main, 0)}` },
+                        "100%": { boxShadow: `0 0 0 0 ${alpha(theme.palette.primary.main, 0)}` },
                     },
                 }}
             >

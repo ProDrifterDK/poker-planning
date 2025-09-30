@@ -11,7 +11,7 @@ import {
   Cloud,
   FloppyDiskArrowIn,
 } from 'iconoir-react';
-import { Grid } from '@mui/material';
+import { Grid, useTheme } from '@mui/material';
 
 const ShowcaseContainer = styled.section`
   padding: ${({ theme }) => theme.spacing(20)} 0;
@@ -95,6 +95,7 @@ const FeatureIcon = styled.div`
 // Main FeatureShowcase component
 export const FeatureShowcase: React.FC = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   // Define features with their properties
   const features: Feature[] = [
@@ -171,7 +172,7 @@ export const FeatureShowcase: React.FC = () => {
                     text={t(feature.descriptionKey)}
                     sx={{
                       height: '100%',
-                      bgcolor: config.isHero ? 'primary.main' : 'background.paper',
+                      bgcolor: config.isHero ? 'primary.main' : theme.palette.background.paper,
                       color: config.isHero ? 'primary.contrastText' : 'text.primary',
                       '& .MuiTypography-root': {
                         color: config.isHero ? 'primary.contrastText' : 'text.primary',

@@ -24,6 +24,30 @@ const HeaderContainer = styled.header`
   backdrop-filter: blur(10px);
 `;
 
+const NavLink = styled(Link)`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.regular};
+  transition: color 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary.main};
+  }
+`;
+
+const AppTitleTypography = styled(Typography)`
+  font-weight: bold;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+`;
+
 const HeaderContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -232,16 +256,9 @@ export default function Header({ variant: propVariant }: HeaderProps) {
         {currentUser && variant === 'app' ? (
           // Show contextual title for authenticated users in app variant
           <AppTitle>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 'bold',
-                color: theme.colors.text.primary,
-                fontFamily: theme.typography.fontFamily.heading
-              }}
-            >
+            <AppTitleTypography variant="h6">
               {t('header.appTitle')}
-            </Typography>
+            </AppTitleTypography>
           </AppTitle>
         ) : (
           // Show navigation for marketing variant or non-authenticated users
@@ -256,32 +273,13 @@ export default function Header({ variant: propVariant }: HeaderProps) {
               }
 
               return linksToShow.map((link) => (
-                <Link
+                <NavLink
                   key={link.href}
                   href={link.href}
                   onClick={closeMobileMenu}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: theme.colors.text.primary,
-                    textDecoration: 'none',
-                    fontFamily: theme.typography.fontFamily.body,
-                    fontSize: theme.typography.fontSizes.body,
-                    fontWeight: theme.typography.fontWeights.regular,
-                    transition: 'color 0.2s ease',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = theme.colors.primary.main;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = theme.colors.text.primary;
-                  }}
                 >
                   {t(link.labelKey)}
-                </Link>
+                </NavLink>
               ));
             })()}
           </Navigation>

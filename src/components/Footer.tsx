@@ -3,6 +3,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
+import { useTheme } from '@mui/material/styles';
 import Link from 'next/link';
 import {
   Twitter,
@@ -17,7 +18,7 @@ type IconComponent = React.ComponentType<{ width?: string | number; height?: str
 const FooterContainer = styled.footer`
   background-color: ${({ theme }) => theme.colors.background.paper};
   border-top: 1px solid ${({ theme }) => theme.colors.border.main};
-  padding: ${({ theme }) => theme.spacing(12)} 0 ${({ theme }) => theme.spacing(6)};
+  padding: ${({ theme }) => `${theme.spacing(12)} 0 ${theme.spacing(6)}`};
 `;
 
 const FooterContent = styled.div`
@@ -60,7 +61,7 @@ const FooterLink = styled(Link)`
   text-decoration: none;
   font-family: ${({ theme }) => theme.typography.fontFamily.body};
   font-size: ${({ theme }) => theme.typography.fontSizes.body};
-  line-height: 1.6;
+  line-height: ${({ theme }) => theme.typography.lineHeights.body};
   transition: color 0.2s ease;
 
   &:hover {
@@ -90,7 +91,7 @@ const CompanyDescription = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-family: ${({ theme }) => theme.typography.fontFamily.body};
   font-size: ${({ theme }) => theme.typography.fontSizes.body};
-  line-height: 1.6;
+  line-height: ${({ theme }) => theme.typography.lineHeights.body};
   margin: 0;
   max-width: 300px;
 `;
@@ -108,8 +109,8 @@ const SocialLink = styled.a`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: ${({ theme }) => theme.spacing(10)};
+  height: ${({ theme }) => theme.spacing(10)};
   background-color: ${({ theme }) => theme.colors.background.default};
   border: 1px solid ${({ theme }) => theme.colors.border.main};
   border-radius: ${({ theme }) => theme.borderRadius.medium};
@@ -146,7 +147,7 @@ const SocialLink = styled.a`
 const BottomSection = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing(6)} ${({ theme }) => theme.spacing(4)} 0;
+  padding: ${({ theme }) => `${theme.spacing(6)} ${theme.spacing(4)} 0`};
   border-top: 1px solid ${({ theme }) => theme.colors.border.main};
   display: flex;
   justify-content: space-between;
@@ -192,12 +193,15 @@ const LegalLink = styled(Link)`
 const SocialIcon: React.FC<{ href: string; label: string; icon: IconComponent }> = ({
   href,
   label,
-  icon: Icon
-}) => (
-  <SocialLink href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
-    <Icon width={20} height={20} />
-  </SocialLink>
-);
+  icon: Icon,
+}) => {
+  const theme = useTheme();
+  return (
+    <SocialLink href={href} aria-label={label} target="_blank" rel="noopener noreferrer">
+      <Icon width={theme.spacing(5)} height={theme.spacing(5)} />
+    </SocialLink>
+  );
+};
 
 const footerData = {
   companyInfo: {

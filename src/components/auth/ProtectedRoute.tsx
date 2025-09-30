@@ -139,21 +139,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           sx={{
             width: '90%',
             maxWidth: 400,
-            p: 4,
+            p: theme => theme.spacing(4),
             outline: 'none',
-            borderRadius: 2,
+            borderRadius: theme => theme.shape.borderRadius,
           }}
         >
           <Typography id="guest-access-modal-title" variant="h5" component="h2" gutterBottom>
             {t('protectedRoute.roomAccess')}
           </Typography>
           
-          <Typography id="guest-access-modal-description" sx={{ mt: 2, mb: 3 }}>
+          <Typography id="guest-access-modal-description" sx={{ mt: theme => theme.spacing(2), mb: theme => theme.spacing(3) }}>
             {t('protectedRoute.accessDescription')}
           </Typography>
           
           {guestError && (
-            <Typography color="error" sx={{ mb: 2 }}>
+            <Typography color="error" sx={{ mb: theme => theme.spacing(2) }}>
               {guestError}
             </Typography>
           )}
@@ -171,7 +171,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             placeholder={t('protectedRoute.namePlaceholder')}
           />
           
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', gap: theme => theme.spacing(2) }}>
             <Button
               variant="outlined"
               onClick={handleGoToSignIn}

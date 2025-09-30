@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { darkEmotionTheme } from '../../styles/theme';
+import { Theme } from '@emotion/react';
 
 // Input wrapper for consistent spacing and positioning
 const InputWrapper = styled.div`
@@ -9,51 +9,51 @@ const InputWrapper = styled.div`
 `;
 
 // Styled input using theme tokens
-const StyledInput = styled.input<{ hasError?: boolean }>`
+const StyledInput = styled.input<{ hasError?: boolean; }>`
   width: 100%;
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.regular};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.regular};
   line-height: 1.5;
-  padding: ${darkEmotionTheme.spacing(3)} ${darkEmotionTheme.spacing(4)};
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
-  border: 2px solid ${darkEmotionTheme.colors.border.main};
-  background-color: ${darkEmotionTheme.colors.background.paper};
-  color: ${darkEmotionTheme.colors.text.primary};
+  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  border: 2px solid ${({ theme }) => theme.colors.border.main};
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  color: ${({ theme }) => theme.colors.text.primary};
   transition: all 0.2s ease-in-out;
   box-sizing: border-box;
 
   &::placeholder {
-    color: ${darkEmotionTheme.colors.text.secondary};
+    color: ${({ theme }) => theme.colors.text.secondary};
     opacity: 0.7;
   }
 
   &:hover {
-    border-color: ${darkEmotionTheme.colors.border.light};
+    border-color: ${({ theme }) => theme.colors.border.light};
   }
 
   &:focus {
     outline: none;
-    border-color: ${darkEmotionTheme.colors.primary.main};
-    box-shadow: 0 0 0 3px rgba(18, 151, 253, 0.1);
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: ${({ theme }) => theme.shadows.small};
   }
 
   &:disabled {
-    background-color: ${darkEmotionTheme.colors.background.alt};
-    color: ${darkEmotionTheme.colors.text.disabled};
-    border-color: ${darkEmotionTheme.colors.border.dark};
+    background-color: ${({ theme }) => theme.colors.background.alt};
+    color: ${({ theme }) => theme.colors.text.disabled};
+    border-color: ${({ theme }) => theme.colors.border.dark};
     cursor: not-allowed;
     opacity: 0.6;
   }
 
-  ${({ hasError }) =>
+  ${({ hasError, theme }: { hasError?: boolean; theme: Theme }) =>
         hasError &&
         `
-    border-color: ${darkEmotionTheme.colors.error.main};
+    border-color: ${theme.colors.error.main};
 
     &:focus {
-      border-color: ${darkEmotionTheme.colors.error.main};
-      box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.1);
+      border-color: ${theme.colors.error.main};
+      box-shadow: ${theme.shadows.small};
     }
   `}
 `;

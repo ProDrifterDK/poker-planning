@@ -64,10 +64,10 @@ const AdBlockerWarning: React.FC = () => {
     <Box
       sx={{
         position: 'fixed',
-        bottom: 16,
-        right: 16,
-        zIndex: 9999,
-        maxWidth: 400
+        bottom: (theme) => theme.spacing(2),
+        right: (theme) => theme.spacing(2),
+        zIndex: (theme) => theme.zIndex.modal + 1,
+        maxWidth: 400,
       }}
     >
       <Alert
@@ -84,7 +84,7 @@ const AdBlockerWarning: React.FC = () => {
             <CloseIcon fontSize="inherit" />
           </IconButton>
         }
-        sx={{ borderRadius: 1 }}
+        sx={{ borderRadius: (theme) => theme.shape.borderRadius }}
       >
         <AlertTitle>{t('adBlocker.detected')}</AlertTitle>
         <Typography variant="body2">

@@ -274,7 +274,7 @@ const SignUp: React.FC = () => {
           p: 4,
           width: '100%',
           maxWidth: 400,
-          borderRadius: 2,
+          borderRadius: theme => theme.shape.borderRadius,
         }}
       >
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
@@ -336,7 +336,7 @@ const SignUp: React.FC = () => {
                   <Box component="li" sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: hasMinLength ? 'success.main' : 'text.secondary',
+                    color: theme => theme.palette.mode === 'dark' ? (hasMinLength ? 'success.main' : 'text.secondary') : (hasMinLength ? 'success.dark' : 'text.secondary'),
                     transition: 'color 0.3s'
                   }}>
                     {hasMinLength ?
@@ -351,7 +351,7 @@ const SignUp: React.FC = () => {
                   <Box component="li" sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: hasUpperCase ? 'success.main' : 'text.secondary',
+                    color: theme => theme.palette.mode === 'dark' ? (hasUpperCase ? 'success.main' : 'text.secondary') : (hasUpperCase ? 'success.dark' : 'text.secondary'),
                     transition: 'color 0.3s'
                   }}>
                     {hasUpperCase ?
@@ -366,7 +366,7 @@ const SignUp: React.FC = () => {
                   <Box component="li" sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: hasLowerCase ? 'success.main' : 'text.secondary',
+                    color: theme => theme.palette.mode === 'dark' ? (hasLowerCase ? 'success.main' : 'text.secondary') : (hasLowerCase ? 'success.dark' : 'text.secondary'),
                     transition: 'color 0.3s'
                   }}>
                     {hasLowerCase ?
@@ -381,7 +381,7 @@ const SignUp: React.FC = () => {
                   <Box component="li" sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: hasNumber ? 'success.main' : 'text.secondary',
+                    color: theme => theme.palette.mode === 'dark' ? (hasNumber ? 'success.main' : 'text.secondary') : (hasNumber ? 'success.dark' : 'text.secondary'),
                     transition: 'color 0.3s'
                   }}>
                     {hasNumber ?
@@ -396,7 +396,7 @@ const SignUp: React.FC = () => {
                   <Box component="li" sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: hasSpecialChar ? 'success.main' : 'text.secondary',
+                    color: theme => theme.palette.mode === 'dark' ? (hasSpecialChar ? 'success.main' : 'text.secondary') : (hasSpecialChar ? 'success.dark' : 'text.secondary'),
                     transition: 'color 0.3s'
                   }}>
                     {hasSpecialChar ?
@@ -418,7 +418,7 @@ const SignUp: React.FC = () => {
                         height: 4,
                         width: '100%',
                         bgcolor: 'grey.300',
-                        borderRadius: 2,
+                        borderRadius: '2px',
                         mt: 0.5
                       }}
                     >
@@ -427,7 +427,7 @@ const SignUp: React.FC = () => {
                           height: '100%',
                           width: `${passwordStrength}%`,
                           bgcolor: getStrengthColor(passwordStrength),
-                          borderRadius: 2,
+                          borderRadius: 'inherit',
                           transition: 'width 0.3s, background-color 0.3s'
                         }}
                       />

@@ -104,8 +104,8 @@ export default function ClientLanguageSwitch({
   const isEnglish = i18n.language === 'en';
   
   // Custom switch track colors
-  const trackColor = isEnglish ? '#004489' : '#e4312b';
-  const thumbColor = isEnglish ? '#dc002e' : '#ffdf00';
+  const trackColor = isEnglish ? muiTheme.palette.primary.dark : muiTheme.palette.error.main;
+  const thumbColor = isEnglish ? muiTheme.palette.error.dark : muiTheme.palette.warning.main;
   
   // Si es la variante de menú, mostrar un diseño diferente
   if (variant === 'menu') {
@@ -179,16 +179,16 @@ export default function ClientLanguageSwitch({
       alignItems: 'center',
       gap: isMobile ? 0.5 : 1,
       backgroundColor: mode === 'dark'
-        ? 'rgba(30, 30, 30, 0.9)' // Fondo oscuro para tema oscuro
-        : 'rgba(255, 255, 255, 0.9)', // Fondo claro para tema claro
+        ? muiTheme.palette.background.paper
+        : muiTheme.palette.background.default,
       padding: isMobile ? '2px 4px' : '4px 8px',
       borderRadius: '8px',
       border: mode === 'dark'
-        ? '1px solid rgba(255, 255, 255, 0.1)' // Borde sutil para tema oscuro
-        : '1px solid rgba(0, 0, 0, 0.1)', // Borde sutil para tema claro
+        ? `1px solid ${muiTheme.palette.divider}`
+        : `1px solid ${muiTheme.palette.divider}`,
       boxShadow: mode === 'dark'
-        ? '0 2px 4px rgba(0, 0, 0, 0.3)' // Sombra más pronunciada para tema oscuro
-        : '0 2px 4px rgba(0, 0, 0, 0.1)', // Sombra sutil para tema claro
+        ? muiTheme.shadows[1]
+        : muiTheme.shadows[1],
     }}>
       <Box
         sx={{
@@ -241,7 +241,7 @@ export default function ClientLanguageSwitch({
             backgroundColor: thumbColor,
             borderRadius: '50%',
             transition: 'all 0.3s',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            boxShadow: muiTheme.shadows[1],
           }}
         />
         <input

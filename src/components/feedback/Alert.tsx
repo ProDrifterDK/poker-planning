@@ -1,46 +1,46 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { darkEmotionTheme } from '../../styles/theme';
+import { alpha } from '@mui/material/styles';
 
 // Alert wrapper with consistent styling
 const AlertWrapper = styled.div<{ variant: 'success' | 'error' | 'warning' | 'info' }>`
   display: flex;
   align-items: flex-start;
-  gap: ${darkEmotionTheme.spacing(3)};
-  padding: ${darkEmotionTheme.spacing(4)};
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
+  gap: ${({ theme }) => theme.spacing(3)};
+  padding: ${({ theme }) => theme.spacing(4)};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
   border: 1px solid;
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
   line-height: 1.5;
   transition: all 0.2s ease-in-out;
 
-  ${({ variant }) => {
+  ${({ variant, theme }) => {
     switch (variant) {
       case 'success':
         return `
-          background-color: rgba(0, 200, 81, 0.1);
-          border-color: ${darkEmotionTheme.colors.success.main};
-          color: ${darkEmotionTheme.colors.success.dark};
+          background-color: ${alpha(theme.colors.success.main, 0.1)};
+          border-color: ${theme.colors.success.main};
+          color: ${theme.colors.success.dark};
         `;
       case 'error':
         return `
-          background-color: rgba(255, 68, 68, 0.1);
-          border-color: ${darkEmotionTheme.colors.error.main};
-          color: ${darkEmotionTheme.colors.error.dark};
+          background-color: ${alpha(theme.colors.error.main, 0.1)};
+          border-color: ${theme.colors.error.main};
+          color: ${theme.colors.error.dark};
         `;
       case 'warning':
         return `
-          background-color: rgba(255, 187, 51, 0.1);
-          border-color: ${darkEmotionTheme.colors.warning.main};
-          color: ${darkEmotionTheme.colors.warning.dark};
+          background-color: ${alpha(theme.colors.warning.main, 0.1)};
+          border-color: ${theme.colors.warning.main};
+          color: ${theme.colors.warning.dark};
         `;
       case 'info':
       default:
         return `
-          background-color: rgba(18, 151, 253, 0.1);
-          border-color: ${darkEmotionTheme.colors.info.main};
-          color: ${darkEmotionTheme.colors.info.dark};
+          background-color: ${alpha(theme.colors.info.main, 0.1)};
+          border-color: ${theme.colors.info.main};
+          color: ${theme.colors.info.dark};
         `;
     }
   }}
@@ -61,12 +61,12 @@ const ContentContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: ${darkEmotionTheme.spacing(1)};
+  gap: ${({ theme }) => theme.spacing(1)};
 `;
 
 // Title styled component
 const AlertTitle = styled.div`
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
   margin: 0;
 `;
 

@@ -21,6 +21,44 @@ import {
 import { ref, onValue, push, update } from "firebase/database";
 import { realtimeDb } from "@/lib/firebaseConfig";
 
+import styled from "@emotion/styled";
+
+const SidebarContainer = styled(Box)`
+    width: 300px;
+    max-height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid ${({ theme }) => theme.palette.divider};
+    display: flex;
+    flex-direction: column;
+`;
+
+const HeaderBox = styled(Box)`
+    padding: ${({ theme }) => theme.spacing(2)};
+`;
+
+const ContentBox = styled(Box)`
+    padding: ${({ theme }) => theme.spacing(2)};
+    display: flex;
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing(2)};
+`;
+
+const IssueBox = styled(Box)`
+    padding: ${({ theme }) => theme.spacing(1)};
+    border: 1px solid ${({ theme }) => theme.palette.divider};
+    border-radius: ${({ theme }) => theme.shape.borderRadius}px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+`;
+
+const AddIssueButton = styled(Button)`
+    text-transform: none;
+`;
+
+const DialogTextField = styled(TextField)`
+    margin-top: ${({ theme }) => theme.spacing(2)};
+`;
+
 // Interfaz local para Issue
 interface Issue {
     id: string;
@@ -111,24 +149,15 @@ export default function IssueSidebar({
     };
 
     return (
-        <Box
-            sx={{
-                width: 300,
-                maxHeight: "100vh",
-                overflowY: "auto",
-                borderRight: (theme) => `1px solid ${theme.palette.divider}`,
-                display: "flex",
-                flexDirection: "column",
-            }}
-        >
+        <SidebarContainer>
             {/* Encabezado */}
-            <Box sx={{ p: 2 }}>
+            <HeaderBox>
                 <Typography variant="h6">{t('issues.title')}</Typography>
-            </Box>
+            </HeaderBox>
             <Divider />
 
             {/* Selector de Issue en Discusión */}
-            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <ContentBox>
                 <FormControl size="small" fullWidth>
                     <InputLabel id="issue-select-label">{t('issues.currentIssue')}</InputLabel>
                     <Select
@@ -147,27 +176,18 @@ export default function IssueSidebar({
                         ))}
                     </Select>
                 </FormControl>
-            </Box>
+            </ContentBox>
             <Divider />
 
             {/* Lista de Issues + botón de agregar */}
-            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <ContentBox>
                 {issues.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                         {t('issues.noIssues')}
                     </Typography>
                 ) : (
                     issues.map((issue) => (
-                        <Box
-                            key={issue.id}
-                            sx={{
-                                p: 1,
-                                border: (theme) => `1px solid ${theme.palette.divider}`,
-                                borderRadius: 1,
-                                wordBreak: "break-word",
-                                overflowWrap: "break-word",
-                            }}
-                        >
+                        <IssueBox key={issue.id}>
                             <Typography variant="subtitle1" fontWeight="bold">
                                 {issue.key}
                             </Typography>
@@ -179,16 +199,16 @@ export default function IssueSidebar({
                                     Promedio: {issue.average}
                                 </Typography>
                             )}
-                        </Box>
+                        </IssueBox>
                     ))
                 )}
 
                 <Divider />
 
-                <Button variant="outlined" onClick={handleOpenDialog} sx={{ textTransform: "none" }}>
+                <AddIssueButton variant="outlined" onClick={handleOpenDialog}>
                     {t('issues.addIssue')}
-                </Button>
-            </Box>
+                </AddIssueButton>
+            </ContentBox>
 
             {/* Dialog para agregar un nuevo Issue */}
             <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
@@ -198,7 +218,7 @@ export default function IssueSidebar({
                         {t('issues.enterKeyAndSummary')}
                     </DialogContentText>
 
-                    <TextField
+                    <DialogTextField
                         margin="dense"
                         label={t('issues.issueKey')}
                         type="text"
@@ -206,10 +226,9 @@ export default function IssueSidebar({
                         variant="outlined"
                         value={issueKey}
                         onChange={(e) => setIssueKey(e.target.value)}
-                        sx={{ mt: 2 }}
                     />
 
-                    <TextField
+                    <DialogTextField
                         margin="dense"
                         label={t('issues.summary')}
                         type="text"
@@ -219,19 +238,18 @@ export default function IssueSidebar({
                         variant="outlined"
                         value={issueSummary}
                         onChange={(e) => setIssueSummary(e.target.value)}
-                        sx={{ mt: 2 }}
                     />
                 </DialogContent>
 
                 <DialogActions>
-                    <Button onClick={handleCloseDialog} sx={{ textTransform: "none" }}>
+                    <AddIssueButton onClick={handleCloseDialog}>
                         {t('issues.cancel')}
-                    </Button>
-                    <Button variant="contained" onClick={handleAddIssue} sx={{ textTransform: "none" }}>
+                    </AddIssueButton>
+                    <AddIssueButton variant="contained" onClick={handleAddIssue}>
                         {t('issues.create')}
-                    </Button>
+                    </AddIssueButton>
                 </DialogActions>
             </Dialog>
-        </Box>
+        </SidebarContainer>
     );
 }

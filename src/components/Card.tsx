@@ -77,12 +77,12 @@ export default function Card({
     const selectionVariants = {
         selected: {
             scale: 1.05,
-            boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.2)",
+            boxShadow: theme.shadows[4],
             // No animamos borderWidth ya que no es animable
         },
         unselected: {
             scale: 1,
-            boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
+            boxShadow: theme.shadows[1],
             // No animamos borderWidth ya que no es animable
         }
     };
@@ -168,7 +168,7 @@ export default function Card({
                                         textAlign: 'center',
                                         fontFamily: 'serif',
                                         fontSize: isMobile ? `calc(${fontSize} * 0.7)` : fontSize,
-                                        color: cardPalette.text || '#000000', // Asegurar alto contraste
+                                        color: cardPalette.text || theme.palette.text.primary,
                                     }}
                                 >
                                     {value}
@@ -189,7 +189,7 @@ export default function Card({
                                             left: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text || '#000000', // Asegurar alto contraste
+                                            color: cardPalette.text || theme.palette.text.primary,
                                         }}
                                     >
                                         {value}
@@ -206,7 +206,7 @@ export default function Card({
                                             right: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text || '#000000', // Asegurar alto contraste
+                                            color: cardPalette.text || theme.palette.text.primary,
                                             transform: 'rotate(180deg)',
                                         }}
                                     >
@@ -235,7 +235,7 @@ export default function Card({
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        color: '#ffffff',
+                        color: theme.palette.primary.contrastText,
                         fontWeight: 'bold',
                         fontSize: '18px',
                     }}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { darkEmotionTheme } from '../styles/theme';
+import { useTheme } from '@emotion/react';
 import { Button } from './Button';
 import { InformationCard } from './InfoCard';
 import AnimatedSection from './AnimatedSection';
@@ -13,13 +13,13 @@ const HeroContainer = styled.section`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: ${darkEmotionTheme.spacing(8)} ${darkEmotionTheme.spacing(6)};
+  padding: ${({ theme }) => theme.spacing(8)} ${({ theme }) => theme.spacing(6)};
   position: relative;
   overflow: hidden;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     min-height: 100vh;
-    padding: ${darkEmotionTheme.spacing(6)} ${darkEmotionTheme.spacing(4)};
+    padding: ${({ theme }) => theme.spacing(6)} ${({ theme }) => theme.spacing(4)};
     flex-direction: column;
     justify-content: center;
   }
@@ -31,14 +31,14 @@ const HeroContent = styled.div`
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${darkEmotionTheme.spacing(8)};
+  gap: ${({ theme }) => theme.spacing(8)};
   align-items: center;
   width: 100%;
   justify-items: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     grid-template-columns: 1fr;
-    gap: ${darkEmotionTheme.spacing(6)};
+    gap: ${({ theme }) => theme.spacing(6)};
     text-align: center;
     justify-items: center;
   }
@@ -53,7 +53,7 @@ const TextContent = styled.div`
   justify-content: center;
   text-align: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     order: 1;
     text-align: center;
   }
@@ -61,44 +61,44 @@ const TextContent = styled.div`
 
 // Main headline
 const HeroHeadline = styled.h1`
-  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
-  font-size: ${darkEmotionTheme.typography.fontSizes.h1};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
-  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.h1};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  line-height: ${({ theme }) => theme.typography.lineHeights.heading};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.text.primary} 0%, ${({ theme }) => theme.colors.primary.main} 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 2px 4px rgba(18, 151, 253, 0.1);
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     font-size: 2.5rem;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     font-size: 2rem;
   }
 `;
 
 // Sub-headline
 const HeroSubheadline = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  line-height: ${({ theme }) => theme.typography.lineHeights.body};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${darkEmotionTheme.spacing(8)} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing(8)} 0;
   max-width: 500px;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     max-width: none;
   }
 `;
 
 // CTA section
 const CTASection = styled.div`
-  margin-top: ${darkEmotionTheme.spacing(6)};
+  margin-top: ${({ theme }) => theme.spacing(6)};
 `;
 
 // Right column - Visual element (Z-pattern middle)
@@ -109,9 +109,9 @@ const VisualContent = styled.div`
   justify-content: center;
   align-items: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     order: 2;
-    margin-top: ${darkEmotionTheme.spacing(4)};
+    margin-top: ${({ theme }) => theme.spacing(4)};
   }
 `;
 
@@ -120,7 +120,7 @@ const VisualPlaceholder = styled.div`
   max-width: 400px;
   width: 100%;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     max-width: 300px;
   }
 `;
@@ -145,6 +145,7 @@ export interface HeroSectionProps {
 // Main HeroSection component
 export const HeroSection: React.FC<HeroSectionProps> = ({ className }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   const handleCTAClick = () => {
     // Placeholder for CTA action
@@ -188,7 +189,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ className }) => {
                       height="48"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke={darkEmotionTheme.colors.primary.main}
+                      stroke={theme.colors.primary.main}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"

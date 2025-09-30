@@ -45,7 +45,7 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
   });
   
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} sx={{ backgroundColor: 'background.paper' }}>
       <Table>
         <TableHead>
           <TableRow>
@@ -73,7 +73,7 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
                 />
               </TableCell>
               <TableCell>
-                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                <Typography variant="body2">
                   {payment.transactionId.substring(0, 12)}...
                 </Typography>
               </TableCell>

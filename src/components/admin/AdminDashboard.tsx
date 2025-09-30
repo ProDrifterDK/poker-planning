@@ -31,7 +31,7 @@ function TabPanel(props: TabPanelProps) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: theme => theme.spacing(3) }}>
           {children}
         </Box>
       )}
@@ -57,7 +57,7 @@ const AdminDashboard: React.FC = () => {
   // Verificar si el usuario es moderador
   if (!isModerator()) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: theme => theme.spacing(4) }}>
         <Alert severity="error">
           No tienes permisos para acceder al panel de administración
         </Alert>
@@ -66,12 +66,12 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: theme => theme.spacing(4) }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Panel de Administración
       </Typography>
       
-      <Paper sx={{ width: '100%', mb: 2 }}>
+      <Paper sx={{ width: '100%', mb: theme => theme.spacing(2) }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}

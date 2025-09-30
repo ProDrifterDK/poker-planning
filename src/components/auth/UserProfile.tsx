@@ -370,7 +370,7 @@ const UserProfile: React.FC = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <CircularProgress />
+        <CircularProgress color="primary" />
         <Typography variant="h6" sx={{ ml: 2 }}>
           {t('profile.loading')}
         </Typography>
@@ -397,7 +397,7 @@ const UserProfile: React.FC = () => {
             p: 4,
             width: '100%',
             maxWidth: 800,
-            borderRadius: 2,
+            borderRadius: theme => theme.shape.borderRadius,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -429,7 +429,7 @@ const UserProfile: React.FC = () => {
                   bottom: 0,
                   right: 8,
                   backgroundColor: 'primary.main',
-                  color: 'white',
+                  color: (theme) => theme.palette.getContrastText(theme.palette.primary.main),
                   '&:hover': {
                     backgroundColor: 'primary.dark',
                   }

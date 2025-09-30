@@ -132,11 +132,11 @@ const BasicOnboardingTooltip: React.FC = () => {
                                 onClick={handleSkipClick}
                                 aria-label="Cerrar tutorial"
                                 sx={{
-                                    color: 'grey.500',
+                                    color: (theme) => theme.palette.text.secondary,
                                     '&:hover': {
                                         color: 'primary.main',
-                                        backgroundColor: 'grey.100'
-                                    }
+                                        backgroundColor: (theme) => theme.palette.action.hover,
+                                    },
                                 }}
                             >
                                 <CloseIcon fontSize="small" />

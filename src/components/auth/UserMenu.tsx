@@ -23,28 +23,28 @@ const UserMenuContainer = styled.div`
 const UserButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${darkEmotionTheme.spacing(2)};
+  gap: ${(props) => props.theme.spacing(2)};
   background: none;
-  border: 1px solid ${darkEmotionTheme.colors.border.main};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
-  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(3)};
+  border: 1px solid ${(props) => props.theme.colors.border.main};
+  border-radius: ${(props) => props.theme.borderRadius.large};
+  padding: ${(props) => props.theme.spacing(2)} ${(props) => props.theme.spacing(3)};
   cursor: pointer;
   transition: all 0.2s ease;
-  color: ${darkEmotionTheme.colors.text.primary};
+  color: ${(props) => props.theme.colors.text.primary};
 
   &:hover {
-    border-color: ${darkEmotionTheme.colors.primary.main};
-    background-color: ${darkEmotionTheme.colors.background.paper};
+    border-color: ${(props) => props.theme.colors.primary.main};
+    background-color: ${(props) => props.theme.colors.background.paper};
   }
 
   &:focus {
-    outline: 2px solid ${darkEmotionTheme.colors.primary.main};
+    outline: 2px solid ${(props) => props.theme.colors.primary.main};
     outline-offset: 2px;
   }
 
   @media (max-width: 768px) {
-    padding: ${darkEmotionTheme.spacing(2)};
-    gap: ${darkEmotionTheme.spacing(1)};
+    padding: ${(props) => props.theme.spacing(2)};
+    gap: ${(props) => props.theme.spacing(1)};
   }
 `;
 
@@ -52,12 +52,12 @@ const UserAvatar = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: ${darkEmotionTheme.colors.primary.main};
+  background-color: ${(props) => props.theme.colors.primary.main};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
+  font-weight: ${(props) => props.theme.typography.fontWeights.medium};
   flex-shrink: 0;
 
   @media (max-width: 768px) {
@@ -78,15 +78,15 @@ const UserInfo = styled.div`
 `;
 
 const UserName = styled.span`
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
-  color: ${darkEmotionTheme.colors.text.primary};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
+  font-weight: ${(props) => props.theme.typography.fontWeights.medium};
+  color: ${(props) => props.theme.colors.text.primary};
   line-height: 1.2;
 `;
 
 const UserEmail = styled.span`
-  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
-  color: ${darkEmotionTheme.colors.text.secondary};
+  font-size: ${(props) => props.theme.typography.fontSizes.caption};
+  color: ${(props) => props.theme.colors.text.secondary};
   line-height: 1.2;
 `;
 
@@ -94,13 +94,13 @@ const DropdownMenu = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: ${darkEmotionTheme.colors.background.paper};
-  border: 1px solid ${darkEmotionTheme.colors.border.main};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
-  box-shadow: ${darkEmotionTheme.shadows.small};
+  background-color: ${(props) => props.theme.colors.background.paper};
+  border: 1px solid ${(props) => props.theme.colors.border.main};
+  border-radius: ${(props) => props.theme.borderRadius.large};
+  box-shadow: ${(props) => props.theme.shadows.small};
   min-width: 200px;
-  padding: ${darkEmotionTheme.spacing(2)};
-  margin-top: ${darkEmotionTheme.spacing(1)};
+  padding: ${(props) => props.theme.spacing(2)};
+  margin-top: ${(props) => props.theme.spacing(1)};
   z-index: 1000;
   opacity: ${({ isOpen }) => isOpen ? 1 : 0};
   visibility: ${({ isOpen }) => isOpen ? 'visible' : 'hidden'};
@@ -108,7 +108,7 @@ const DropdownMenu = styled.div<{ isOpen: boolean }>`
   transition: all 0.2s ease;
 
   @media (max-width: 768px) {
-    right: -${darkEmotionTheme.spacing(2)};
+    right: -${(props) => props.theme.spacing(2)};
     min-width: 180px;
   }
 `;
@@ -117,33 +117,33 @@ const MenuItem = styled.button`
   width: 100%;
   display: flex;
   align-items: center;
-  gap: ${darkEmotionTheme.spacing(2)};
-  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(3)};
+  gap: ${(props) => props.theme.spacing(2)};
+  padding: ${(props) => props.theme.spacing(2)} ${(props) => props.theme.spacing(3)};
   background: none;
   border: none;
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
-  color: ${darkEmotionTheme.colors.text.primary};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.regular};
+  border-radius: ${(props) => props.theme.borderRadius.medium};
+  color: ${(props) => props.theme.colors.text.primary};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
+  font-weight: ${(props) => props.theme.typography.fontWeights.regular};
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: ${darkEmotionTheme.colors.background.default};
-    color: ${darkEmotionTheme.colors.primary.main};
+    background-color: ${(props) => props.theme.colors.background.default};
+    color: ${(props) => props.theme.colors.primary.main};
   }
 
   &:focus {
-    outline: 2px solid ${darkEmotionTheme.colors.primary.main};
+    outline: 2px solid ${(props) => props.theme.colors.primary.main};
     outline-offset: 2px;
   }
 `;
 
 const MenuDivider = styled.hr`
   border: none;
-  border-top: 1px solid ${darkEmotionTheme.colors.border.main};
-  margin: ${darkEmotionTheme.spacing(2)} 0;
+  border-top: 1px solid ${(props) => props.theme.colors.border.main};
+  margin: ${(props) => props.theme.spacing(2)} 0;
 `;
 
 export default function UserMenu({ currentUser }: UserMenuProps) {

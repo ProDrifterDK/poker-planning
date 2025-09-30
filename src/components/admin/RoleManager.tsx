@@ -103,18 +103,18 @@ const RoleManager: React.FC = () => {
   return (
     <>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: theme => theme.spacing(2) }}>
           {error}
         </Alert>
       )}
       
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
+        <Alert severity="success" sx={{ mb: theme => theme.spacing(2) }}>
           {success}
         </Alert>
       )}
       
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: theme => theme.spacing(3) }}>
         <TextField
           label="Buscar usuario"
           variant="outlined"

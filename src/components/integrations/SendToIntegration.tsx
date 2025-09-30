@@ -18,6 +18,7 @@ import {
   Divider,
   Snackbar,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -46,6 +47,7 @@ interface SendToIntegrationProps {
 
 export default function SendToIntegration({ issueData, disabled = false }: SendToIntegrationProps) {
   const { integrations, sendIssueToIntegration, isLoading } = useIntegrationStore();
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [results, setResults] = useState<IntegrationResult[]>([]);
@@ -153,10 +155,10 @@ export default function SendToIntegration({ issueData, disabled = false }: SendT
           disabled={disabled || enabledIntegrations.length === 0 || isLoading}
           sx={{
             textTransform: 'none',
-            width: '200px',
-            height: '36px',
+            width: theme.spacing(25),
+            height: theme.spacing(4.5),
             justifyContent: 'center',
-            fontSize: '0.875rem'
+            fontSize: theme.typography.button.fontSize
           }}
         >
           Sincronizar Issues
@@ -168,7 +170,7 @@ export default function SendToIntegration({ issueData, disabled = false }: SendT
         <DialogTitle>Enviar a Integraciones</DialogTitle>
         <DialogContent>
           {enabledIntegrations.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
+            <Typography variant="body2" color="text.secondary" textAlign="center" py={theme.spacing(2)}>
               No hay integraciones habilitadas. Configura al menos una integración para continuar.
             </Typography>
           ) : (
@@ -198,7 +200,7 @@ export default function SendToIntegration({ issueData, disabled = false }: SendT
 
               {showResults && (
                 <>
-                  <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: theme.spacing(2) }} />
                   <Typography variant="subtitle1" gutterBottom>
                     Resultados:
                   </Typography>

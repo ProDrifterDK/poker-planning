@@ -6,7 +6,7 @@ import { Box, SxProps, Theme } from '@mui/material';
 const CardContainer = styled(Box)`
   background-color: ${props => props.theme.colors.background.paper};
   border: 1px solid ${props => props.theme.colors.border.main};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
+  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
   padding: ${({ theme }) => theme.spacing(6)};
   transition: all 0.3s ease;
   cursor: pointer;

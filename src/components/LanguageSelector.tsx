@@ -7,6 +7,7 @@ import Image from 'next/image';
 import styled from '@emotion/styled';
 import { i18n } from '../../next-i18next.config.js';
 import { useState, useEffect } from 'react';
+import { useTheme } from '@emotion/react';
 import { darkEmotionTheme } from '../styles/theme';
 
 // Styled components using Sleek Innovator design system
@@ -16,7 +17,7 @@ const LanguageSelectorContainer = styled.div`
   gap: 4px;
   background-color: ${props => props.theme.colors.background.paper};
   padding: 4px 8px;
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
+  border-radius: ${(props) => props.theme.shape.borderRadius}px;
   border: 1px solid ${props => props.theme.colors.border.main};
   transition: all 0.3s ease;
 `;
@@ -57,21 +58,20 @@ const SwitchThumb = styled.div<{ $isEnglish: boolean }>`
   left: ${props => props.$isEnglish ? '22px' : '2px'};
   width: 16px;
   height: 16px;
-  background-color: ${props =>
+  background-color: ${(props) =>
     props.$isEnglish
       ? props.theme.colors.primary.main
-      : props.theme.colors.text.secondary
-  };
+      : props.theme.colors.text.secondary};
   border-radius: 50%;
   transition: all 0.3s ease;
   box-shadow: ${props => props.theme.shadows.small};
 `;
-
 export default function LanguageSelector() {
   const router = useRouter();
   const pathname = usePathname();
   const { i18n: i18nInstance } = useTranslation();
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+  const theme = useTheme();
   
   // Efecto para evitar múltiples cambios de idioma simultáneos
   useEffect(() => {
@@ -134,9 +134,8 @@ export default function LanguageSelector() {
         <Image
           src="/images/icons/spain-flag.webp"
           alt="Español"
-          width={30}
+          style={{ borderRadius: `${theme.shape.borderRadius}px` }}
           height={30}
-          style={{ borderRadius: '2px' }}
         />
       </FlagContainer>
 
@@ -163,9 +162,7 @@ export default function LanguageSelector() {
         <Image
           src="/images/icons/britain-flag.webp"
           alt="English"
-          width={30}
-          height={30}
-          style={{ borderRadius: '2px' }}
+          style={{ borderRadius: `${theme.shape.borderRadius}px` }}
         />
       </FlagContainer>
     </LanguageSelectorContainer>

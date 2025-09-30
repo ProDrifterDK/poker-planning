@@ -131,16 +131,16 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
       <Box
         sx={{
           position: 'absolute',
-          bottom: 16,
-          left: 16,
+          bottom: (theme) => theme.spacing(2),
+          left: (theme) => theme.spacing(2),
           display: 'flex',
           alignItems: 'center',
           bgcolor: 'background.paper',
-          borderRadius: 16,
+          borderRadius: (theme) => theme.shape.borderRadius * 2,
           px: 1.5,
           py: 0.5,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          zIndex: 10
+          boxShadow: (theme) => theme.shadows[1],
+          zIndex: (theme) => theme.zIndex.tooltip
         }}
       >
         <PeopleIcon fontSize="small" color="action" sx={{ mr: 0.5 }} />
@@ -162,18 +162,18 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
       <Box
         sx={{
           position: 'absolute',
-          bottom: 16,
-          left: 16,
+          bottom: (theme) => theme.spacing(2),
+          left: (theme) => theme.spacing(2),
           display: 'flex',
           alignItems: 'center',
           bgcolor: 'background.paper',
-          borderRadius: 16,
+          borderRadius: (theme) => theme.shape.borderRadius * 2,
           px: 1.5,
           py: 0.5,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          zIndex: 10,
+          boxShadow: (theme) => theme.shadows[1],
+          zIndex: (theme) => theme.zIndex.tooltip,
           '&:hover': {
-            boxShadow: '0 3px 6px rgba(0,0,0,0.15)',
+            boxShadow: (theme) => theme.shadows[2],
           }
         }}
       >

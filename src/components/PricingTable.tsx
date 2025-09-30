@@ -8,12 +8,12 @@ import AnimatedSection from './AnimatedSection';
 
 // Styled container for the pricing section
 const PricingSection = styled.section`
-  padding: ${darkEmotionTheme.spacing(20)} ${darkEmotionTheme.spacing(6)};
+  padding: ${(props) => props.theme.spacing(20)} ${(props) => props.theme.spacing(6)};
   background-color: ${({ theme }) => theme.colors.background.default};
   text-align: center;
 
   @media (max-width: 900px) {
-    padding: ${darkEmotionTheme.spacing(15)} ${darkEmotionTheme.spacing(4)};
+    padding: ${(props) => props.theme.spacing(15)} ${(props) => props.theme.spacing(4)};
   }
 `;
 
@@ -21,36 +21,36 @@ const PricingSection = styled.section`
 const PricingGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${darkEmotionTheme.spacing(8)};
+  gap: ${(props) => props.theme.spacing(8)};
   max-width: 1200px;
   margin: 0 auto;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: ${darkEmotionTheme.spacing(6)};
+    gap: ${(props) => props.theme.spacing(6)};
   }
 `;
 
 // Styled section title
 const SectionTitle = styled.h2`
-  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
-  font-size: ${darkEmotionTheme.typography.fontSizes.h2};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  font-family: ${(props) => props.theme.typography.fontFamily.heading};
+  font-size: ${(props) => props.theme.typography.fontSizes.h2};
+  font-weight: ${(props) => props.theme.typography.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${darkEmotionTheme.spacing(4)};
-  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  margin-bottom: ${(props) => props.theme.spacing(4)};
+  line-height: ${(props) => props.theme.typography.lineHeights.heading};
 `;
 
 // Styled section subtitle
 const SectionSubtitle = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin-bottom: ${darkEmotionTheme.spacing(12)};
+  margin-bottom: ${(props) => props.theme.spacing(12)};
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  line-height: ${(props) => props.theme.typography.lineHeights.body};
 `;
 
 // Styled billing toggle container
@@ -58,8 +58,8 @@ const BillingToggleContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${darkEmotionTheme.spacing(2)};
-  margin-bottom: ${darkEmotionTheme.spacing(8)};
+  gap: ${(props) => props.theme.spacing(2)};
+  margin-bottom: ${(props) => props.theme.spacing(8)};
 `;
 
 // Styled billing toggle
@@ -68,8 +68,8 @@ const BillingToggle = styled.div<{ isYearly: boolean }>`
   align-items: center;
   background-color: ${({ theme }) => theme.colors.background.paper};
   border: 1px solid ${({ theme }) => theme.colors.border.main};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
-  padding: ${darkEmotionTheme.spacing(1)};
+  border-radius: ${(props) => props.theme.borderRadius.large};
+  padding: ${(props) => props.theme.spacing(1)};
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -83,11 +83,11 @@ const ToggleOption = styled.button<{ active: boolean }>`
   background: ${({ active, theme }) => active ? theme.colors.primary.main : 'transparent'};
   color: ${({ active, theme }) => active ? theme.colors.text.primary : theme.colors.text.secondary};
   border: none;
-  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(4)};
-  border-radius: ${darkEmotionTheme.borderRadius.medium};
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
+  padding: ${(props) => props.theme.spacing(2)} ${(props) => props.theme.spacing(4)};
+  border-radius: ${(props) => props.theme.borderRadius.medium};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
+  font-weight: ${(props) => props.theme.typography.fontWeights.medium};
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -101,32 +101,32 @@ const PriceDisplay = styled.div`
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: ${darkEmotionTheme.spacing(2)};
-  margin-bottom: ${darkEmotionTheme.spacing(4)};
+  gap: ${(props) => props.theme.spacing(2)};
+  margin-bottom: ${(props) => props.theme.spacing(4)};
 `;
 
 // Styled price amount
 const PriceAmount = styled.span`
-  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
+  font-family: ${(props) => props.theme.typography.fontFamily.heading};
   font-size: 3rem;
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  font-weight: ${(props) => props.theme.typography.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   line-height: 1;
 `;
 
 // Styled price period
 const PricePeriod = styled.span`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
 // Styled savings badge
 const SavingsBadge = styled.span`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.caption};
   color: ${({ theme }) => theme.colors.success.main};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
+  font-weight: ${(props) => props.theme.typography.fontWeights.medium};
 `;
 
 // Styled popular badge
@@ -137,11 +137,11 @@ const PopularBadge = styled.div`
   transform: translateX(-50%);
   background: linear-gradient(45deg, ${({ theme }) => theme.colors.primary.main}, ${({ theme }) => theme.colors.primary.dark});
   color: ${({ theme }) => theme.colors.text.primary};
-  padding: ${darkEmotionTheme.spacing(1)} ${darkEmotionTheme.spacing(3)};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  padding: ${(props) => props.theme.spacing(1)} ${(props) => props.theme.spacing(3)};
+  border-radius: ${(props) => props.theme.borderRadius.large};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.caption};
+  font-weight: ${(props) => props.theme.typography.fontWeights.bold};
   text-transform: uppercase;
   letter-spacing: 0.5px;
   z-index: 1;
@@ -151,7 +151,7 @@ const PopularBadge = styled.div`
 const FeaturesList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 ${darkEmotionTheme.spacing(6)} 0;
+  margin: 0 0 ${(props) => props.theme.spacing(6)} 0;
   text-align: left;
 `;
 
@@ -159,12 +159,12 @@ const FeaturesList = styled.ul`
 const FeatureItem = styled.li`
   display: flex;
   align-items: center;
-  gap: ${darkEmotionTheme.spacing(2)};
-  margin-bottom: ${darkEmotionTheme.spacing(3)};
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  gap: ${(props) => props.theme.spacing(2)};
+  margin-bottom: ${(props) => props.theme.spacing(3)};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
   color: ${({ theme }) => theme.colors.text.primary};
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  line-height: ${(props) => props.theme.typography.lineHeights.body};
 `;
 
 // Styled checkmark icon
@@ -176,62 +176,62 @@ const CheckmarkIcon = styled(CheckCircleIcon)`
 
 // Styled plan description
 const PlanDescription = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin-bottom: ${darkEmotionTheme.spacing(6)};
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  margin-bottom: ${(props) => props.theme.spacing(6)};
+  line-height: ${(props) => props.theme.typography.lineHeights.body};
 `;
 
 // Styled pricing card container
 const PricingCardContainer = styled.div<{ popular: boolean }>`
   background-color: ${({ theme }) => theme.colors.background.paper};
   border: 1px solid ${({ theme }) => theme.colors.border.main};
-  border-radius: ${darkEmotionTheme.borderRadius.large};
-  padding: ${darkEmotionTheme.spacing(6)};
+  border-radius: ${(props) => props.theme.borderRadius.large};
+  padding: ${(props) => props.theme.spacing(6)};
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   text-align: center;
 
-  ${({ popular }) => popular && `border: 2px solid ${darkEmotionTheme.colors.primary.main};`}
+  ${({ popular, theme }) => popular && `border: 2px solid ${theme.colors.primary.main};`}
 
   &:hover {
     transform: translateY(-4px);
     border-color: ${({ theme }) => theme.colors.primary.main};
-    box-shadow: ${darkEmotionTheme.shadows.primaryGlow};
+    box-shadow: ${(props) => props.theme.shadows.primaryGlow};
   }
 
   &:focus-within {
-    border-color: ${darkEmotionTheme.colors.primary.main};
-    box-shadow: ${darkEmotionTheme.shadows.primaryGlow};
+    border-color: ${(props) => props.theme.colors.primary.main};
+    box-shadow: ${(props) => props.theme.shadows.primaryGlow};
   }
 `;
 
 // Styled card title
 const PricingCardTitle = styled.h3`
-  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
-  font-size: ${darkEmotionTheme.typography.fontSizes.h4};
-  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
-  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  font-family: ${(props) => props.theme.typography.fontFamily.heading};
+  font-size: ${(props) => props.theme.typography.fontSizes.h4};
+  font-weight: ${(props) => props.theme.typography.fontWeights.bold};
+  line-height: ${(props) => props.theme.typography.lineHeights.heading};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${darkEmotionTheme.spacing(2)} 0;
+  margin: 0 0 ${(props) => props.theme.spacing(2)} 0;
 `;
 
 // Styled card subtitle
 const PricingCardSubtitle = styled.p`
-  font-family: ${darkEmotionTheme.typography.fontFamily.body};
-  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-family: ${(props) => props.theme.typography.fontFamily.body};
+  font-size: ${(props) => props.theme.typography.fontSizes.body};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
-  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  margin: 0 0 ${(props) => props.theme.spacing(4)} 0;
+  line-height: ${(props) => props.theme.typography.lineHeights.body};
 `;
 
 // Styled card wrapper for popular badge positioning
 const CardWrapper = styled.div<{ popular: boolean }>`
   position: relative;
-  ${({ popular }) => popular && `padding-top: ${darkEmotionTheme.spacing(4)};`}
+  ${({ popular, theme }) => popular && `padding-top: ${theme.spacing(4)};`}
 `;
 
 // Pricing plan interface

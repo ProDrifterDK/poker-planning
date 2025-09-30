@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 const ToggleButton = styled.button`
     background: transparent;
     border: none;
-    border-radius: 50%;
+    border-radius: ${props => props.theme.shape.borderRadius};
     width: 40px;
     height: 40px;
     display: flex;
@@ -20,7 +20,7 @@ const ToggleButton = styled.button`
     transition: all 0.2s ease-in-out;
 
     &:hover {
-        background-color: ${props => props.theme.colors.background.paper};
+        background-color: ${props => props.theme.palette.action.hover};
         transform: scale(1.05);
     }
 
@@ -36,7 +36,10 @@ const ToggleButton = styled.button`
     svg {
         width: 20px;
         height: 20px;
-        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        transition: ${props =>
+            props.theme.transitions.create(['transform', 'opacity'], {
+                duration: props.theme.transitions.duration.short,
+            })};
     }
 `;
 
@@ -68,7 +71,10 @@ const TooltipText = styled.div`
     font-size: 12px;
     white-space: nowrap;
     z-index: 1000;
-    transition: opacity 0.3s, visibility 0.3s;
+    transition: ${props =>
+        props.theme.transitions.create(['opacity', 'visibility'], {
+            duration: props.theme.transitions.duration.short,
+        })};
     border: 1px solid ${props => props.theme.colors.border.main};
 
     &::after {
