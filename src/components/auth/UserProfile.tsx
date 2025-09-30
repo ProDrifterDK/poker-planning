@@ -440,7 +440,7 @@ const UserProfile: React.FC = () => {
               </IconButton>
             </Box>
             <Box>
-              <Typography variant="h5" component="h1" gutterBottom>
+              <Typography variant="h5" component="h3" gutterBottom>
                 {t('profile.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary">

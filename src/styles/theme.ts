@@ -551,6 +551,9 @@ export const lightEmotionTheme = {
       body: 1.6,
       heading: 1.2,
     },
+    caption: {
+      fontSize: "0.75rem",
+    },
   },
   borderRadius: {
     small: '4px',
@@ -645,6 +648,9 @@ export const darkEmotionTheme = {
     lineHeights: {
       body: 1.6,
       heading: 1.2,
+    },
+    caption: {
+      fontSize: "0.75rem",
     },
   },
   borderRadius: {

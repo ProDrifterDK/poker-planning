@@ -228,7 +228,7 @@ export default function Card({
                         width: '100%',
                         height: '100%',
                         backfaceVisibility: 'hidden',
-                        backgroundColor: theme.palette.primary.main,
+                        backgroundColor: 'transparent',
                         borderRadius: 2,
                         boxShadow: cardPalette.boxShadow,
                         transform: 'rotateY(180deg)',
