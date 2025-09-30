@@ -13,8 +13,7 @@ import {
   Card,
   CardContent,
   CardActions,
-  Stack,
-  IconButton
+  Stack
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
@@ -25,9 +24,7 @@ import { ref, get, update } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import CloseIcon from '@mui/icons-material/Close';
 
 interface Room {
   id: string;
@@ -321,18 +318,6 @@ export default function ActiveRoomsList() {
                   },
                 }}
               >
-                <IconButton
-                  aria-label="close room"
-                  onClick={() => handleCloseRoom(room.id)}
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 1,
-                  }}
-                >
-                  <CloseIcon />
-                </IconButton>
                 <CardContent sx={{ pb: 1 }}>
                   <Stack
                     direction="row"
@@ -349,7 +334,6 @@ export default function ActiveRoomsList() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        pt: '28px',
                       }}
                     >
                       {room.title}
@@ -374,14 +358,15 @@ export default function ActiveRoomsList() {
                 </CardContent>
                 
                 <CardActions sx={{ p: 2, pt: 1, justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'action.hover' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'medium' }}>
-                      {t('activeRooms.code')}: {room.id}
-                    </Typography>
-                    <IconButton size="small" onClick={() => navigator.clipboard.writeText(room.id)}>
-                      <ContentCopyIcon sx={{ fontSize: '1rem' }} />
-                    </IconButton>
-                  </Box>
+                  <Button
+                    variant="text"
+                    color="warning"
+                    size="small"
+                    onClick={() => handleCloseRoom(room.id)}
+                    sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                  >
+                    {t('activeRooms.dismiss')}
+                  </Button>
                   <Button
                     variant="contained"
                     color="primary"

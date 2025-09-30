@@ -86,6 +86,7 @@
     "freePlanLimit": "Los usuarios del plan Free solo pueden tener una sala activa a la vez. Por favor, abandona tu sala actual antes de crear una nueva.",
     "planLimit": "Has alcanzado el límite de {{maxRooms}} {{roomText}} de tu plan. Actualiza tu suscripción para crear más salas.",
     "singleRoom": "sala activa",
-    "multipleRooms": "salas activas"
+    "multipleRooms": "salas activas",
+    "dismiss": "Cerrar Sala"
   }
 }
