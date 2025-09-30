@@ -2,6 +2,7 @@
  * Tipos de roles disponibles en la aplicación
  */
 export enum UserRole {
+  ADMIN = 'admin',
   MODERATOR = 'moderator',
   PARTICIPANT = 'participant',
 }
@@ -31,6 +32,18 @@ export enum Permission {
  * Mapeo de roles a permisos
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  [UserRole.ADMIN]: [
+    Permission.CREATE_ROOM,
+    Permission.JOIN_ROOM,
+    Permission.REVEAL_CARDS,
+    Permission.RESET_VOTING,
+    Permission.KICK_USER,
+    Permission.CHANGE_ROOM_SETTINGS,
+    Permission.END_SESSION,
+    Permission.MANAGE_TIMER,
+    Permission.VOTE,
+    Permission.CHANGE_OWN_NAME,
+  ],
   [UserRole.MODERATOR]: [
     Permission.CREATE_ROOM,
     Permission.JOIN_ROOM,

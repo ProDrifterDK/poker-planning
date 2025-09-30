@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { getLocalizedRoute } from '@/utils/routeUtils';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { ref, get, update } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
 import PeopleIcon from '@mui/icons-material/People';
@@ -40,6 +40,7 @@ interface RoomMetadata {
   seriesKey?: string;
   createdAt?: number;
   creatorPlan?: string;
+  active?: boolean;
 }
 
 interface RoomParticipant {
@@ -104,6 +105,10 @@ export default function ActiveRoomsList() {
               // Skip if no metadata
               if (!typedRoomData.metadata) {
                 console.log(`Room ${roomId} has no metadata, skipping`);
+                continue;
+              }
+
+              if (typedRoomData.metadata.active === false) {
                 continue;
               }
               
@@ -269,13 +274,19 @@ export default function ActiveRoomsList() {
   };
 
   const handleCloseRoom = async (roomId: string) => {
-    const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+    const rtdbRoomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+    const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+
     try {
-      await update(roomRef, { active: false });
+      await Promise.all([
+        update(rtdbRoomRef, { active: false }),
+        updateDoc(firestoreRoomRef, { active: false }),
+      ]);
+
       setActiveRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
     } catch (error) {
       console.error("Error closing room:", error);
-      setError('Failed to close room. Please try again.');
+      setError(t('activeRooms.closeRoomError'));
     }
   };
   
@@ -285,7 +296,7 @@ export default function ActiveRoomsList() {
   }
   
   return (
-    <Box sx={{ maxWidth: 1200, width: '100%', mb: 4 }}>
+    <Box sx={{ width: '100%', maxWidth: 500, mb: 4 }}>
       <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center' }}>
         {t('activeRooms.title')}
       </Typography>
@@ -301,7 +312,7 @@ export default function ActiveRoomsList() {
       ) : (
         <Grid container spacing={3} justifyContent="center">
           {activeRooms.map((room) => (
-            <Grid item xs={12} sm={6} md={4} key={room.id}>
+            <Grid item xs={12} key={room.id}>
               <Card
                 sx={{
                   position: 'relative',

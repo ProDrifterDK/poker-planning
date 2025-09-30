@@ -65,6 +65,7 @@ interface RoomActions {
   createRoom: (seriesKey: string, title?: string) => Promise<string>;
   joinRoomWithName: (roomId: string, name: string) => Promise<void>;
   leaveRoom: () => void;
+  removeParticipant: (participantId: string) => Promise<void>;
 
   // Acciones para votación
   selectEstimation: (value: number | string) => Promise<void>;
@@ -570,6 +571,39 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           errorStore.setError(appError);
         }
       },
+      // Eliminar un participante de la sala
+      removeParticipant: async (participantId: string) => {
+        const { roomId } = get();
+        const errorStore = useErrorStore.getState();
+        set({isLoading: true, error: null});
+
+        if (!roomId) {
+          const appError = createError(
+            ErrorType.ROOM_NOT_FOUND,
+            "No se encontró la sala para eliminar al participante."
+          );
+          errorStore.setError(appError);
+          set({ error: appError.message, isLoading: false });
+          return;
+        }
+
+        try {
+          const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+          await update(participantRef, { active: false });
+        } catch (error) {
+          const appError = createError(
+            ErrorType.UPDATE_FAILED,
+            "No se pudo eliminar al participante.",
+            { originalError: error },
+            () => get().removeParticipant(participantId)
+          );
+          errorStore.setError(appError);
+          set({ error: appError.message });
+        } finally {
+            set({isLoading: false});
+        }
+      },
+
 
       // Seleccionar una estimación
       selectEstimation: async (value: number | string) => {

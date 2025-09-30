@@ -87,6 +87,7 @@
     "freePlanLimit": "Free plan users can only have one active room at a time. Please leave your current room before creating a new one.",
     "planLimit": "You have reached the limit of {{maxRooms}} {{roomText}} for your plan. Upgrade your subscription to create more rooms.",
     "singleRoom": "active room",
-    "multipleRooms": "active rooms"
+    "multipleRooms": "active rooms",
+    "closeRoomError": "Failed to close room. Please try again."
   }
 }

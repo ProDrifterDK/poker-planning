@@ -87,6 +87,7 @@
     "planLimit": "Has alcanzado el límite de {{maxRooms}} {{roomText}} de tu plan. Actualiza tu suscripción para crear más salas.",
     "singleRoom": "sala activa",
     "multipleRooms": "salas activas",
-    "dismiss": "Cerrar Sala"
+    "dismiss": "Cerrar Sala",
+    "closeRoomError": "Error al cerrar la sala. Por favor, intenta de nuevo."
   }
 }

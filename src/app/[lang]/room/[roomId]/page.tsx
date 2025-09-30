@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import MenuCloseIcon from '@mui/icons-material/Menu';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import Card from '@/components/Card';
 import IssueSidebar from '@/components/IssueSidebar';
 import ExportData from '@/components/ExportData';
@@ -66,7 +67,20 @@ export default function RoomPage() {
         startNewVote,
         setError,
         leaveRoom,
+        removeParticipant,
     } = useRoomStore();
+
+    const handleRemoveParticipant = async (participantId: string) => {
+        try {
+            await removeParticipant(participantId);
+        } catch (error) {
+            console.error("Error removing participant:", error);
+            setErrorMessage(t('errors.removeParticipantFailed'));
+        }
+    };
+
+    const currentUserParticipant = participants.find(p => p.id === localStorage.getItem(`participant_id_${roomId}`));
+    const isCurrentUserAdminOrModerator = currentUserParticipant?.role === 'moderator';
 
     // Referencia para medir el contenido principal
     const mainContentRef = useRef<HTMLDivElement>(null);
@@ -730,34 +744,47 @@ export default function RoomPage() {
                                             participant.estimation === undefined;
 
                                         return (
-                                            <Box key={participant.id} textAlign="center">
-                                                <Typography
-                                                    variant="body2"
-                                                    gutterBottom
-                                                    sx={{
-                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        maxWidth: { xs: 70, sm: 100 }
-                                                    }}
-                                                >
-                                                    {participant.role === 'moderator' ? (
-                                                        <>
-                                                            {participant.name === 'Moderador' ? currentUser?.displayName || 'Moderador' : participant.name}
-                                                            <span style={{
-                                                                fontSize: '0.7em',
-                                                                opacity: 0.7,
-                                                                marginLeft: '3px',
-                                                                display: 'block'
-                                                            }}>
-                                                                ({t('room.moderator')})
-                                                            </span>
-                                                        </>
-                                                    ) : (
-                                                        participant.name
+                                            <Box key={participant.id} textAlign="center" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Typography
+                                                        variant="body2"
+                                                        gutterBottom
+                                                        sx={{
+                                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: { xs: 70, sm: 100 },
+                                                            mb: 0,
+                                                        }}
+                                                    >
+                                                        {participant.role === 'moderator' ? (
+                                                            <>
+                                                                {participant.name === 'Moderador' ? currentUser?.displayName || 'Moderador' : participant.name}
+                                                                <span style={{
+                                                                    fontSize: '0.7em',
+                                                                    opacity: 0.7,
+                                                                    marginLeft: '3px',
+                                                                    display: 'block'
+                                                                }}>
+                                                                    ({t('room.moderator')})
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            participant.name
+                                                        )}
+                                                    </Typography>
+                                                    {isCurrentUserAdminOrModerator && currentUserParticipant?.id !== participant.id && (
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => handleRemoveParticipant(participant.id)}
+                                                            aria-label={`Remove ${participant.name}`}
+                                                            sx={{ ml: 0.5, p: 0.2 }}
+                                                        >
+                                                            <PersonRemoveIcon sx={{ fontSize: '1rem' }} />
+                                                        </IconButton>
                                                     )}
-                                                </Typography>
+                                                </Box>
                                                 <Card
                                                     value={participant.estimation}
                                                     selected={false}

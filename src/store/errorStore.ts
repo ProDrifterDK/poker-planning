@@ -20,6 +20,7 @@ export enum ErrorType {
   ROOM_CREATION_FAILED = "ROOM_CREATION_FAILED",
   JOIN_ROOM_FAILED = "JOIN_ROOM_FAILED",
   VOTE_FAILED = "VOTE_FAILED",
+  UPDATE_FAILED = "UPDATE_FAILED",
   
   // Errores de suscripción
   SUBSCRIPTION_LIMIT_REACHED = "SUBSCRIPTION_LIMIT_REACHED",
@@ -68,6 +69,7 @@ export const errorMessages: Record<ErrorType, string> = {
   [ErrorType.ROOM_CREATION_FAILED]: "No se pudo crear la sala. Intenta nuevamente.",
   [ErrorType.JOIN_ROOM_FAILED]: "No se pudo unir a la sala. Verifica el código e intenta nuevamente.",
   [ErrorType.VOTE_FAILED]: "No se pudo registrar tu voto. Intenta nuevamente.",
+  [ErrorType.UPDATE_FAILED]: "No se pudo actualizar el estado. Intenta nuevamente.",
   
   [ErrorType.SUBSCRIPTION_LIMIT_REACHED]: "Has alcanzado el límite de tu plan actual. Actualiza tu suscripción para continuar.",
   
