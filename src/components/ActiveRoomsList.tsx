@@ -21,12 +21,13 @@ import { useAuth } from '@/context/authContext';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { getLocalizedRoute } from '@/utils/routeUtils';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { ref, get } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface Room {
   id: string;
@@ -269,6 +270,17 @@ export default function ActiveRoomsList() {
   const handleJoinRoom = (roomId: string) => {
     router.push(getLocalizedRoute(`/room/${roomId}`));
   };
+
+  const handleCloseRoom = async (roomId: string) => {
+    const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+    try {
+      await update(roomRef, { active: false });
+      setActiveRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
+    } catch (error) {
+      console.error("Error closing room:", error);
+      setError('Failed to close room. Please try again.');
+    }
+  };
   
   // If the user is not on Pro or Enterprise plan, don't show this component
   if (currentPlan !== 'pro' && currentPlan !== 'enterprise') {
@@ -295,6 +307,7 @@ export default function ActiveRoomsList() {
             <Grid item xs={12} sm={6} md={4} key={room.id}>
               <Card
                 sx={{
+                  position: 'relative',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -305,12 +318,40 @@ export default function ActiveRoomsList() {
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: (theme) => theme.shadows[6],
-                  }
+                  },
                 }}
               >
+                <IconButton
+                  aria-label="close room"
+                  onClick={() => handleCloseRoom(room.id)}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 1,
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
                 <CardContent sx={{ pb: 1 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1} sx={{ mb: 2 }}>
-                    <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                    spacing={1}
+                    sx={{ mb: 2 }}
+                  >
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      sx={{
+                        fontWeight: 'bold',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        pt: '28px',
+                      }}
+                    >
                       {room.title}
                     </Typography>
                     <Chip label={formatSeriesKey(room.seriesKey)} color="secondary" size="small" sx={{ textTransform: 'capitalize' }} />
