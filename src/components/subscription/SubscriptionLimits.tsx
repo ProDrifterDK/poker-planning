@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Box, Typography, LinearProgress, Button, Tooltip } from '@mui/material';
+import { Box, Typography, LinearProgress, Button, Tooltip, useTheme } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
@@ -39,6 +39,7 @@ const getLocalizedRoute = (route: string): string => {
  * Component to display the current subscription limits
  */
 export default function SubscriptionLimits() {
+  const theme = useTheme();
   const { currentSubscription, getCurrentPlan } = useSubscriptionStore();
   const { t } = useTranslation('common');
   
@@ -60,9 +61,9 @@ export default function SubscriptionLimits() {
     <Box
       sx={{
         p: 1.5,
-        border: '1px dashed',
+        border: `1px dashed ${theme.palette.divider}`,
         borderColor: 'divider',
-        borderRadius: 1,
+        borderRadius: theme.shape.borderRadius,
         bgcolor: 'background.paper',
         mb: 2,
         width: '100%',
@@ -70,7 +71,7 @@ export default function SubscriptionLimits() {
         opacity: 0.9,
         '&:hover': {
           opacity: 1,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+          boxShadow: theme.shadows[1]
         },
         transition: 'opacity 0.2s, box-shadow 0.2s'
       }}

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { PAYPAL_CONFIG } from '@/lib/paypalConfig';
 import { SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
 // Los tipos ahora están definidos en src/types/paypal.d.ts
@@ -15,6 +16,7 @@ const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({
   onSuccess,
   onError 
 }) => {
+  const theme = useTheme();
   const paypalButtonRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -164,8 +166,8 @@ const PayPalSubscriptionButton: React.FC<PayPalSubscriptionButtonProps> = ({
   
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 100 }}>
-        <CircularProgress size={30} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: theme.spacing(25) }}>
+        <CircularProgress size={theme.spacing(7.5)} />
       </Box>
     );
   }

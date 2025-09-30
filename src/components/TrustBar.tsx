@@ -1,18 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { useTheme } from '@emotion/react';
 import AnimatedSection from './AnimatedSection';
 
 // TrustBar container - full width section below hero
 const TrustBarContainer = styled.section`
   background: ${props => props.theme.colors.background.paper};
-  background: ${props => props.theme.palette.background.paper};
-  padding: ${props => props.theme.spacing(8, 0)};
-  border-top: 1px solid ${props => props.theme.palette.divider};
+  padding: ${props => `${props.theme.spacing(8)} 0`};
+  border-top: 1px solid ${props => props.theme.colors.border.main};
 
-  @media (max-width: 768px) {
-    padding: ${props => props.theme.spacing(6, 0)};
+  @media (max-width: ${props => props.theme.breakpoints.values.md}px) {
+    padding: ${props => `${props.theme.spacing(6)} 0`};
   }
 `;
 
@@ -20,25 +18,25 @@ const TrustBarContainer = styled.section`
 const TrustBarContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: ${props => props.theme.spacing(0, 6)};
+  padding: ${props => `0 ${props.theme.spacing(6)}`};
   text-align: center;
 
-  @media (max-width: 768px) {
-    padding: ${props => props.theme.spacing(0, 4)};
+  @media (max-width: ${props => props.theme.breakpoints.values.md}px) {
+    padding: ${props => `0 ${props.theme.spacing(4)}`};
   }
 `;
 
 // Heading section
 const TrustBarHeading = styled.h2`
-  font-family: ${props => props.theme.typography.fontFamily};
-  font-size: ${props => props.theme.typography.h4.fontSize};
-  font-weight: ${props => props.theme.typography.h4.fontWeight};
-  line-height: ${props => props.theme.typography.h4.lineHeight};
-  color: ${props => props.theme.palette.text.secondary};
-  margin: ${props => props.theme.spacing(0, 0, 8)};
+  font-family: ${props => props.theme.typography.fontFamily.heading};
+  font-size: ${props => props.theme.typography.fontSizes.h4};
+  font-weight: ${props => props.theme.typography.fontWeights.bold};
+  line-height: ${props => props.theme.typography.lineHeights.heading};
+  color: ${props => props.theme.colors.text.secondary};
+  margin: ${props => `0 0 ${props.theme.spacing(8)}`};
 
-  @media (max-width: 768px) {
-    font-size: ${props => props.theme.typography.body1.fontSize};
+  @media (max-width: ${props => props.theme.breakpoints.values.md}px) {
+    font-size: ${props => props.theme.typography.fontSizes.body};
     margin-bottom: ${props => props.theme.spacing(6)};
   }
 `;
@@ -51,12 +49,12 @@ const LogoGrid = styled.div`
   align-items: center;
   justify-items: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: ${props => props.theme.breakpoints.values.md}px) {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: ${props => props.theme.spacing(4)};
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: ${props => props.theme.breakpoints.values.sm}px) {
     grid-template-columns: repeat(2, 1fr);
   }
 `;
@@ -68,31 +66,31 @@ const LogoPlaceholder = styled.div`
   justify-content: center;
   width: 100%;
   height: 60px;
-  background: ${props => props.theme.palette.background.default};
-  border: 2px solid ${props => props.theme.palette.divider};
-  border-radius: ${props => props.theme.shape.borderRadius}px;
+  background: ${props => props.theme.colors.background.default};
+  border: 2px solid ${props => props.theme.colors.border.main};
+  border-radius: ${props => props.theme.borderRadius.medium};
   filter: grayscale(100%);
   transition: all 0.3s ease;
   cursor: pointer;
 
   &:hover {
     filter: grayscale(80%);
-    border-color: ${props => props.theme.palette.primary.main};
+    border-color: ${props => props.theme.colors.primary.main};
     transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows[1]};
+    box-shadow: ${props => props.theme.shadows.small};
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: ${props => props.theme.breakpoints.values.md}px) {
     height: 50px;
   }
 `;
 
 // Placeholder logo content
 const LogoContent = styled.div`
-  font-family: ${props => props.theme.typography.fontFamily};
-  font-size: ${props => props.theme.typography.caption.fontSize};
-  font-weight: ${props => props.theme.typography.caption.fontWeight};
-  color: ${props => props.theme.palette.text.disabled};
+  font-family: ${props => props.theme.typography.fontFamily.body};
+  font-size: ${props => props.theme.typography.fontSizes.caption};
+  font-weight: ${props => props.theme.typography.fontWeights.medium};
+  color: ${props => props.theme.colors.text.disabled};
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;

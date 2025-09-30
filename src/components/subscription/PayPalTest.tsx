@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { PAYPAL_CONFIG } from '@/lib/paypalConfig';
 // Los tipos ahora están definidos en src/types/paypal.d.ts
 
 const PayPalTest: React.FC = () => {
+  const theme = useTheme();
   const paypalButtonRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,8 +118,8 @@ const PayPalTest: React.FC = () => {
   
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 100 }}>
-        <CircularProgress size={30} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: theme.spacing(25) }}>
+        <CircularProgress size={theme.spacing(7.5)} />
       </Box>
     );
   }

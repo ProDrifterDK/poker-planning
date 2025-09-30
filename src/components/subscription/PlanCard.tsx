@@ -16,7 +16,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
+  useTheme
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -36,6 +37,7 @@ interface PlanCardProps {
 }
 
 export default function PlanCard({ plan: initialPlan, planKey, isCurrentPlan, userId }: PlanCardProps) {
+  const theme = useTheme();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showPayPalButton, setShowPayPalButton] = useState(false);
@@ -155,7 +157,7 @@ export default function PlanCard({ plan: initialPlan, planKey, isCurrentPlan, us
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: isCurrentPlan ? '2px solid' : 'none',
+          border: isCurrentPlan ? `2px solid ${theme.palette.primary.main}` : 'none',
           borderColor: isCurrentPlan ? 'primary.main' : 'transparent',
           position: 'relative'
         }}
@@ -166,8 +168,8 @@ export default function PlanCard({ plan: initialPlan, planKey, isCurrentPlan, us
             color="primary"
             sx={{
               position: 'absolute',
-              top: 10,
-              right: 10
+              top: theme.spacing(1.25),
+              right: theme.spacing(1.25)
             }}
           />
         )}
@@ -313,7 +315,7 @@ export default function PlanCard({ plan: initialPlan, planKey, isCurrentPlan, us
                 disabled={processing || isCurrentPlan}
               >
                 {processing ? (
-                  <CircularProgress size={24} />
+                  <CircularProgress size={theme.spacing(3)} />
                 ) : isCurrentPlan ? (
                   t('subscription.currentPlan', 'Plan Actual')
                 ) : plan.price === 0 ? (
