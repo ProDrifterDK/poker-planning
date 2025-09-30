@@ -256,7 +256,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
         {currentUser && variant === 'app' ? (
           // Show contextual title for authenticated users in app variant
           <AppTitle>
-            <AppTitleTypography variant="h6">
+            <AppTitleTypography variant="h2">
               {t('header.appTitle')}
             </AppTitleTypography>
           </AppTitle>
