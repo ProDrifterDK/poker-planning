@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, usePathname } from 'next/navigation';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../styles/theme';
+import { useTheme } from '@emotion/react';
 import { Button } from './Button';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,23 +19,22 @@ const HeaderContainer = styled.header`
   position: sticky;
   top: 0;
   z-index: 1000;
-  background-color: ${emotionTheme.colors.background.default};
-  border-bottom: 1px solid ${emotionTheme.colors.border.main};
+  background-color: ${props => props.theme.colors.background.default};
+  border-bottom: 1px solid ${props => props.theme.colors.border.main};
   backdrop-filter: blur(10px);
-  background: rgba(18, 18, 18, 0.95);
 `;
 
 const HeaderContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 ${emotionTheme.spacing(4)};
+  padding: 0 ${({ theme }) => theme.spacing(4)};
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 80px;
 
   @media (max-width: 768px) {
-    padding: 0 ${emotionTheme.spacing(3)};
+    padding: 0 ${({ theme }) => theme.spacing(3)};
     height: 70px;
   }
 `;
@@ -58,19 +57,19 @@ const Logo = styled(Image)`
 const Navigation = styled.nav<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
-  gap: ${emotionTheme.spacing(8)};
+  gap: ${({ theme }) => theme.spacing(8)};
 
   @media (max-width: 768px) {
     position: fixed;
     top: 70px;
     left: 0;
     right: 0;
-    background-color: ${emotionTheme.colors.background.paper};
-    border-top: 1px solid ${emotionTheme.colors.border.main};
-    border-bottom: 1px solid ${emotionTheme.colors.border.main};
+    background-color: ${props => props.theme.colors.background.paper};
+    border-top: 1px solid ${props => props.theme.colors.border.main};
+    border-bottom: 1px solid ${props => props.theme.colors.border.main};
     flex-direction: column;
-    gap: ${emotionTheme.spacing(4)};
-    padding: ${emotionTheme.spacing(6)};
+    gap: ${({ theme }) => theme.spacing(4)};
+    padding: ${({ theme }) => theme.spacing(6)};
     transform: ${({ isOpen }) => isOpen ? 'translateY(0)' : 'translateY(-100%)'};
     opacity: ${({ isOpen }) => isOpen ? 1 : 0};
     visibility: ${({ isOpen }) => isOpen ? 'visible' : 'hidden'};
@@ -94,11 +93,11 @@ const AppTitle = styled.div`
 const ActionsContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: ${emotionTheme.spacing(4)};
+  gap: ${({ theme }) => theme.spacing(4)};
   flex-shrink: 0;
 
   @media (max-width: 768px) {
-    gap: ${emotionTheme.spacing(2)};
+    gap: ${({ theme }) => theme.spacing(2)};
   }
 `;
 
@@ -107,15 +106,15 @@ const HamburgerButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  padding: ${emotionTheme.spacing(2)};
-  color: ${emotionTheme.colors.text.primary};
+  padding: ${({ theme }) => theme.spacing(2)};
+  color: ${props => props.theme.colors.text.primary};
 
   @media (max-width: 768px) {
     display: block;
   }
 
   &:focus {
-    outline: 2px solid ${emotionTheme.colors.primary.main};
+    outline: 2px solid ${props => props.theme.colors.primary.main};
     outline-offset: 2px;
   }
 `;
@@ -123,7 +122,7 @@ const HamburgerButton = styled.button`
 const HamburgerIcon = styled.div<{ isOpen: boolean }>`
   width: 24px;
   height: 2px;
-  background-color: ${emotionTheme.colors.text.primary};
+  background-color: ${props => props.theme.colors.text.primary};
   position: relative;
   transition: all 0.3s ease;
 
@@ -133,7 +132,7 @@ const HamburgerIcon = styled.div<{ isOpen: boolean }>`
     position: absolute;
     width: 24px;
     height: 2px;
-    background-color: ${emotionTheme.colors.text.primary};
+    background-color: ${props => props.theme.colors.text.primary};
     transition: all 0.3s ease;
   }
 
@@ -178,6 +177,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { currentUser } = useAuth();
+  const theme = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Auto-detect variant based on current route if not explicitly provided
@@ -236,8 +236,8 @@ export default function Header({ variant: propVariant }: HeaderProps) {
               variant="h6"
               sx={{
                 fontWeight: 'bold',
-                color: emotionTheme.colors.text.primary,
-                fontFamily: emotionTheme.typography.fontFamily.heading
+                color: theme.colors.text.primary,
+                fontFamily: theme.typography.fontFamily.heading
               }}
             >
               {t('header.appTitle')}
@@ -263,21 +263,21 @@ export default function Header({ variant: propVariant }: HeaderProps) {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: emotionTheme.colors.text.primary,
+                    color: theme.colors.text.primary,
                     textDecoration: 'none',
-                    fontFamily: emotionTheme.typography.fontFamily.body,
-                    fontSize: emotionTheme.typography.fontSizes.body,
-                    fontWeight: emotionTheme.typography.fontWeights.regular,
+                    fontFamily: theme.typography.fontFamily.body,
+                    fontSize: theme.typography.fontSizes.body,
+                    fontWeight: theme.typography.fontWeights.regular,
                     transition: 'color 0.2s ease',
                     position: 'relative',
                     cursor: 'pointer',
                     padding: 0
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = emotionTheme.colors.primary.main;
+                    e.currentTarget.style.color = theme.colors.primary.main;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = emotionTheme.colors.text.primary;
+                    e.currentTarget.style.color = theme.colors.text.primary;
                   }}
                 >
                   {t(link.labelKey)}

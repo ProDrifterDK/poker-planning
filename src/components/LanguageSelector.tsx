@@ -4,9 +4,68 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { Box } from '@mui/material';
+import styled from '@emotion/styled';
 import { i18n } from '../../next-i18next.config.js';
 import { useState, useEffect } from 'react';
+import { darkEmotionTheme } from '../styles/theme';
+
+// Styled components using Sleek Innovator design system
+const LanguageSelectorContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: ${props => props.theme.colors.background.paper};
+  padding: 4px 8px;
+  border-radius: ${darkEmotionTheme.borderRadius.medium};
+  border: 1px solid ${props => props.theme.colors.border.main};
+  transition: all 0.3s ease;
+`;
+
+const FlagContainer = styled.div<{ $isActive: boolean }>`
+  opacity: ${props => props.$isActive ? 1 : 0.5};
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SwitchContainer = styled.div`
+  position: relative;
+  width: 40px;
+  height: 20px;
+  margin: 0 4px;
+`;
+
+const SwitchTrack = styled.div<{ $isEnglish: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: ${props =>
+    props.$isEnglish
+      ? props.theme.colors.border.main
+      : props.theme.colors.primary.main
+  };
+  border-radius: 10px;
+  transition: all 0.3s ease;
+`;
+
+const SwitchThumb = styled.div<{ $isEnglish: boolean }>`
+  position: absolute;
+  top: 2px;
+  left: ${props => props.$isEnglish ? '22px' : '2px'};
+  width: 16px;
+  height: 16px;
+  background-color: ${props =>
+    props.$isEnglish
+      ? props.theme.colors.primary.main
+      : props.theme.colors.text.secondary
+  };
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: ${props => props.theme.shadows.small};
+`;
 
 export default function LanguageSelector() {
   const router = useRouter();
@@ -69,73 +128,22 @@ export default function LanguageSelector() {
   
   const isEnglish = i18nInstance.language === 'en';
   
-  // Custom switch track colors
-  const trackColor = isEnglish ? '#004489' : '#e4312b';
-  const thumbColor = isEnglish ? '#dc002e' : '#ffdf00';
-  
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)', // Much whiter background
-      padding: '4px 8px',
-      borderRadius: '8px',
-      border: '1px solid rgba(0, 0, 0, 0.1)', // Subtle border
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Add a subtle shadow
-    }}>
-      <Box 
-        sx={{
-          opacity: isEnglish ? 0.5 : 1,
-          transition: 'all 0.3s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Image 
-          src="/images/icons/spain-flag.webp" 
-          alt="Español" 
-          width={30} 
-          height={30} 
+    <LanguageSelectorContainer>
+      <FlagContainer $isActive={!isEnglish}>
+        <Image
+          src="/images/icons/spain-flag.webp"
+          alt="Español"
+          width={30}
+          height={30}
           style={{ borderRadius: '2px' }}
         />
-      </Box>
-      
+      </FlagContainer>
+
       {/* Custom Switch */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: 40,
-          height: 20,
-          mx: 1,
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: trackColor,
-            borderRadius: 10,
-            transition: 'all 0.3s',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 2,
-            left: isEnglish ? 22 : 2,
-            width: 16,
-            height: 16,
-            backgroundColor: thumbColor,
-            borderRadius: '50%',
-            transition: 'all 0.3s',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          }}
-        />
+      <SwitchContainer>
+        <SwitchTrack $isEnglish={isEnglish} />
+        <SwitchThumb $isEnglish={isEnglish} />
         <input
           type="checkbox"
           checked={isEnglish}
@@ -149,25 +157,17 @@ export default function LanguageSelector() {
             zIndex: 1,
           }}
         />
-      </Box>
-      
-      <Box 
-        sx={{
-          opacity: isEnglish ? 1 : 0.5,
-          transition: 'all 0.3s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Image 
-          src="/images/icons/britain-flag.webp" 
-          alt="English" 
-          width={30} 
-          height={30} 
+      </SwitchContainer>
+
+      <FlagContainer $isActive={isEnglish}>
+        <Image
+          src="/images/icons/britain-flag.webp"
+          alt="English"
+          width={30}
+          height={30}
           style={{ borderRadius: '2px' }}
         />
-      </Box>
-    </Box>
+      </FlagContainer>
+    </LanguageSelectorContainer>
   );
 }

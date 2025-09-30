@@ -2,7 +2,6 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { InformationCard } from './InfoCard';
-import { emotionTheme } from '../styles/theme';
 import AnimatedSection from './AnimatedSection';
 import {
   User,
@@ -10,146 +9,38 @@ import {
   Activity,
   Github,
   Cloud,
-  FloppyDiskArrowIn
+  FloppyDiskArrowIn,
 } from 'iconoir-react';
+import { Grid } from '@mui/material';
 
-// Styled container for the entire feature showcase section
 const ShowcaseContainer = styled.section`
-  padding: ${emotionTheme.spacing(20)} 0 ${emotionTheme.spacing(24)} 0;
-  background-color: ${emotionTheme.colors.background.default};
+  padding: ${({ theme }) => theme.spacing(20)} 0;
+  background-color: ${({ theme }) => theme.colors.background.default};
   width: 100%;
 
   @media (max-width: 900px) {
-    padding: ${emotionTheme.spacing(16)} 0 ${emotionTheme.spacing(20)} 0;
+    padding: ${({ theme }) => theme.spacing(16)} 0;
   }
 `;
 
-// Content wrapper to maintain max-width constraint for content
 const ShowcaseContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 ${emotionTheme.spacing(6)};
-
-  @media (max-width: 900px) {
-    padding: 0 ${emotionTheme.spacing(4)};
-  }
+  padding: 0 ${({ theme }) => theme.spacing(4)};
 `;
 
-// Styled section title
 const SectionTitle = styled.h2`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h2};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  line-height: ${emotionTheme.typography.lineHeights.heading};
-  color: ${emotionTheme.colors.text.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.h2};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  line-height: ${({ theme }) => theme.typography.lineHeights.heading};
+  color: ${({ theme }) => theme.colors.text.primary};
   text-align: center;
-  margin: 0 0 ${emotionTheme.spacing(12)} 0;
+  margin-bottom: ${({ theme }) => theme.spacing(12)};
 
   @media (max-width: 600px) {
-    font-size: ${emotionTheme.typography.fontSizes.h3};
-    margin-bottom: ${emotionTheme.spacing(8)};
-  }
-`;
-
-// Styled Bento Grid container
-const BentoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: 200px;
-  gap: ${emotionTheme.spacing(4)};
-  margin-bottom: ${emotionTheme.spacing(8)};
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 180px;
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 160px;
-    gap: ${emotionTheme.spacing(3)};
-  }
-
-  @media (max-width: 400px) {
-    grid-template-columns: 1fr;
-    grid-auto-rows: 140px;
-  }
-`;
-
-// Styled grid items with different sizes for Bento layout
-const GridItem = styled.div<{ size: 'small' | 'medium' | 'large' | 'hero' }>`
-  grid-column: ${({ size }) => {
-    switch (size) {
-      case 'hero':
-        return 'span 3';
-      case 'large':
-        return 'span 2';
-      case 'medium':
-        return 'span 2';
-      case 'small':
-      default:
-        return 'span 1';
-    }
-  }};
-
-  grid-row: ${({ size }) => {
-    switch (size) {
-      case 'hero':
-        return 'span 2';
-      case 'large':
-        return 'span 1';
-      case 'medium':
-        return 'span 1';
-      case 'small':
-      default:
-        return 'span 1';
-    }
-  }};
-
-  @media (max-width: 1200px) {
-    grid-column: ${({ size }) => {
-      switch (size) {
-        case 'hero':
-          return 'span 2';
-        case 'large':
-          return 'span 2';
-        case 'medium':
-          return 'span 1';
-        case 'small':
-        default:
-          return 'span 1';
-      }
-    }};
-  }
-
-  @media (max-width: 900px) {
-    grid-column: ${({ size }) => {
-      switch (size) {
-        case 'hero':
-          return 'span 3';
-        case 'large':
-          return 'span 2';
-        case 'medium':
-          return 'span 1';
-        case 'small':
-        default:
-          return 'span 1';
-      }
-    }};
-  }
-
-  @media (max-width: 600px) {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
-  @media (max-width: 400px) {
-    grid-column: span 1;
-    grid-row: span 1;
+    font-size: ${({ theme }) => theme.typography.fontSizes.h3};
+    margin-bottom: ${({ theme }) => theme.spacing(8)};
   }
 `;
 
@@ -168,10 +59,10 @@ const FeatureIcon = styled.div`
   justify-content: center;
   width: 64px;
   height: 64px;
-  border-radius: ${emotionTheme.borderRadius.large};
-  background-color: ${emotionTheme.colors.primary.main};
-  color: ${emotionTheme.colors.primary.contrastText};
-  margin-bottom: ${emotionTheme.spacing(4)};
+  border-radius: ${({ theme }) => theme.borderRadius.large};
+  background-color: ${({ theme }) => theme.colors.primary.main};
+  color: ${({ theme }) => theme.colors.primary.contrastText};
+  margin-bottom: ${({ theme }) => theme.spacing(4)};
   transition: all 0.3s ease-in-out;
   cursor: pointer;
 
@@ -181,7 +72,7 @@ const FeatureIcon = styled.div`
   }
 
   &:hover {
-    background-color: ${emotionTheme.colors.primary.dark};
+    background-color: ${({ theme }) => theme.colors.primary.dark};
     transform: translateY(-2px) scale(1.1);
     box-shadow: 0 8px 25px rgba(18, 151, 253, 0.4), 0 4px 12px rgba(18, 151, 253, 0.2);
   }
@@ -193,7 +84,7 @@ const FeatureIcon = styled.div`
   @media (max-width: 600px) {
     width: 48px;
     height: 48px;
-    margin-bottom: ${emotionTheme.spacing(3)};
+    margin-bottom: ${({ theme }) => theme.spacing(3)};
 
     svg {
       font-size: 24px;
@@ -247,12 +138,12 @@ export const FeatureShowcase: React.FC = () => {
 
   // Define grid item configurations with different sizes
   const gridConfigs = [
-    { size: 'hero' as const, featureIndex: 0 }, // Real-time collaboration (hero)
-    { size: 'large' as const, featureIndex: 1 }, // Flexible estimation
-    { size: 'medium' as const, featureIndex: 2 }, // Analytics
-    { size: 'large' as const, featureIndex: 3 }, // Integrations
-    { size: 'small' as const, featureIndex: 4 }, // Remote-first
-    { size: 'medium' as const, featureIndex: 5 }, // History
+    { xs: 12, md: 8, featureIndex: 0, isHero: true },
+    { xs: 12, md: 4, featureIndex: 1 },
+    { xs: 12, md: 4, featureIndex: 2 },
+    { xs: 12, md: 8, featureIndex: 3 },
+    { xs: 12, md: 6, featureIndex: 4 },
+    { xs: 12, md: 6, featureIndex: 5 },
   ];
 
   return (
@@ -262,30 +153,39 @@ export const FeatureShowcase: React.FC = () => {
           <SectionTitle>{t('featureShowcase.title')}</SectionTitle>
         </AnimatedSection>
 
-        <AnimatedSection animation="fade-up" delay={0.2}>
-          <BentoGrid>
-            {gridConfigs.map((config, index) => {
-              const feature = features[config.featureIndex];
-              if (!feature) return null;
+        <Grid container spacing={4}>
+          {gridConfigs.map((config, index) => {
+            const feature = features[config.featureIndex];
+            if (!feature) return null;
 
-              return (
+            return (
+              <Grid item xs={config.xs} md={config.md} key={feature.key}>
                 <AnimatedSection
-                  key={feature.key}
                   animation="scale-up"
-                  delay={0.3 + (index * 0.1)}
+                  delay={0.2 + index * 0.1}
+                  style={{ height: '100%' }}
                 >
-                  <GridItem size={config.size}>
-                    <InformationCard
-                      icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
-                      title={t(feature.titleKey)}
-                      text={t(feature.descriptionKey)}
-                    />
-                  </GridItem>
+                  <InformationCard
+                    icon={<FeatureIcon>{feature.icon}</FeatureIcon>}
+                    title={t(feature.titleKey)}
+                    text={t(feature.descriptionKey)}
+                    sx={{
+                      height: '100%',
+                      bgcolor: config.isHero ? 'primary.main' : 'background.paper',
+                      color: config.isHero ? 'primary.contrastText' : 'text.primary',
+                      '& .MuiTypography-root': {
+                        color: config.isHero ? 'primary.contrastText' : 'text.primary',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: config.isHero ? 'primary.contrastText' : 'primary.main',
+                      }
+                    }}
+                  />
                 </AnimatedSection>
-              );
-            })}
-          </BentoGrid>
-        </AnimatedSection>
+              </Grid>
+            );
+          })}
+        </Grid>
       </ShowcaseContent>
     </ShowcaseContainer>
   );

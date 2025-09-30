@@ -3,7 +3,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../styles/theme';
 import Link from 'next/link';
 import {
   Twitter,
@@ -16,27 +15,27 @@ type IconComponent = React.ComponentType<{ width?: string | number; height?: str
 
 // Styled components using the design system
 const FooterContainer = styled.footer`
-  background-color: ${emotionTheme.colors.background.paper};
-  border-top: 1px solid ${emotionTheme.colors.border.main};
-  padding: ${emotionTheme.spacing(12)} 0 ${emotionTheme.spacing(6)};
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.main};
+  padding: ${({ theme }) => theme.spacing(12)} 0 ${({ theme }) => theme.spacing(6)};
 `;
 
 const FooterContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 ${emotionTheme.spacing(4)};
+  padding: 0 ${({ theme }) => theme.spacing(4)};
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: ${emotionTheme.spacing(8)};
+  gap: ${({ theme }) => theme.spacing(8)};
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr 1fr 1fr;
-    gap: ${emotionTheme.spacing(6)};
+    gap: ${({ theme }) => theme.spacing(6)};
   }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: ${emotionTheme.spacing(6)};
+    gap: ${({ theme }) => theme.spacing(6)};
     text-align: center;
   }
 `;
@@ -44,53 +43,53 @@ const FooterContent = styled.div`
 const FooterSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${emotionTheme.spacing(3)};
+  gap: ${({ theme }) => theme.spacing(3)};
 `;
 
 const FooterTitle = styled.h3`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  color: ${emotionTheme.colors.text.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
-  margin-bottom: ${emotionTheme.spacing(2)};
+  margin-bottom: ${({ theme }) => theme.spacing(2)};
 `;
 
 const FooterLink = styled(Link)`
-  color: ${emotionTheme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text.secondary};
   text-decoration: none;
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
   line-height: 1.6;
   transition: color 0.2s ease;
 
   &:hover {
-    color: ${emotionTheme.colors.primary.main};
+    color: ${({ theme }) => theme.colors.primary.main};
   }
 `;
 
 const CompanyInfo = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${emotionTheme.spacing(2)};
+  gap: ${({ theme }) => theme.spacing(2)};
 `;
 
 const CompanyName = styled.h2`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h4};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  color: ${emotionTheme.colors.text.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.h4};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
-  background: linear-gradient(135deg, ${emotionTheme.colors.primary.main}, ${emotionTheme.colors.secondary.main});
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary.main}, ${({ theme }) => theme.colors.secondary.main});
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 `;
 
 const CompanyDescription = styled.p`
-  color: ${emotionTheme.colors.text.secondary};
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
   line-height: 1.6;
   margin: 0;
   max-width: 300px;
@@ -98,7 +97,7 @@ const CompanyDescription = styled.p`
 
 const SocialLinks = styled.div`
   display: flex;
-  gap: ${emotionTheme.spacing(3)};
+  gap: ${({ theme }) => theme.spacing(3)};
 
   @media (max-width: 768px) {
     justify-content: center;
@@ -111,10 +110,10 @@ const SocialLink = styled.a`
   justify-content: center;
   width: 40px;
   height: 40px;
-  background-color: ${emotionTheme.colors.background.default};
-  border: 1px solid ${emotionTheme.colors.border.main};
-  border-radius: ${emotionTheme.borderRadius.medium};
-  color: ${emotionTheme.colors.text.secondary};
+  background-color: ${({ theme }) => theme.colors.background.default};
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  color: ${({ theme }) => theme.colors.text.secondary};
   text-decoration: none;
   transition: all 0.3s ease-in-out;
   position: relative;
@@ -136,9 +135,9 @@ const SocialLink = styled.a`
   }
 
   &:hover {
-    background-color: ${emotionTheme.colors.primary.main};
-    border-color: ${emotionTheme.colors.primary.main};
-    color: ${emotionTheme.colors.text.primary};
+    background-color: ${({ theme }) => theme.colors.primary.main};
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    color: ${({ theme }) => theme.colors.text.primary};
     transform: translateY(-3px) scale(1.1);
     box-shadow: 0 8px 25px rgba(18, 151, 253, 0.3), 0 4px 12px rgba(18, 151, 253, 0.2);
   }
@@ -147,29 +146,29 @@ const SocialLink = styled.a`
 const BottomSection = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: ${emotionTheme.spacing(6)} ${emotionTheme.spacing(4)} 0;
-  border-top: 1px solid ${emotionTheme.colors.border.main};
+  padding: ${({ theme }) => theme.spacing(6)} ${({ theme }) => theme.spacing(4)} 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.border.main};
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: ${emotionTheme.spacing(4)};
+    gap: ${({ theme }) => theme.spacing(4)};
     text-align: center;
   }
 `;
 
 const Copyright = styled.p`
-  color: ${emotionTheme.colors.text.secondary};
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.caption};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.caption};
   margin: 0;
 `;
 
 const LegalLinks = styled.div`
   display: flex;
-  gap: ${emotionTheme.spacing(4)};
+  gap: ${({ theme }) => theme.spacing(4)};
 
   @media (max-width: 768px) {
     flex-wrap: wrap;
@@ -178,14 +177,14 @@ const LegalLinks = styled.div`
 `;
 
 const LegalLink = styled(Link)`
-  color: ${emotionTheme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text.secondary};
   text-decoration: none;
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.caption};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  font-size: ${({ theme }) => theme.typography.fontSizes.caption};
   transition: color 0.2s ease;
 
   &:hover {
-    color: ${emotionTheme.colors.primary.main};
+    color: ${({ theme }) => theme.colors.primary.main};
   }
 `;
 

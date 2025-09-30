@@ -26,7 +26,7 @@ export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
   };
 
   if (delay > 0) {
-    dataAttributes['data-aos-delay'] = delay;
+    dataAttributes['data-aos-delay'] = delay * 1000;
   }
 
   if (duration && duration > 0) {

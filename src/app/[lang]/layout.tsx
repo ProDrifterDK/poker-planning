@@ -44,7 +44,7 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning={true}>
         <Providers lang={lang}>
           <>
             <Header />

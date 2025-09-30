@@ -2,8 +2,21 @@
 
 import { createContext, useState, useMemo, useContext, ReactNode } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as EmotionThemeProvider } from '@emotion/react';
 import CssBaseline from '@mui/material/CssBaseline';
-import { lightTheme, darkTheme } from '../styles/theme';
+import { lightTheme, darkTheme, lightEmotionTheme, darkEmotionTheme } from '../styles/theme';
+import { EmotionTheme } from '../types/theme';
+
+// Extend the Emotion theme interface
+declare module '@emotion/react' {
+  export interface Theme extends EmotionTheme {
+    colors: EmotionTheme['colors'];
+    typography: EmotionTheme['typography'];
+    spacing: EmotionTheme['spacing'];
+    borderRadius: EmotionTheme['borderRadius'];
+    shadows: EmotionTheme['shadows'];
+  }
+}
 
 type ThemeContextType = {
     toggleTheme: () => void;
@@ -34,13 +47,16 @@ export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const theme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode]);
+    const muiTheme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode]);
+    const emotionTheme = useMemo(() => (mode === 'light' ? lightEmotionTheme : darkEmotionTheme), [mode]);
 
     return (
         <ThemeContext.Provider value={{ toggleTheme, mode }}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                {children}
+            <ThemeProvider theme={muiTheme}>
+                <EmotionThemeProvider theme={emotionTheme}>
+                    <CssBaseline />
+                    {children}
+                </EmotionThemeProvider>
             </ThemeProvider>
         </ThemeContext.Provider>
     );

@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
-import { emotionTheme } from '../styles/theme';
+import { darkEmotionTheme } from '../styles/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AnimatedSection from './AnimatedSection';
 
 // Styled container for the pricing section
 const PricingSection = styled.section`
-  padding: ${emotionTheme.spacing(20)} ${emotionTheme.spacing(6)};
-  background-color: ${emotionTheme.colors.background.default};
+  padding: ${darkEmotionTheme.spacing(20)} ${darkEmotionTheme.spacing(6)};
+  background-color: ${({ theme }) => theme.colors.background.default};
   text-align: center;
 
   @media (max-width: 900px) {
-    padding: ${emotionTheme.spacing(15)} ${emotionTheme.spacing(4)};
+    padding: ${darkEmotionTheme.spacing(15)} ${darkEmotionTheme.spacing(4)};
   }
 `;
 
@@ -21,36 +21,36 @@ const PricingSection = styled.section`
 const PricingGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${emotionTheme.spacing(8)};
+  gap: ${darkEmotionTheme.spacing(8)};
   max-width: 1200px;
   margin: 0 auto;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: ${emotionTheme.spacing(6)};
+    gap: ${darkEmotionTheme.spacing(6)};
   }
 `;
 
 // Styled section title
 const SectionTitle = styled.h2`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h2};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  color: ${emotionTheme.colors.text.primary};
-  margin-bottom: ${emotionTheme.spacing(4)};
-  line-height: ${emotionTheme.typography.lineHeights.heading};
+  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
+  font-size: ${darkEmotionTheme.typography.fontSizes.h2};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${darkEmotionTheme.spacing(4)};
+  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
 `;
 
 // Styled section subtitle
 const SectionSubtitle = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  color: ${emotionTheme.colors.text.secondary};
-  margin-bottom: ${emotionTheme.spacing(12)};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${darkEmotionTheme.spacing(12)};
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  line-height: ${emotionTheme.typography.lineHeights.body};
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
 `;
 
 // Styled billing toggle container
@@ -58,41 +58,41 @@ const BillingToggleContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${emotionTheme.spacing(2)};
-  margin-bottom: ${emotionTheme.spacing(8)};
+  gap: ${darkEmotionTheme.spacing(2)};
+  margin-bottom: ${darkEmotionTheme.spacing(8)};
 `;
 
 // Styled billing toggle
 const BillingToggle = styled.div<{ isYearly: boolean }>`
   display: flex;
   align-items: center;
-  background-color: ${emotionTheme.colors.background.paper};
-  border: 1px solid ${emotionTheme.colors.border.main};
-  border-radius: ${emotionTheme.borderRadius.large};
-  padding: ${emotionTheme.spacing(1)};
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
+  padding: ${darkEmotionTheme.spacing(1)};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${emotionTheme.colors.primary.main};
+    border-color: ${({ theme }) => theme.colors.primary.main};
   }
 `;
 
 // Styled toggle option
 const ToggleOption = styled.button<{ active: boolean }>`
-  background: ${({ active }) => active ? emotionTheme.colors.primary.main : 'transparent'};
-  color: ${({ active }) => active ? emotionTheme.colors.text.primary : emotionTheme.colors.text.secondary};
+  background: ${({ active, theme }) => active ? theme.colors.primary.main : 'transparent'};
+  color: ${({ active, theme }) => active ? theme.colors.text.primary : theme.colors.text.secondary};
   border: none;
-  padding: ${emotionTheme.spacing(2)} ${emotionTheme.spacing(4)};
-  border-radius: ${emotionTheme.borderRadius.medium};
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  font-weight: ${emotionTheme.typography.fontWeights.medium};
+  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(4)};
+  border-radius: ${darkEmotionTheme.borderRadius.medium};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: ${({ active }) => active ? emotionTheme.colors.primary.main : emotionTheme.colors.border.light};
+    background-color: ${({ active, theme }) => active ? theme.colors.primary.main : theme.colors.border.light};
   }
 `;
 
@@ -101,32 +101,32 @@ const PriceDisplay = styled.div`
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: ${emotionTheme.spacing(2)};
-  margin-bottom: ${emotionTheme.spacing(4)};
+  gap: ${darkEmotionTheme.spacing(2)};
+  margin-bottom: ${darkEmotionTheme.spacing(4)};
 `;
 
 // Styled price amount
 const PriceAmount = styled.span`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
+  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
   font-size: 3rem;
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  color: ${emotionTheme.colors.text.primary};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
   line-height: 1;
 `;
 
 // Styled price period
 const PricePeriod = styled.span`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  color: ${emotionTheme.colors.text.secondary};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
 // Styled savings badge
 const SavingsBadge = styled.span`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.caption};
-  color: ${emotionTheme.colors.success.main};
-  font-weight: ${emotionTheme.typography.fontWeights.medium};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
+  color: ${({ theme }) => theme.colors.success.main};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
 `;
 
 // Styled popular badge
@@ -135,13 +135,13 @@ const PopularBadge = styled.div`
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(45deg, ${emotionTheme.colors.primary.main}, ${emotionTheme.colors.primary.dark});
-  color: ${emotionTheme.colors.text.primary};
-  padding: ${emotionTheme.spacing(1)} ${emotionTheme.spacing(3)};
-  border-radius: ${emotionTheme.borderRadius.large};
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.caption};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
+  background: linear-gradient(45deg, ${({ theme }) => theme.colors.primary.main}, ${({ theme }) => theme.colors.primary.dark});
+  color: ${({ theme }) => theme.colors.text.primary};
+  padding: ${darkEmotionTheme.spacing(1)} ${darkEmotionTheme.spacing(3)};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
   text-transform: uppercase;
   letter-spacing: 0.5px;
   z-index: 1;
@@ -151,7 +151,7 @@ const PopularBadge = styled.div`
 const FeaturesList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 ${emotionTheme.spacing(6)} 0;
+  margin: 0 0 ${darkEmotionTheme.spacing(6)} 0;
   text-align: left;
 `;
 
@@ -159,79 +159,79 @@ const FeaturesList = styled.ul`
 const FeatureItem = styled.li`
   display: flex;
   align-items: center;
-  gap: ${emotionTheme.spacing(2)};
-  margin-bottom: ${emotionTheme.spacing(3)};
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  color: ${emotionTheme.colors.text.primary};
-  line-height: ${emotionTheme.typography.lineHeights.body};
+  gap: ${darkEmotionTheme.spacing(2)};
+  margin-bottom: ${darkEmotionTheme.spacing(3)};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.primary};
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
 `;
 
 // Styled checkmark icon
 const CheckmarkIcon = styled(CheckCircleIcon)`
-  color: ${emotionTheme.colors.success.main};
+  color: ${({ theme }) => theme.colors.success.main};
   font-size: 1.25rem;
   flex-shrink: 0;
 `;
 
 // Styled plan description
 const PlanDescription = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  color: ${emotionTheme.colors.text.secondary};
-  margin-bottom: ${emotionTheme.spacing(6)};
-  line-height: ${emotionTheme.typography.lineHeights.body};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${darkEmotionTheme.spacing(6)};
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
 `;
 
 // Styled pricing card container
 const PricingCardContainer = styled.div<{ popular: boolean }>`
-  background-color: ${emotionTheme.colors.background.paper};
-  border: 1px solid ${emotionTheme.colors.border.main};
-  border-radius: ${emotionTheme.borderRadius.large};
-  padding: ${emotionTheme.spacing(6)};
+  background-color: ${({ theme }) => theme.colors.background.paper};
+  border: 1px solid ${({ theme }) => theme.colors.border.main};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
+  padding: ${darkEmotionTheme.spacing(6)};
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   text-align: center;
 
-  ${({ popular }) => popular && `border: 2px solid ${emotionTheme.colors.primary.main};`}
+  ${({ popular }) => popular && `border: 2px solid ${darkEmotionTheme.colors.primary.main};`}
 
   &:hover {
     transform: translateY(-4px);
-    border-color: ${emotionTheme.colors.primary.main};
-    box-shadow: ${emotionTheme.shadows.primaryGlow};
+    border-color: ${({ theme }) => theme.colors.primary.main};
+    box-shadow: ${darkEmotionTheme.shadows.primaryGlow};
   }
 
   &:focus-within {
-    border-color: ${emotionTheme.colors.primary.main};
-    box-shadow: ${emotionTheme.shadows.primaryGlow};
+    border-color: ${darkEmotionTheme.colors.primary.main};
+    box-shadow: ${darkEmotionTheme.shadows.primaryGlow};
   }
 `;
 
 // Styled card title
 const PricingCardTitle = styled.h3`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h4};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  line-height: ${emotionTheme.typography.lineHeights.heading};
-  color: ${emotionTheme.colors.text.primary};
-  margin: 0 0 ${emotionTheme.spacing(2)} 0;
+  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
+  font-size: ${darkEmotionTheme.typography.fontSizes.h4};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${darkEmotionTheme.spacing(2)} 0;
 `;
 
 // Styled card subtitle
 const PricingCardSubtitle = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  color: ${emotionTheme.colors.text.secondary};
-  margin: 0 0 ${emotionTheme.spacing(4)} 0;
-  line-height: ${emotionTheme.typography.lineHeights.body};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
 `;
 
 // Styled card wrapper for popular badge positioning
 const CardWrapper = styled.div<{ popular: boolean }>`
   position: relative;
-  ${({ popular }) => popular && `padding-top: ${emotionTheme.spacing(4)};`}
+  ${({ popular }) => popular && `padding-top: ${darkEmotionTheme.spacing(4)};`}
 `;
 
 // Pricing plan interface
@@ -360,7 +360,7 @@ export const PricingTable: React.FC = () => {
 
       <AnimatedSection animation="fade-up" delay={0.3}>
         <BillingToggleContainer>
-          <span style={{ color: emotionTheme.colors.text.secondary }}>
+          <span style={{ color: darkEmotionTheme.colors.text.secondary }}>
             {t('plansSection.billingToggle.monthly')}
           </span>
           <BillingToggle isYearly={isYearly}>

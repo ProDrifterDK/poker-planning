@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  compiler: {
+    emotion: true,
+  },
 };
 
 export default nextConfig;

@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material/styles";
+import { createTheme, ThemeOptions } from "@mui/material/styles";
 
 // Sleek Innovator Color Palette
 const sleekInnovatorColors = {
@@ -262,94 +262,6 @@ export const lightTheme = createTheme({
   },
 });
 
-// Simplified theme object for use with Emotion styled components
-export const emotionTheme = {
- colors: {
-   primary: {
-     main: "#1297FD",
-     light: "#4DB8FF",
-     dark: "#0077CC",
-     contrastText: "#000000",
-   },
-   secondary: {
-     main: "#6F4C6C",
-     light: "#8B6B88",
-     dark: "#523150",
-     contrastText: "#ffffff",
-   },
-   background: {
-     default: "#121212",
-     paper: "#1E1E1E",
-     alt: "#0F0F0F",
-   },
-   text: {
-     primary: "#FCFCFC",
-     secondary: "#C3C3C5",
-     disabled: "#8A8A8C",
-   },
-   border: {
-     main: "#353536",
-     light: "#4A4A4B",
-     dark: "#1F1F20",
-   },
-   success: {
-     main: "#00C851",
-     light: "#5DFC88",
-     dark: "#009624",
-   },
-   error: {
-     main: "#FF4444",
-     light: "#FF7F7F",
-     dark: "#CC0000",
-   },
-   warning: {
-     main: "#FFBB33",
-     light: "#FFFF66",
-     dark: "#CC9900",
-   },
-   info: {
-     main: "#1297FD",
-     light: "#4DB8FF",
-     dark: "#0077CC",
-   },
- },
- typography: {
-   fontFamily: {
-     heading: '"Montserrat", sans-serif',
-     body: '"Inter", sans-serif',
-   },
-   fontSizes: {
-     h1: '4.5rem',
-     h2: '3rem',
-     h3: '2.25rem',
-     h4: '1.5rem',
-     body: '1.125rem',
-     button: '0.875rem',
-     caption: '0.75rem',
-   },
-   fontWeights: {
-     regular: 400,
-     medium: 500,
-     bold: 700,
-   },
-   lineHeights: {
-     heading: 1.2,
-     body: 1.6,
-   },
- },
- spacing: (factor: number) => `${factor * 4}px`,
- borderRadius: {
-   small: '4px',
-   medium: '8px',
-   large: '16px',
- },
- shadows: {
-   primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.3)',
-   secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.3)',
-   small: '0px 2px 4px rgba(0, 0, 0, 0.1)',
- },
-};
-
 export const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -561,3 +473,191 @@ export const darkTheme = createTheme({
     },
   },
 });
+
+// Dark theme object for use with Emotion styled components
+export const darkEmotionTheme = {
+  ...darkTheme,
+  colors: {
+    primary: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+      contrastText: "#000000",
+    },
+    secondary: {
+      main: "#6F4C6C",
+      light: "#8B6B88",
+      dark: "#523150",
+      contrastText: "#ffffff",
+    },
+    background: {
+      default: "#121212",
+      paper: "#1E1E1E",
+      alt: "#0F0F0F",
+    },
+    text: {
+      primary: "#FCFCFC",
+      secondary: "#C3C3C5",
+      disabled: "#8A8A8C",
+    },
+    border: {
+      main: "#353536",
+      light: "#4A4A4B",
+      dark: "#1F1F20",
+    },
+    success: {
+      main: "#00C851",
+      light: "#5DFC88",
+      dark: "#009624",
+    },
+    error: {
+      main: "#FF4444",
+      light: "#FF7F7F",
+      dark: "#CC0000",
+    },
+    warning: {
+      main: "#FFBB33",
+      light: "#FFFF66",
+      dark: "#CC9900",
+    },
+    info: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+    },
+  },
+  typography: {
+    ...darkTheme.typography,
+    fontFamily: {
+      heading: '"Montserrat", sans-serif',
+      body: '"Inter", sans-serif',
+    },
+    fontSizes: {
+      h1: '4.5rem',
+      h2: '3rem',
+      h3: '2.25rem',
+      h4: '1.5rem',
+      body: '1.125rem',
+      button: '0.875rem',
+      caption: '0.75rem',
+    },
+    fontWeights: {
+      regular: 400,
+      medium: 500,
+      bold: 700,
+    },
+    lineHeights: {
+      heading: 1.2,
+      body: 1.6,
+    },
+  },
+  spacing: darkTheme.spacing,
+  borderRadius: {
+    small: '4px',
+    medium: '8px',
+    large: '16px',
+  },
+  shadows: {
+    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.3)',
+    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.3)',
+    small: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+};
+
+// Light theme object for use with Emotion styled components
+export const lightEmotionTheme = {
+  ...lightTheme,
+  colors: {
+    primary: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+      contrastText: "#ffffff",
+    },
+    secondary: {
+      main: "#6F4C6C",
+      light: "#8B6B88",
+      dark: "#523150",
+      contrastText: "#ffffff",
+    },
+    background: {
+      default: "#FCFCFC",
+      paper: "#FFFFFF",
+      alt: "#F5F5F5",
+    },
+    text: {
+      primary: "#2C2C2C",
+      secondary: "#6F6F6F",
+      disabled: "#A0A0A0",
+    },
+    border: {
+      main: "#E0E0E0",
+      light: "#F0F0F0",
+      dark: "#CCCCCC",
+    },
+    success: {
+      main: "#00C851",
+      light: "#5DFC88",
+      dark: "#009624",
+    },
+    error: {
+      main: "#FF4444",
+      light: "#FF7F7F",
+      dark: "#CC0000",
+    },
+    warning: {
+      main: "#FFBB33",
+      light: "#FFFF66",
+      dark: "#CC9900",
+    },
+    info: {
+      main: "#1297FD",
+      light: "#4DB8FF",
+      dark: "#0077CC",
+    },
+  },
+  typography: {
+    ...lightTheme.typography,
+    fontFamily: {
+      heading: '"Montserrat", sans-serif',
+      body: '"Inter", sans-serif',
+    },
+    fontSizes: {
+      h1: '4.5rem',
+      h2: '3rem',
+      h3: '2.25rem',
+      h4: '1.5rem',
+      body: '1.125rem',
+      button: '0.875rem',
+      caption: '0.75rem',
+    },
+    fontWeights: {
+      regular: 400,
+      medium: 500,
+      bold: 700,
+    },
+    lineHeights: {
+      heading: 1.2,
+      body: 1.6,
+    },
+  },
+  spacing: lightTheme.spacing,
+  borderRadius: {
+    small: '4px',
+    medium: '8px',
+    large: '16px',
+  },
+  shadows: {
+    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.15)',
+    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.15)',
+    small: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+};
+
+// Type helper for Emotion theme objects
+export type AppTheme = typeof darkEmotionTheme;
+
+// Props interface for styled components that need theme
+export interface ThemeProps {
+  theme: AppTheme;
+}

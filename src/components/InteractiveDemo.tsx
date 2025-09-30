@@ -2,28 +2,28 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../styles/theme';
+import { darkEmotionTheme } from '../styles/theme';
 import AnimatedSection from './AnimatedSection';
 
 // Spacious section container that commands attention
 const DemoSection = styled.section`
   min-height: 80vh;
-  background: linear-gradient(135deg, ${emotionTheme.colors.background.paper} 0%, ${emotionTheme.colors.background.default} 100%);
+  background: linear-gradient(135deg, ${props => props.theme.colors.background.paper} 0%, ${props => props.theme.colors.background.default} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${emotionTheme.spacing(16)} ${emotionTheme.spacing(6)};
+  padding: ${darkEmotionTheme.spacing(16)} ${darkEmotionTheme.spacing(6)};
   position: relative;
   overflow: hidden;
 
   @media (max-width: 768px) {
     min-height: 70vh;
-    padding: ${emotionTheme.spacing(12)} ${emotionTheme.spacing(4)};
+    padding: ${darkEmotionTheme.spacing(12)} ${darkEmotionTheme.spacing(4)};
   }
 
   @media (max-width: 480px) {
     min-height: 60vh;
-    padding: ${emotionTheme.spacing(8)} ${emotionTheme.spacing(3)};
+    padding: ${darkEmotionTheme.spacing(8)} ${darkEmotionTheme.spacing(3)};
   }
 `;
 
@@ -38,20 +38,20 @@ const DemoContent = styled.div`
 
 // Section heading
 const DemoHeading = styled.h2`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h2};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  line-height: ${emotionTheme.typography.lineHeights.heading};
-  color: ${emotionTheme.colors.text.primary};
-  margin: 0 0 ${emotionTheme.spacing(4)} 0;
-  background: linear-gradient(135deg, ${emotionTheme.colors.text.primary} 0%, ${emotionTheme.colors.primary.main} 100%);
+  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
+  font-size: ${darkEmotionTheme.typography.fontSizes.h2};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  color: ${props => props.theme.colors.text.primary};
+  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
+  background: linear-gradient(135deg, ${props => props.theme.colors.text.primary} 0%, ${props => props.theme.colors.primary.main} 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
-    margin-bottom: ${emotionTheme.spacing(3)};
+    margin-bottom: ${darkEmotionTheme.spacing(3)};
   }
 
   @media (max-width: 480px) {
@@ -61,18 +61,18 @@ const DemoHeading = styled.h2`
 
 // Descriptive paragraph
 const DemoDescription = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  line-height: ${emotionTheme.typography.lineHeights.body};
-  color: ${emotionTheme.colors.text.secondary};
-  margin: 0 0 ${emotionTheme.spacing(12)} 0;
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  color: ${props => props.theme.colors.text.secondary};
+  margin: 0 0 ${darkEmotionTheme.spacing(12)} 0;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 
   @media (max-width: 768px) {
     font-size: 1rem;
-    margin-bottom: ${emotionTheme.spacing(8)};
+    margin-bottom: ${darkEmotionTheme.spacing(8)};
     max-width: none;
   }
 `;
@@ -97,9 +97,9 @@ const DemoContainer = styled.div`
 const DemoPlaceholder = styled.div`
   width: 100%;
   height: 500px;
-  background: linear-gradient(145deg, ${emotionTheme.colors.background.default} 0%, ${emotionTheme.colors.border.main} 100%);
-  border: 2px dashed ${emotionTheme.colors.border.light};
-  border-radius: ${emotionTheme.borderRadius.large};
+  background: linear-gradient(145deg, ${props => props.theme.colors.background.default} 0%, ${props => props.theme.colors.border.main} 100%);
+  border: 2px dashed ${props => props.theme.colors.border.light};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,15 +109,15 @@ const DemoPlaceholder = styled.div`
   cursor: pointer;
 
   &:hover {
-    border-color: ${emotionTheme.colors.primary.main};
-    background: linear-gradient(145deg, ${emotionTheme.colors.background.paper} 0%, ${emotionTheme.colors.border.light} 100%);
+    border-color: ${props => props.theme.colors.primary.main};
+    background: linear-gradient(145deg, ${props => props.theme.colors.background.paper} 0%, ${props => props.theme.colors.border.light} 100%);
     transform: translateY(-2px);
-    box-shadow: ${emotionTheme.shadows.primaryGlow};
+    box-shadow: ${props => props.theme.shadows.primaryGlow};
   }
 
   &:focus-within {
-    border-color: ${emotionTheme.colors.primary.main};
-    box-shadow: ${emotionTheme.shadows.primaryGlow};
+    border-color: ${props => props.theme.colors.primary.main};
+    box-shadow: ${props => props.theme.shadows.primaryGlow};
   }
 
   @media (max-width: 768px) {
@@ -133,7 +133,7 @@ const DemoPlaceholder = styled.div`
 const PlaceholderIcon = styled.div`
   width: 80px;
   height: 80px;
-  margin-bottom: ${emotionTheme.spacing(4)};
+  margin-bottom: ${darkEmotionTheme.spacing(4)};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,14 +143,14 @@ const PlaceholderIcon = styled.div`
   svg {
     width: 40px;
     height: 40px;
-    stroke: ${emotionTheme.colors.primary.main};
+    stroke: ${props => props.theme.colors.primary.main};
     stroke-width: 2;
   }
 
   @media (max-width: 480px) {
     width: 60px;
     height: 60px;
-    margin-bottom: ${emotionTheme.spacing(3)};
+    margin-bottom: ${darkEmotionTheme.spacing(3)};
 
     svg {
       width: 30px;
@@ -161,9 +161,9 @@ const PlaceholderIcon = styled.div`
 
 // Placeholder text
 const PlaceholderText = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
   font-size: 1.125rem;
-  color: ${emotionTheme.colors.text.secondary};
+  color: ${props => props.theme.colors.text.secondary};
   margin: 0;
   text-align: center;
   max-width: 400px;

@@ -1,17 +1,17 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../../styles/theme';
+import { darkEmotionTheme } from '../../styles/theme';
 
 // Alert wrapper with consistent styling
 const AlertWrapper = styled.div<{ variant: 'success' | 'error' | 'warning' | 'info' }>`
   display: flex;
   align-items: flex-start;
-  gap: ${emotionTheme.spacing(3)};
-  padding: ${emotionTheme.spacing(4)};
-  border-radius: ${emotionTheme.borderRadius.medium};
+  gap: ${darkEmotionTheme.spacing(3)};
+  padding: ${darkEmotionTheme.spacing(4)};
+  border-radius: ${darkEmotionTheme.borderRadius.medium};
   border: 1px solid;
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
   line-height: 1.5;
   transition: all 0.2s ease-in-out;
 
@@ -20,27 +20,27 @@ const AlertWrapper = styled.div<{ variant: 'success' | 'error' | 'warning' | 'in
       case 'success':
         return `
           background-color: rgba(0, 200, 81, 0.1);
-          border-color: ${emotionTheme.colors.success.main};
-          color: ${emotionTheme.colors.success.dark};
+          border-color: ${darkEmotionTheme.colors.success.main};
+          color: ${darkEmotionTheme.colors.success.dark};
         `;
       case 'error':
         return `
           background-color: rgba(255, 68, 68, 0.1);
-          border-color: ${emotionTheme.colors.error.main};
-          color: ${emotionTheme.colors.error.dark};
+          border-color: ${darkEmotionTheme.colors.error.main};
+          color: ${darkEmotionTheme.colors.error.dark};
         `;
       case 'warning':
         return `
           background-color: rgba(255, 187, 51, 0.1);
-          border-color: ${emotionTheme.colors.warning.main};
-          color: ${emotionTheme.colors.warning.dark};
+          border-color: ${darkEmotionTheme.colors.warning.main};
+          color: ${darkEmotionTheme.colors.warning.dark};
         `;
       case 'info':
       default:
         return `
           background-color: rgba(18, 151, 253, 0.1);
-          border-color: ${emotionTheme.colors.info.main};
-          color: ${emotionTheme.colors.info.dark};
+          border-color: ${darkEmotionTheme.colors.info.main};
+          color: ${darkEmotionTheme.colors.info.dark};
         `;
     }
   }}
@@ -61,12 +61,12 @@ const ContentContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: ${emotionTheme.spacing(1)};
+  gap: ${darkEmotionTheme.spacing(1)};
 `;
 
 // Title styled component
 const AlertTitle = styled.div`
-  font-weight: ${emotionTheme.typography.fontWeights.medium};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
   margin: 0;
 `;
 

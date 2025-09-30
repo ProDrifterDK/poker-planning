@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../styles/theme';
+import { darkEmotionTheme } from '../styles/theme';
 import { Button } from './Button';
 import { InformationCard } from './InfoCard';
 import AnimatedSection from './AnimatedSection';
@@ -9,17 +9,17 @@ import AnimatedSection from './AnimatedSection';
 // Full-page hero container
 const HeroContainer = styled.section`
   min-height: 100vh;
-  background: linear-gradient(135deg, ${emotionTheme.colors.background.default} 0%, ${emotionTheme.colors.background.paper} 100%);
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.background.default} 0%, ${({ theme }) => theme.colors.background.paper} 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: ${emotionTheme.spacing(8)} ${emotionTheme.spacing(6)};
+  padding: ${darkEmotionTheme.spacing(8)} ${darkEmotionTheme.spacing(6)};
   position: relative;
   overflow: hidden;
 
   @media (max-width: 768px) {
     min-height: 100vh;
-    padding: ${emotionTheme.spacing(6)} ${emotionTheme.spacing(4)};
+    padding: ${darkEmotionTheme.spacing(6)} ${darkEmotionTheme.spacing(4)};
     flex-direction: column;
     justify-content: center;
   }
@@ -31,14 +31,14 @@ const HeroContent = styled.div`
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${emotionTheme.spacing(8)};
+  gap: ${darkEmotionTheme.spacing(8)};
   align-items: center;
   width: 100%;
   justify-items: center;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: ${emotionTheme.spacing(6)};
+    gap: ${darkEmotionTheme.spacing(6)};
     text-align: center;
     justify-items: center;
   }
@@ -61,13 +61,13 @@ const TextContent = styled.div`
 
 // Main headline
 const HeroHeadline = styled.h1`
-  font-family: ${emotionTheme.typography.fontFamily.heading};
-  font-size: ${emotionTheme.typography.fontSizes.h1};
-  font-weight: ${emotionTheme.typography.fontWeights.bold};
-  line-height: ${emotionTheme.typography.lineHeights.heading};
-  color: ${emotionTheme.colors.text.primary};
-  margin: 0 0 ${emotionTheme.spacing(4)} 0;
-  background: linear-gradient(135deg, ${emotionTheme.colors.text.primary} 0%, ${emotionTheme.colors.primary.main} 100%);
+  font-family: ${darkEmotionTheme.typography.fontFamily.heading};
+  font-size: ${darkEmotionTheme.typography.fontSizes.h1};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.bold};
+  line-height: ${darkEmotionTheme.typography.lineHeights.heading};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${darkEmotionTheme.spacing(4)} 0;
+  background: linear-gradient(135deg, ${({ theme }) => theme.colors.text.primary} 0%, ${({ theme }) => theme.colors.primary.main} 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -84,11 +84,11 @@ const HeroHeadline = styled.h1`
 
 // Sub-headline
 const HeroSubheadline = styled.p`
-  font-family: ${emotionTheme.typography.fontFamily.body};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  line-height: ${emotionTheme.typography.lineHeights.body};
-  color: ${emotionTheme.colors.text.secondary};
-  margin: 0 0 ${emotionTheme.spacing(8)} 0;
+  font-family: ${darkEmotionTheme.typography.fontFamily.body};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  line-height: ${darkEmotionTheme.typography.lineHeights.body};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0 0 ${darkEmotionTheme.spacing(8)} 0;
   max-width: 500px;
 
   @media (max-width: 768px) {
@@ -98,7 +98,7 @@ const HeroSubheadline = styled.p`
 
 // CTA section
 const CTASection = styled.div`
-  margin-top: ${emotionTheme.spacing(6)};
+  margin-top: ${darkEmotionTheme.spacing(6)};
 `;
 
 // Right column - Visual element (Z-pattern middle)
@@ -111,7 +111,7 @@ const VisualContent = styled.div`
 
   @media (max-width: 768px) {
     order: 2;
-    margin-top: ${emotionTheme.spacing(4)};
+    margin-top: ${darkEmotionTheme.spacing(4)};
   }
 `;
 
@@ -188,7 +188,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ className }) => {
                       height="48"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke={emotionTheme.colors.primary.main}
+                      stroke={darkEmotionTheme.colors.primary.main}
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"

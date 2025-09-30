@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
-import { emotionTheme } from '../../styles/theme';
+import { darkEmotionTheme } from '../../styles/theme';
 import { User } from 'firebase/auth';
 import { User as UserIcon } from 'iconoir-react';
 import Image from 'next/image';
@@ -23,28 +23,28 @@ const UserMenuContainer = styled.div`
 const UserButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${emotionTheme.spacing(2)};
+  gap: ${darkEmotionTheme.spacing(2)};
   background: none;
-  border: 1px solid ${emotionTheme.colors.border.main};
-  border-radius: ${emotionTheme.borderRadius.large};
-  padding: ${emotionTheme.spacing(2)} ${emotionTheme.spacing(3)};
+  border: 1px solid ${darkEmotionTheme.colors.border.main};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
+  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(3)};
   cursor: pointer;
   transition: all 0.2s ease;
-  color: ${emotionTheme.colors.text.primary};
+  color: ${darkEmotionTheme.colors.text.primary};
 
   &:hover {
-    border-color: ${emotionTheme.colors.primary.main};
-    background-color: ${emotionTheme.colors.background.paper};
+    border-color: ${darkEmotionTheme.colors.primary.main};
+    background-color: ${darkEmotionTheme.colors.background.paper};
   }
 
   &:focus {
-    outline: 2px solid ${emotionTheme.colors.primary.main};
+    outline: 2px solid ${darkEmotionTheme.colors.primary.main};
     outline-offset: 2px;
   }
 
   @media (max-width: 768px) {
-    padding: ${emotionTheme.spacing(2)};
-    gap: ${emotionTheme.spacing(1)};
+    padding: ${darkEmotionTheme.spacing(2)};
+    gap: ${darkEmotionTheme.spacing(1)};
   }
 `;
 
@@ -52,12 +52,12 @@ const UserAvatar = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: ${emotionTheme.colors.primary.main};
+  background-color: ${darkEmotionTheme.colors.primary.main};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: ${emotionTheme.typography.fontWeights.medium};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
   flex-shrink: 0;
 
   @media (max-width: 768px) {
@@ -78,15 +78,15 @@ const UserInfo = styled.div`
 `;
 
 const UserName = styled.span`
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  font-weight: ${emotionTheme.typography.fontWeights.medium};
-  color: ${emotionTheme.colors.text.primary};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.medium};
+  color: ${darkEmotionTheme.colors.text.primary};
   line-height: 1.2;
 `;
 
 const UserEmail = styled.span`
-  font-size: ${emotionTheme.typography.fontSizes.caption};
-  color: ${emotionTheme.colors.text.secondary};
+  font-size: ${darkEmotionTheme.typography.fontSizes.caption};
+  color: ${darkEmotionTheme.colors.text.secondary};
   line-height: 1.2;
 `;
 
@@ -94,13 +94,13 @@ const DropdownMenu = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: ${emotionTheme.colors.background.paper};
-  border: 1px solid ${emotionTheme.colors.border.main};
-  border-radius: ${emotionTheme.borderRadius.large};
-  box-shadow: ${emotionTheme.shadows.small};
+  background-color: ${darkEmotionTheme.colors.background.paper};
+  border: 1px solid ${darkEmotionTheme.colors.border.main};
+  border-radius: ${darkEmotionTheme.borderRadius.large};
+  box-shadow: ${darkEmotionTheme.shadows.small};
   min-width: 200px;
-  padding: ${emotionTheme.spacing(2)};
-  margin-top: ${emotionTheme.spacing(1)};
+  padding: ${darkEmotionTheme.spacing(2)};
+  margin-top: ${darkEmotionTheme.spacing(1)};
   z-index: 1000;
   opacity: ${({ isOpen }) => isOpen ? 1 : 0};
   visibility: ${({ isOpen }) => isOpen ? 'visible' : 'hidden'};
@@ -108,7 +108,7 @@ const DropdownMenu = styled.div<{ isOpen: boolean }>`
   transition: all 0.2s ease;
 
   @media (max-width: 768px) {
-    right: -${emotionTheme.spacing(2)};
+    right: -${darkEmotionTheme.spacing(2)};
     min-width: 180px;
   }
 `;
@@ -117,33 +117,33 @@ const MenuItem = styled.button`
   width: 100%;
   display: flex;
   align-items: center;
-  gap: ${emotionTheme.spacing(2)};
-  padding: ${emotionTheme.spacing(2)} ${emotionTheme.spacing(3)};
+  gap: ${darkEmotionTheme.spacing(2)};
+  padding: ${darkEmotionTheme.spacing(2)} ${darkEmotionTheme.spacing(3)};
   background: none;
   border: none;
-  border-radius: ${emotionTheme.borderRadius.medium};
-  color: ${emotionTheme.colors.text.primary};
-  font-size: ${emotionTheme.typography.fontSizes.body};
-  font-weight: ${emotionTheme.typography.fontWeights.regular};
+  border-radius: ${darkEmotionTheme.borderRadius.medium};
+  color: ${darkEmotionTheme.colors.text.primary};
+  font-size: ${darkEmotionTheme.typography.fontSizes.body};
+  font-weight: ${darkEmotionTheme.typography.fontWeights.regular};
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: ${emotionTheme.colors.background.default};
-    color: ${emotionTheme.colors.primary.main};
+    background-color: ${darkEmotionTheme.colors.background.default};
+    color: ${darkEmotionTheme.colors.primary.main};
   }
 
   &:focus {
-    outline: 2px solid ${emotionTheme.colors.primary.main};
+    outline: 2px solid ${darkEmotionTheme.colors.primary.main};
     outline-offset: 2px;
   }
 `;
 
 const MenuDivider = styled.hr`
   border: none;
-  border-top: 1px solid ${emotionTheme.colors.border.main};
-  margin: ${emotionTheme.spacing(2)} 0;
+  border-top: 1px solid ${darkEmotionTheme.colors.border.main};
+  margin: ${darkEmotionTheme.spacing(2)} 0;
 `;
 
 export default function UserMenu({ currentUser }: UserMenuProps) {

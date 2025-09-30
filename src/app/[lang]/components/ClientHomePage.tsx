@@ -20,12 +20,16 @@ import InteractiveDemo from '@/components/InteractiveDemo';
 import PricingTable from '@/components/PricingTable';
 import FinalCTA from '@/components/FinalCTA';
 import LoadingSpinner from '@/components/feedback/LoadingSpinner';
+import { ThemeProvider } from '@emotion/react';
+import { darkEmotionTheme, lightEmotionTheme } from '@/styles/theme';
+import { useThemeMode } from '@/context/themeContext';
 
 // No longer need the ClientHomePageProps interface as we're using useTranslation
 
 export default function ClientHomePage({ lang }: { lang: string }) {
   const { t, i18n } = useTranslation('common');
   const { currentUser, loading, isGuestUser, logout } = useAuth();
+  const { mode } = useThemeMode();
   // Use the current language from i18n context for consistent language display
   const currentLang = i18n.language || lang;
   const [isClient, setIsClient] = useState(false);
@@ -148,7 +152,7 @@ export default function ClientHomePage({ lang }: { lang: string }) {
 
   // Si el usuario no está autenticado, mostramos la página de bienvenida con los nuevos componentes
   return (
-    <>
+    <ThemeProvider theme={mode === 'dark' ? darkEmotionTheme : lightEmotionTheme}>
       {/* Componente de persistencia de sesión */}
       <SessionPersistence />
 
@@ -159,6 +163,6 @@ export default function ClientHomePage({ lang }: { lang: string }) {
       <InteractiveDemo />
       <PricingTable />
       <FinalCTA />
-    </>
+    </ThemeProvider>
   );
 }

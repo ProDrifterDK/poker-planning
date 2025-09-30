@@ -95,14 +95,15 @@ html {
 }
 
 body {
-  height: 100%;
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-body);
-  color: var(--color-text-primary);
-  background-color: var(--color-background-default);
-  overflow-x: hidden;
+   height: 100%;
+   font-family: var(--font-family-body);
+   font-size: var(--font-size-body);
+   font-weight: var(--font-weight-regular);
+   line-height: var(--line-height-body);
+   color: var(--color-text-primary);
+   background-color: var(--color-background-default);
+   overflow-x: hidden;
+   transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 
 /* Remove list styles on ul, ol elements with a list role */

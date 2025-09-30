@@ -16,11 +16,11 @@
     "cypress:ci": "start-server-and-test dev http://localhost:3000 cypress:headless"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.5",
-    "@emotion/styled": "^11.13.5",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@formatjs/intl-localematcher": "^0.6.1",
     "@mui/icons-material": "^6.1.9",
-    "@mui/material": "^6.1.9",
+    "@mui/material": "^6.5.0",
     "@octokit/rest": "^21.1.1",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@types/aos": "^3.0.7",

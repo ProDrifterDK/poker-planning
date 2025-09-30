@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import { Button, ButtonProps } from '../Button';
-import { emotionTheme } from '../../styles/theme';
+import { darkEmotionTheme } from '../../styles/theme';
 
 // Loading spinner animation
 const spin = keyframes`
@@ -15,7 +15,7 @@ const SpinnerWrapper = styled.div`
   display: inline-block;
   width: 16px;
   height: 16px;
-  margin-right: ${emotionTheme.spacing(2)};
+  margin-right: ${darkEmotionTheme.spacing(2)};
   animation: ${spin} 1s linear infinite;
 `;
 
