@@ -206,7 +206,7 @@ export const lightTheme = createTheme({
     '0px 24px 72px rgba(111, 76, 108, 0.4)', // Secondary epic
   ],
   shape: {
-    borderRadius: 8,
+    borderRadius: 4,
   },
   components: {
     MuiButton: {
@@ -413,7 +413,7 @@ export const darkTheme = createTheme({
     '0px 24px 72px rgba(111, 76, 108, 0.8)', // Secondary epic
   ],
   shape: {
-    borderRadius: 8,
+    borderRadius: 4,
   },
   components: {
     MuiButton: {
@@ -527,6 +527,7 @@ export const lightEmotionTheme = {
     },
   },
   typography: {
+    pxToRem: (value: number) => `${value / 16}rem`,
     fontFamily: {
       body: '"Inter", sans-serif',
       heading: '"Montserrat", sans-serif',
@@ -559,6 +560,7 @@ export const lightEmotionTheme = {
   },
   spacing: (factor: number) => `${factor * 4}px`,
   shadows: {
+    ...lightTheme.shadows,
     focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
     focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
     primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.15)',
@@ -620,6 +622,7 @@ export const darkEmotionTheme = {
     },
   },
   typography: {
+    pxToRem: (value: number) => `${value / 16}rem`,
     fontFamily: {
       body: '"Inter", sans-serif',
       heading: '"Montserrat", sans-serif',
@@ -652,6 +655,7 @@ export const darkEmotionTheme = {
   },
   spacing: (factor: number) => `${factor * 4}px`, // 4px base unit
   shadows: {
+    ...darkTheme.shadows,
     focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
     focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
     primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.3)',

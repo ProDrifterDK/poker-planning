@@ -134,8 +134,9 @@ export default function LanguageSelector() {
         <Image
           src="/images/icons/spain-flag.webp"
           alt="Español"
+          width={24}
+          height={24}
           style={{ borderRadius: `${theme.shape.borderRadius}px` }}
-          height={30}
         />
       </FlagContainer>
 
@@ -162,6 +163,8 @@ export default function LanguageSelector() {
         <Image
           src="/images/icons/britain-flag.webp"
           alt="English"
+          width={24}
+          height={24}
           style={{ borderRadius: `${theme.shape.borderRadius}px` }}
         />
       </FlagContainer>
