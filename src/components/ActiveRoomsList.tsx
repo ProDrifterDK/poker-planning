@@ -5,16 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { 
   Box, 
   Typography, 
-  Paper, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemSecondaryAction,
   Button,
   Chip,
-  Divider,
   CircularProgress,
-  Alert
+  Alert,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Stack,
+  IconButton
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/authContext';
@@ -24,8 +24,9 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, get } from 'firebase/database';
 import { firestore, realtimeDb } from '@/lib/firebaseConfig';
 import PeopleIcon from '@mui/icons-material/People';
-import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface Room {
   id: string;
@@ -248,7 +249,7 @@ export default function ActiveRoomsList() {
       case 'tshirt':
         return 'T-Shirt';
       case 'powers2':
-        return 'Poderes de 2';
+        return 'Powers of 2';
       case 'days':
         return t('activeRooms.days');
       default:
@@ -258,8 +259,10 @@ export default function ActiveRoomsList() {
   
   // Format the creation date
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(timestamp).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   };
   
   // Join a room
@@ -273,79 +276,85 @@ export default function ActiveRoomsList() {
   }
   
   return (
-    <Box sx={{ width: '100%', maxWidth: 800, mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
+    <Box sx={{ maxWidth: 1200, width: '100%', mb: 4 }}>
+      <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center' }}>
         {t('activeRooms.title')}
       </Typography>
       
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress size={40} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
         </Box>
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : activeRooms.length === 0 ? (
         <Alert severity="info">{t('activeRooms.noActiveRooms')}</Alert>
       ) : (
-        <Paper elevation={2}>
-          <List>
-            {activeRooms.map((room, index) => (
-              <React.Fragment key={room.id}>
-                {index > 0 && <Divider />}
-                <ListItem>
-                  <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" sx={{ fontWeight: (theme) => theme.typography.fontWeightMedium }}>
-                        {room.title}
+        <Grid container spacing={3} justifyContent="center">
+          {activeRooms.map((room) => (
+            <Grid item xs={12} sm={6} md={4} key={room.id}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  borderRadius: 2,
+                  boxShadow: (theme) => theme.shadows[2],
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: (theme) => theme.shadows[6],
+                  }
+                }}
+              >
+                <CardContent sx={{ pb: 1 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1} sx={{ mb: 2 }}>
+                    <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {room.title}
+                    </Typography>
+                    <Chip label={formatSeriesKey(room.seriesKey)} color="secondary" size="small" sx={{ textTransform: 'capitalize' }} />
+                  </Stack>
+                  
+                  <Stack spacing={1.5} sx={{ color: 'text.secondary' }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <AccessTimeIcon fontSize="small" />
+                      <Typography variant="body2">
+                        {formatDate(room.createdAt)}
                       </Typography>
-                    }
-                    secondary={
-                      <Typography component="div" variant="body2" color="text.secondary">
-                        <Box sx={{ mt: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
-                            <Chip
-                              icon={<MeetingRoomIcon fontSize="small" />}
-                              label={`${t('activeRooms.code')}: ${room.id}`}
-                              size="small"
-                              variant="outlined"
-                            />
-                            <Chip
-                              icon={<PeopleIcon fontSize="small" />}
-                              label={`${room.participantsCount} ${t('activeRooms.participants')}`}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Typography component="span" variant="body2" color="text.secondary">
-                              {t('activeRooms.series')}: {formatSeriesKey(room.seriesKey)}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <AccessTimeIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
-                              <Typography component="span" variant="body2" color="text.secondary">
-                                {formatDate(room.createdAt)}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
+                    </Stack>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <PeopleIcon fontSize="small" />
+                      <Typography variant="body2">
+                        {room.participantsCount} {t('activeRooms.participants')}
                       </Typography>
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleJoinRoom(room.id)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {t('activeRooms.enter')}
-                    </Button>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-        </Paper>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+                
+                <CardActions sx={{ p: 2, pt: 1, justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'action.hover' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium' }}>
+                      {t('activeRooms.code')}: {room.id}
+                    </Typography>
+                    <IconButton size="small" onClick={() => navigator.clipboard.writeText(room.id)}>
+                      <ContentCopyIcon sx={{ fontSize: '1rem' }} />
+                    </IconButton>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleJoinRoom(room.id)}
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                  >
+                    {t('activeRooms.enter')}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
     </Box>
   );
