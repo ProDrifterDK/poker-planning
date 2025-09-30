@@ -532,7 +532,12 @@ export const lightEmotionTheme = {
       heading: '"Montserrat", sans-serif',
     },
     fontSizes: {
+      h1: '4.5rem',
+      h2: '3rem',
+      h3: '1.5rem',
+      h4: '1.25rem',
       body: '1rem',
+      button: '0.875rem',
       caption: '0.75rem',
     },
     fontWeights: {
@@ -540,6 +545,10 @@ export const lightEmotionTheme = {
       regular: 400,
       medium: 500,
       bold: 700,
+    },
+    lineHeights: {
+      body: 1.6,
+      heading: 1.2,
     },
   },
   borderRadius: {
@@ -552,6 +561,9 @@ export const lightEmotionTheme = {
   shadows: {
     focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
     focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
+    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.15)',
+    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.15)',
+    small: '0px 2px 4px -1px rgba(0,0,0,0.1)',
   },
 };
 
@@ -613,7 +625,12 @@ export const darkEmotionTheme = {
       heading: '"Montserrat", sans-serif',
     },
     fontSizes: {
+      h1: '4.5rem',
+      h2: '3rem',
+      h3: '1.5rem',
+      h4: '1.25rem',
       body: '1rem', // 16px
+      button: '0.875rem',
       caption: '0.75rem', // 12px
     },
     fontWeights: {
@@ -621,6 +638,10 @@ export const darkEmotionTheme = {
       regular: 400,
       medium: 500,
       bold: 700,
+    },
+    lineHeights: {
+      body: 1.6,
+      heading: 1.2,
     },
   },
   borderRadius: {
@@ -633,5 +654,8 @@ export const darkEmotionTheme = {
   shadows: {
     focus: `0 0 0 3px ${sleekInnovatorColors.primary.main}1A`,
     focusError: `0 0 0 3px ${sleekInnovatorColors.error.main}1A`,
+    primaryGlow: '0px 4px 12px rgba(18, 151, 253, 0.3)',
+    secondaryGlow: '0px 4px 12px rgba(111, 76, 108, 0.3)',
+    small: '0px 2px 4px -1px rgba(0,0,0,0.2)',
   },
 };
