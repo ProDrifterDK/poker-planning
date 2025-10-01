@@ -148,7 +148,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ className }) => {
 
           <AnimatedSection animation="scale-up" delay={0.4}>
             <CTAButtonSection>
-.              <CTAButton
+              <CTAButton
                 variant="primary"
                 onClick={handleCTAClick}
                 aria-label={t('finalCTA.cta')}

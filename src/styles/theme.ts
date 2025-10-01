@@ -527,6 +527,7 @@ export const lightEmotionTheme = {
     },
   },
   typography: {
+    ...lightTheme.typography,
     pxToRem: (value: number) => `${value / 16}rem`,
     fontFamily: {
       body: '"Inter", sans-serif',
@@ -537,14 +538,21 @@ export const lightEmotionTheme = {
       h2: '3rem',
       h3: '1.5rem',
       h4: '1.25rem',
+      h5: '1.125rem',
+      h6: '1rem',
       body: '1rem',
+      body2: '0.875rem',
       button: '0.875rem',
       caption: '0.75rem',
+      subtitle1: '0.875rem',
+      subtitle2: '0.75rem',
+      overline: '0.75rem',
     },
     fontWeights: {
       light: 300,
       regular: 400,
       medium: 500,
+      semiBold: 600,
       bold: 700,
     },
     lineHeights: {
@@ -625,6 +633,7 @@ export const darkEmotionTheme = {
     },
   },
   typography: {
+    ...darkTheme.typography,
     pxToRem: (value: number) => `${value / 16}rem`,
     fontFamily: {
       body: '"Inter", sans-serif',
@@ -635,14 +644,21 @@ export const darkEmotionTheme = {
       h2: '3rem',
       h3: '1.5rem',
       h4: '1.25rem',
+      h5: '1.125rem',
+      h6: '1rem',
       body: '1rem', // 16px
+      body2: '0.875rem',
       button: '0.875rem',
       caption: '0.75rem', // 12px
+      subtitle1: '0.875rem',
+      subtitle2: '0.75rem',
+      overline: '0.75rem',
     },
     fontWeights: {
       light: 300,
       regular: 400,
       medium: 500,
+      semiBold: 600,
       bold: 700,
     },
     lineHeights: {

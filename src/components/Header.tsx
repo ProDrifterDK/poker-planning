@@ -67,15 +67,21 @@ const LogoContainer = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
-`;
-
-const Logo = styled(Image)`
   height: 40px;
-  width: auto;
 
   @media (max-width: 768px) {
     height: 32px;
   }
+`;
+
+const Logo = styled(Image)`
+  height: 100%;
+  width: auto;
+`;
+
+const LogoLink = styled(Link)`
+  height: 100%;
+  display: flex;
 `;
 
 const Navigation = styled.nav<{ isOpen: boolean }>`
@@ -242,7 +248,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
     <HeaderContainer>
       <HeaderContent>
         <LogoContainer>
-          <Link href="/" onClick={closeMobileMenu}>
+          <LogoLink href="/" onClick={closeMobileMenu}>
             <Logo
               src="/images/logo/logo.svg"
               alt={t('header.logoAlt')}
@@ -250,7 +256,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
               height={40}
               priority
             />
-          </Link>
+          </LogoLink>
         </LogoContainer>
 
         {currentUser && variant === 'app' ? (
