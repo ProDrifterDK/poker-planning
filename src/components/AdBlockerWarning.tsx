@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertTitle, Box, IconButton, Typography, List, ListItem } from '@mui/material';
@@ -10,47 +10,39 @@ import WarningIcon from '@mui/icons-material/Warning';
 const StyledBox = styled(Box)``;
 
 /**
- * Componente que muestra una advertencia cuando se detecta un bloqueador de anuncios
- * que podría estar interfiriendo con la funcionalidad de la aplicación.
+ * A robust component that displays a warning when an ad blocker is detected.
+ * It uses the network request probe method for reliable detection.
  */
 const AdBlockerWarning: React.FC = () => {
+  const [adBlockerDetected, setAdBlockerDetected] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
   const { t } = useTranslation('common');
-  const baitRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // We need to append the bait to the body to ensure it's
-    // evaluated by ad blockers.
-    const baitElement = document.createElement('div');
-    baitElement.className = 'adsbox'; // Common class for ad blockers to target
-    Object.assign(baitElement.style, {
-      position: 'absolute',
-      height: '1px',
-      width: '1px',
-      top: '-1px',
-      left: '-1px',
-      pointerEvents: 'none',
-      opacity: '0',
-    });
-    document.body.appendChild(baitElement);
-    baitRef.current = baitElement;
-
-    const timer = setTimeout(() => {
-      if (baitRef.current && baitRef.current.offsetHeight === 0) {
-        setShowWarning(true);
-      }
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (baitRef.current) {
-        document.body.removeChild(baitRef.current);
+    // This function performs the network request probe.
+    const checkAdBlocker = async () => {
+      const adUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+      
+      try {
+        // We use 'HEAD' for efficiency and 'no-cors' to avoid CORS issues.
+        await fetch(new Request(adUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+        }));
+        // If the request succeeds, no ad blocker is active.
+        // The state remains false.
+      } catch (error) {
+        // If the request fails, it's highly likely an ad blocker is active.
+        console.warn('Ad blocker detected.', error);
+        setAdBlockerDetected(true);
       }
     };
-  }, []);
 
-  if (isDismissed || !showWarning) {
+    // Run the check only once when the component mounts.
+    checkAdBlocker();
+  }, []); // Empty dependency array ensures this runs only once.
+
+  if (isDismissed || !adBlockerDetected) {
     return null;
   }
 
