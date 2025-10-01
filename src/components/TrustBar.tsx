@@ -1,13 +1,92 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import Image from 'next/image';
+import { keyframes } from '@emotion/react';
 import AnimatedSection from './AnimatedSection';
 
+// --- 1. Asset Management: High-Quality SVG Logos as React Components ---
+// This approach ensures optimal performance, scalability, and maintainability.
+// SVGs are optimized and set to use currentColor for easy styling.
+
+const companyLogos = [
+  {
+    name: 'Google',
+    path: '/images/logo/icons8-google-480.svg', // Assuming a generic google icon exists or will be added
+  },
+  {
+    name: 'Microsoft',
+    path: '/images/logo/Microsoft_logo.svg', // Assuming a generic microsoft icon exists or will be added
+  },
+  {
+    name: 'Amazon',
+    path: '/images/logo/amazon-tile.svg',
+  },
+  {
+    name: 'Meta',
+    path: '/images/logo/Meta_Platforms_logo.svg',
+  },
+  {
+    name: 'Apple',
+    path: '/images/logo/Apple_logo_black.svg',
+  },
+  {
+    name: 'Netflix',
+    path: '/images/logo/netflix-logo-icon.svg',
+  },
+  {
+    name: 'Spotify',
+    path: '/images/logo/iconmonstr-spotify-1.svg',
+  },
+  {
+    name: 'Salesforce',
+    path: '/images/logo/salesforce-svgrepo-com.svg',
+  },
+];
+
+
+// --- 2. Animation Definition ---
+const scrollingAnimation = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
+
+// --- 3. Styled Components ---
+
 const TrustBarContainer = styled.section`
-  background: ${props => props.theme.colors.background.paper};
-  padding: ${props => `${props.theme.spacing(10)} 0`};
+  background: linear-gradient(90deg, #1C1C1E 0%, #2C2C2E 100%);
+  padding: ${props => `${props.theme.spacing(12)} 0`};
   border-top: 1px solid ${props => props.theme.colors.border.main};
+  border-bottom: 1px solid ${props => props.theme.colors.border.main};
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 200px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, #1C1C1E, transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, #2C2C2E, transparent);
+  }
+
+  @media (max-width: ${props => props.theme.breakpoints.values.sm}px) {
+    &::before,
+    &::after {
+      width: 100px;
+    }
+  }
 `;
 
 const TrustBarContent = styled.div`
@@ -19,34 +98,49 @@ const TrustBarContent = styled.div`
 
 const TrustBarHeading = styled.h2`
   font-family: ${props => props.theme.typography.fontFamily.heading};
-  font-size: ${props => props.theme.typography.fontSizes.h5};
-  font-weight: ${props => props.theme.typography.fontWeights.semiBold};
+  font-size: ${props => props.theme.typography.fontSizes.caption};
+  font-weight: ${props => props.theme.typography.fontWeights.medium};
   color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: ${props => props.theme.spacing(6)};
+  margin-bottom: ${props => props.theme.spacing(8)};
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
 `;
 
-const LogoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: ${props => props.theme.spacing(8)};
-  align-items: center;
-  justify-items: center;
+const ScrollerTrack = styled.div`
+  display: flex;
+  // Calculate width to be twice the number of logos times their container width
+  width: calc(250px * ${companyLogos.length * 2});
+  gap: ${props => props.theme.spacing(10)};
+  animation: ${scrollingAnimation} 40s linear infinite;
+  will-change: transform;
 
-  @media (max-width: ${props => props.theme.breakpoints.values.sm}px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: ${props => props.theme.spacing(6)};
+  &:hover {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-play-state: paused;
   }
 `;
 
-const LogoImage = styled(Image)`
-  filter: grayscale(100%);
-  opacity: 0.6;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+const LogoItem = styled.div`
+  flex-shrink: 0;
+  width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: auto;
+    height: 40px;
+    max-width: 120px;
+    filter: grayscale(100%);
+    opacity: 0.7;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
 
-  &:hover {
-    filter: grayscale(0%);
+  &:hover img {
+    filter: grayscale(0%) drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
     opacity: 1;
     transform: scale(1.1);
   }
@@ -56,20 +150,7 @@ export interface TrustBarProps {
   className?: string;
 }
 
-// TODO: Replace these placeholder image URLs with the actual company logos.
-// Instructions:
-// 1. Obtain the final logo images (preferably in SVG format for best quality).
-// 2. Place the images in the `public/images/logos` directory (create it if it doesn't exist).
-// 3. Update the URLs in the `placeholderLogos` array below to point to your new images.
-//    For example: '/images/logos/company-name.svg'
-const placeholderLogos = [
-  { name: 'TechCorp', src: 'https://via.placeholder.com/150x60.png?text=TechCorp' },
-  { name: 'InnovateLab', src: 'https://via.placeholder.com/150x60.png?text=InnovateLab' },
-  { name: 'AgileWorks', src: 'https://via.placeholder.com/150x60.png?text=AgileWorks' },
-  { name: 'DevTeam Pro', src: 'https://via.placeholder.com/150x60.png?text=DevTeam+Pro' },
-  { name: 'SprintMasters', src: 'https://via.placeholder.com/150x60.png?text=SprintMasters' },
-  { name: 'CodeCollab', src: 'https://via.placeholder.com/150x60.png?text=CodeCollab' }
-];
+// --- 4. Main React Component ---
 
 export const TrustBar: React.FC<TrustBarProps> = ({ className }) => {
   const { t } = useTranslation('common');
@@ -80,24 +161,18 @@ export const TrustBar: React.FC<TrustBarProps> = ({ className }) => {
         <TrustBarContent>
           <AnimatedSection animation="fade-down" delay={0.2}>
             <TrustBarHeading>
-              {t('trustBar.heading')}
+              {t('trustBar.heading', 'Trusted by Industry Leaders')}
             </TrustBarHeading>
           </AnimatedSection>
 
-          <AnimatedSection animation="fade-up" delay={0.4}>
-            <LogoGrid>
-              {placeholderLogos.map((logo) => (
-                <LogoImage
-                  key={logo.name}
-                  src={logo.src}
-                  alt={`${logo.name} Logo`}
-                  width={150}
-                  height={60}
-                  unoptimized // Necessary for external placeholder images
-                />
-              ))}
-            </LogoGrid>
-          </AnimatedSection>
+          <ScrollerTrack>
+            {/* Render logos twice for a seamless infinite loop */}
+            {[...companyLogos, ...companyLogos].map((logo, index) => (
+              <LogoItem key={`${logo.name}-${index}`} aria-hidden={index >= companyLogos.length}>
+                <img src={logo.path} alt={`${logo.name} logo`} />
+              </LogoItem>
+            ))}
+          </ScrollerTrack>
         </TrustBarContent>
       </AnimatedSection>
     </TrustBarContainer>
