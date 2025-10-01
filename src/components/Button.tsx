@@ -132,6 +132,7 @@ export interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   'aria-label'?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 // Main Button component
@@ -143,6 +144,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   'aria-label': ariaLabel,
   className,
+  style,
 }) => {
   const getButtonComponent = () => {
     switch (variant) {
@@ -164,6 +166,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       aria-label={ariaLabel}
       className={className}
+      style={style}
     >
       {children}
     </ButtonComponent>

@@ -107,6 +107,30 @@ const Navigation = styled.nav<{ isOpen: boolean }>`
   }
 `;
 
+const DesktopActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(4)};
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileMenuActions = styled.div`
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(4)};
+  margin-top: ${({ theme }) => theme.spacing(4)};
+  padding-top: ${({ theme }) => theme.spacing(4)};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.main};
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
+
 // App title component for authenticated users
 const AppTitle = styled.div`
   flex: 1;
@@ -190,7 +214,6 @@ const marketingNavigationLinks: NavigationLink[] = [
   { href: '#features', labelKey: 'header.navigation.features' },
   { href: '#pricing', labelKey: 'header.navigation.pricing' },
   { href: '#about', labelKey: 'header.navigation.about' },
-  { href: '#contact', labelKey: 'header.navigation.contact' },
 ];
 
 const appNavigationLinks: NavigationLink[] = [
@@ -288,6 +311,28 @@ export default function Header({ variant: propVariant }: HeaderProps) {
                 </NavLink>
               ));
             })()}
+            <MobileMenuActions>
+              <ThemeToggleButton />
+              <LanguageSelector />
+              {!currentUser && (
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={handleSignIn}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    {t('login')}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSignUp}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    {t('header.cta')}
+                  </Button>
+                </>
+              )}
+            </MobileMenuActions>
           </Navigation>
         )}
 
@@ -295,15 +340,31 @@ export default function Header({ variant: propVariant }: HeaderProps) {
           {currentUser ? (
             // Usuario autenticado
             <>
-              <ThemeToggleButton />
-              <LanguageSelector />
+              <DesktopActions>
+                <ThemeToggleButton />
+                <LanguageSelector />
+              </DesktopActions>
               <UserMenu currentUser={currentUser} />
+              <HamburgerButton
+                onClick={toggleMobileMenu}
+                aria-label="Toggle mobile menu"
+              >
+                <HamburgerIcon isOpen={isMobileMenuOpen} />
+              </HamburgerButton>
             </>
           ) : (
             // Usuario no autenticado - vista de marketing
             <>
-              <ThemeToggleButton />
-              <LanguageSelector />
+              <DesktopActions>
+                <ThemeToggleButton />
+                <LanguageSelector />
+                <Button variant="secondary" onClick={handleSignIn}>
+                  {t('login')}
+                </Button>
+                <Button variant="primary" onClick={handleSignUp}>
+                  {t('header.cta')}
+                </Button>
+              </DesktopActions>
 
               <HamburgerButton
                 onClick={toggleMobileMenu}
@@ -311,14 +372,6 @@ export default function Header({ variant: propVariant }: HeaderProps) {
               >
                 <HamburgerIcon isOpen={isMobileMenuOpen} />
               </HamburgerButton>
-
-              <Button variant="secondary" onClick={handleSignIn}>
-                {t('login')}
-              </Button>
-
-              <Button variant="primary" onClick={handleSignUp}>
-                {t('header.cta')}
-              </Button>
             </>
           )}
         </ActionsContainer>
