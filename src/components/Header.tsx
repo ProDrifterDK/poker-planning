@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, usePathname } from 'next/navigation';
 import styled from '@emotion/styled';
-import { useTheme } from '@emotion/react';
 import { Button } from './Button';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,6 +12,14 @@ import UserMenu from './auth/UserMenu';
 import { Typography } from '@mui/material';
 import ThemeToggleButton from './ThemeToggleButton';
 import LanguageSelector from './LanguageSelector';
+import { Settings } from 'iconoir-react';
+
+const AnimatedSettings = styled(Settings, {
+  shouldForwardProp: prop => prop !== '$isOpen',
+})<{ $isOpen: boolean }>`
+  transition: transform 0.3s ease;
+  transform: ${({ $isOpen }) => ($isOpen ? 'rotate(90deg)' : 'rotate(0deg)')};
+`;
 
 // Styled components using the design system
 const HeaderContainer = styled.header`
@@ -84,7 +91,7 @@ const LogoLink = styled(Link)`
   display: flex;
 `;
 
-const Navigation = styled.nav<{ isOpen: boolean }>`
+const Navigation = styled.nav<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing(8)};
@@ -100,9 +107,9 @@ const Navigation = styled.nav<{ isOpen: boolean }>`
     flex-direction: column;
     gap: ${({ theme }) => theme.spacing(4)};
     padding: ${({ theme }) => theme.spacing(6)};
-    transform: ${({ isOpen }) => isOpen ? 'translateY(0)' : 'translateY(-100%)'};
-    opacity: ${({ isOpen }) => isOpen ? 1 : 0};
-    visibility: ${({ isOpen }) => isOpen ? 'visible' : 'hidden'};
+    transform: ${({ $isOpen }) => $isOpen ? 'translateY(0)' : 'translateY(-100%)'};
+    opacity: ${({ $isOpen }) => $isOpen ? 1 : 0};
+    visibility: ${({ $isOpen }) => $isOpen ? 'visible' : 'hidden'};
     transition: all 0.3s ease-in-out;
   }
 `;
@@ -129,6 +136,12 @@ const MobileMenuActions = styled.div`
   @media (max-width: 768px) {
     display: flex;
   }
+`;
+
+const AuthenticatedMobileMenuActions = styled(MobileMenuActions)`
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
 `;
 
 // App title component for authenticated users
@@ -171,9 +184,15 @@ const HamburgerButton = styled.button`
     outline: 2px solid ${props => props.theme.colors.primary.main};
     outline-offset: 2px;
   }
+
+  & svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
 `;
 
-const HamburgerIcon = styled.div<{ isOpen: boolean }>`
+const HamburgerIcon = styled.div<{ $isOpen: boolean }>`
   width: 24px;
   height: 2px;
   background-color: ${props => props.theme.colors.text.primary};
@@ -192,15 +211,15 @@ const HamburgerIcon = styled.div<{ isOpen: boolean }>`
 
   &::before {
     top: -8px;
-    transform: ${({ isOpen }) => isOpen ? 'rotate(45deg) translate(6px, 6px)' : 'none'};
+    transform: ${({ $isOpen }) => $isOpen ? 'rotate(45deg) translate(6px, 6px)' : 'none'};
   }
 
   &::after {
     top: 8px;
-    transform: ${({ isOpen }) => isOpen ? 'rotate(-45deg) translate(6px, -6px)' : 'none'};
+    transform: ${({ $isOpen }) => $isOpen ? 'rotate(-45deg) translate(6px, -6px)' : 'none'};
   }
 
-  ${({ isOpen }) => isOpen && `
+  ${({ $isOpen }) => $isOpen && `
     background-color: transparent;
   `}
 `;
@@ -216,11 +235,6 @@ const marketingNavigationLinks: NavigationLink[] = [
   { href: '#about', labelKey: 'header.navigation.about' },
 ];
 
-const appNavigationLinks: NavigationLink[] = [
-  { href: '/rooms', labelKey: 'header.navigation.myRooms' },
-  { href: '/rooms/create', labelKey: 'header.navigation.createRoom' },
-];
-
 interface HeaderProps {
   variant?: 'marketing' | 'app';
 }
@@ -230,7 +244,6 @@ export default function Header({ variant: propVariant }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { currentUser } = useAuth();
-  const theme = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Auto-detect variant based on current route if not explicitly provided
@@ -242,17 +255,6 @@ export default function Header({ variant: propVariant }: HeaderProps) {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
-  };
-
-  const handleSmoothScroll = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-    closeMobileMenu();
   };
 
   const handleSignUp = () => {
@@ -283,34 +285,30 @@ export default function Header({ variant: propVariant }: HeaderProps) {
         </LogoContainer>
 
         {currentUser && variant === 'app' ? (
-          // Show contextual title for authenticated users in app variant
-          <AppTitle>
-            <AppTitleTypography variant="h2">
-              {t('header.appTitle')}
-            </AppTitleTypography>
-          </AppTitle>
+          <>
+            <AppTitle>
+              <AppTitleTypography variant="h3">
+                {t('header.appTitle')}
+              </AppTitleTypography>
+            </AppTitle>
+            <Navigation $isOpen={isMobileMenuOpen}>
+              <AuthenticatedMobileMenuActions>
+                <ThemeToggleButton />
+                <LanguageSelector />
+              </AuthenticatedMobileMenuActions>
+            </Navigation>
+          </>
         ) : (
-          // Show navigation for marketing variant or non-authenticated users
-          <Navigation isOpen={isMobileMenuOpen}>
-            {(() => {
-              // Determine which navigation links to show
-              let linksToShow;
-              if (variant === 'marketing') {
-                linksToShow = marketingNavigationLinks;
-              } else {
-                linksToShow = marketingNavigationLinks;
-              }
-
-              return linksToShow.map((link) => (
-                <NavLink
-                  key={link.href}
-                  href={link.href}
-                  onClick={closeMobileMenu}
-                >
-                  {t(link.labelKey)}
-                </NavLink>
-              ));
-            })()}
+          <Navigation $isOpen={isMobileMenuOpen}>
+            {marketingNavigationLinks.map(link => (
+              <NavLink
+                key={link.href}
+                href={link.href}
+                onClick={closeMobileMenu}
+              >
+                {t(link.labelKey)}
+              </NavLink>
+            ))}
             <MobileMenuActions>
               <ThemeToggleButton />
               <LanguageSelector />
@@ -349,7 +347,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
                 onClick={toggleMobileMenu}
                 aria-label="Toggle mobile menu"
               >
-                <HamburgerIcon isOpen={isMobileMenuOpen} />
+                {variant === 'app' ? <AnimatedSettings $isOpen={isMobileMenuOpen} /> : <HamburgerIcon $isOpen={isMobileMenuOpen} />}
               </HamburgerButton>
             </>
           ) : (
@@ -370,7 +368,7 @@ export default function Header({ variant: propVariant }: HeaderProps) {
                 onClick={toggleMobileMenu}
                 aria-label="Toggle mobile menu"
               >
-                <HamburgerIcon isOpen={isMobileMenuOpen} />
+                <HamburgerIcon $isOpen={isMobileMenuOpen} />
               </HamburgerButton>
             </>
           )}
