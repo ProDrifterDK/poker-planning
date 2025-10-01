@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertTitle, Box, IconButton, Typography, List, ListItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
+import { useAdBlockerDetection } from '@/hooks/useAdBlockerDetection';
 
 const StyledBox = styled(Box)``;
 
@@ -14,33 +15,9 @@ const StyledBox = styled(Box)``;
  * It uses the network request probe method for reliable detection.
  */
 const AdBlockerWarning: React.FC = () => {
-  const [adBlockerDetected, setAdBlockerDetected] = useState(false);
+  const adBlockerDetected = useAdBlockerDetection();
   const [isDismissed, setIsDismissed] = useState(false);
   const { t } = useTranslation('common');
-
-  useEffect(() => {
-    // This function performs the network request probe.
-    const checkAdBlocker = async () => {
-      const adUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-      
-      try {
-        // We use 'HEAD' for efficiency and 'no-cors' to avoid CORS issues.
-        await fetch(new Request(adUrl, {
-          method: 'HEAD',
-          mode: 'no-cors',
-        }));
-        // If the request succeeds, no ad blocker is active.
-        // The state remains false.
-      } catch (error) {
-        // If the request fails, it's highly likely an ad blocker is active.
-        console.warn('Ad blocker detected.', error);
-        setAdBlockerDetected(true);
-      }
-    };
-
-    // Run the check only once when the component mounts.
-    checkAdBlocker();
-  }, []); // Empty dependency array ensures this runs only once.
 
   if (isDismissed || !adBlockerDetected) {
     return null;
