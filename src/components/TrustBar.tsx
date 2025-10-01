@@ -2,11 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import Image from 'next/image';
 import AnimatedSection from './AnimatedSection';
 
-// --- 1. Asset Management: High-Quality SVG Logos as React Components ---
-// This approach ensures optimal performance, scalability, and maintainability.
-// SVGs are optimized and set to use currentColor for easy styling.
 
 const companyLogos = [
   {
@@ -53,7 +51,7 @@ const scrollingAnimation = keyframes`
 // --- 3. Styled Components ---
 
 const TrustBarContainer = styled.section`
-  background: linear-gradient(90deg, #1C1C1E 0%, #2C2C2E 100%);
+  background: linear-gradient(90deg, ${props => props.theme.colors.background.paper} 0%, ${props => props.theme.colors.background.default} 100%);
   padding: ${props => `${props.theme.spacing(12)} 0`};
   border-top: 1px solid ${props => props.theme.colors.border.main};
   border-bottom: 1px solid ${props => props.theme.colors.border.main};
@@ -73,12 +71,12 @@ const TrustBarContainer = styled.section`
 
   &::before {
     left: 0;
-    background: linear-gradient(to right, #1C1C1E, transparent);
+    background: linear-gradient(to right, ${props => props.theme.colors.background.paper}, transparent);
   }
 
   &::after {
     right: 0;
-    background: linear-gradient(to left, #2C2C2E, transparent);
+    background: linear-gradient(to left, ${props => props.theme.colors.background.default}, transparent);
   }
 
   @media (max-width: ${props => props.theme.breakpoints.values.sm}px) {
@@ -130,7 +128,7 @@ const LogoItem = styled.div`
   align-items: center;
   justify-content: center;
   
-  img {
+  .logo-image {
     width: auto;
     height: 40px;
     max-width: 120px;
@@ -138,9 +136,8 @@ const LogoItem = styled.div`
     opacity: 0.7;
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-
-  &:hover img {
-    filter: grayscale(0%) drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  &:hover .logo-image {
+    filter: grayscale(0%) drop-shadow(0 0 8px ${props => props.theme.colors.text.primary}33);
     opacity: 1;
     transform: scale(1.1);
   }
@@ -169,7 +166,13 @@ export const TrustBar: React.FC<TrustBarProps> = ({ className }) => {
             {/* Render logos twice for a seamless infinite loop */}
             {[...companyLogos, ...companyLogos].map((logo, index) => (
               <LogoItem key={`${logo.name}-${index}`} aria-hidden={index >= companyLogos.length}>
-                <img src={logo.path} alt={`${logo.name} logo`} />
+                <Image
+                  src={logo.path}
+                  alt={`${logo.name} logo`}
+                  width={120}
+                  height={40}
+                  className="logo-image"
+                />
               </LogoItem>
             ))}
           </ScrollerTrack>
