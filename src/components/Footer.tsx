@@ -295,7 +295,7 @@ export default function Footer() {
 
       <BottomSection>
         <Copyright>
-          © {new Date().getFullYear()} {t(footerData.companyInfo.nameKey)}. {t('footer.copyright')}.
+          © {new Date().getFullYear()} {t(footerData.companyInfo.nameKey)}. {t('footer.copyright')}. <a href="https://www.linkedin.com/company/resyst-softwares/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>{t('footer.legacy.builtBy')}</a>.
         </Copyright>
 
         <LegalLinks>
