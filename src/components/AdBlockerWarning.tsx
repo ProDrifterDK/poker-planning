@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
 
 interface AdBlockerWarningProps {
-  isOpen: boolean;
+  isOpen?: boolean;
 }
 
 const StyledBox = styled(Box, {
@@ -21,7 +21,7 @@ const StyledBox = styled(Box, {
  * Componente que muestra una advertencia cuando se detecta un bloqueador de anuncios
  * que podría estar interfiriendo con la funcionalidad de la aplicación.
  */
-const AdBlockerWarning: React.FC<AdBlockerWarningProps> = ({ isOpen }) => {
+const AdBlockerWarning: React.FC<AdBlockerWarningProps> = ({ isOpen = true }) => {
   const [isDismissed, setIsDismissed] = useState(false);
   const { t } = useTranslation('common');
 
