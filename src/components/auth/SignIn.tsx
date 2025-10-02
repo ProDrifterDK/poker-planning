@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/authContext';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Box, Paper, Typography, Divider, Button } from '@mui/material';
+import { Box, Paper, Typography, Divider, Button, Avatar } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { Input } from '@/components/forms/Input';
 import { FormButton } from '@/components/forms/FormButton';
 import { Alert } from '@/components/feedback/Alert';
@@ -45,6 +47,7 @@ const SignIn: React.FC = () => {
   const { signIn, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
   const { t } = useTranslation('auth');
+  const theme = useTheme();
 
   // Redireccionar si el usuario está autenticado o si el inicio de sesión fue exitoso
   useEffect(() => {
@@ -153,33 +156,36 @@ const SignIn: React.FC = () => {
         alignItems: 'center',
         minHeight: '100vh',
         padding: 2,
-        backgroundColor: 'background.default',
-        '&.MuiBox-root': {
-          backgroundColor: 'background.default !important'
-        }
+        background: `linear-gradient(45deg, ${theme.palette.background.default} 30%, ${theme.palette.primary.main} 150%)`,
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          padding: 4,
+          padding: { xs: 3, sm: 4 },
           width: '100%',
           maxWidth: 400,
-          borderRadius: theme => theme.shape.borderRadius,
-          backgroundColor: 'background.paper',
-          '&.MuiPaper-root': {
-            backgroundColor: 'background.paper !important',
-            backgroundImage: 'none !important'
-          }
+          borderRadius: 2,
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+          backdropFilter: 'blur(10px)',
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: theme.shadows[10],
         }}
       >
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Avatar
+            src="/images/logo/logo.svg"
+            alt="Logo"
+            sx={{ width: 64, height: 64, backgroundColor: 'transparent' }}
+          />
+        </Box>
         {/* Título del formulario */}
         <Typography
           variant="h4"
           component="h1"
           gutterBottom
           textAlign="center"
-          sx={{ mb: 3, fontWeight: theme => theme.typography.fontWeightBold }}
+          sx={{ mb: 5, fontWeight: theme => theme.typography.fontWeightBold }}
         >
           {t('signin.title')}
         </Typography>
@@ -204,63 +210,70 @@ const SignIn: React.FC = () => {
         )}
 
         {/* Formulario de inicio de sesión */}
-        <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 4, mb: 4 }}>
           {/* Campo de correo electrónico */}
-          <Box sx={{ mb: 2 }}>
-            <Input
-              type="email"
-              placeholder={t('signin.email')}
-              value={email}
-              onChange={handleEmailChange}
-              disabled={isSubmitting}
-              error={!!formError && !email.trim()}
-              required
-            />
-          </Box>
+          <Input
+            type="email"
+            placeholder={t('signin.email')}
+            value={email}
+            onChange={handleEmailChange}
+            disabled={isSubmitting}
+            error={!!formError && !email.trim()}
+            required
+          />
 
           {/* Campo de contraseña */}
-          <Box sx={{ mb: 3 }}>
-            <Input
-              type="password"
-              placeholder={t('signin.password')}
-              value={password}
-              onChange={handlePasswordChange}
-              disabled={isSubmitting}
-              error={!!formError && !password}
-              required
-            />
-          </Box>
+          <Input
+            type="password"
+            placeholder={t('signin.password')}
+            value={password}
+            onChange={handlePasswordChange}
+            disabled={isSubmitting}
+            error={!!formError && !password}
+            required
+          />
 
           {/* Botón de inicio de sesión */}
-          <Box sx={{ mb: 2 }}>
-            <FormButton
-              type="submit"
-              variant="primary"
-              isSubmitting={isSubmitting}
-              loadingText={t('signin.signingIn')}
-            >
-              {t('signin.submit')}
-            </FormButton>
-          </Box>
+          <FormButton
+            type="submit"
+            variant="primary"
+            isSubmitting={isSubmitting}
+            loadingText={t('signin.signingIn')}
+          >
+            {t('signin.submit')}
+          </FormButton>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: 4 }}>
+          <Typography variant="caption" color="text.secondary">
+            {t('signin.or')}
+          </Typography>
+        </Divider>
 
         {/* Botón de Google Sign-In */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mt: 4, mb: 4 }}>
           <FormButton
             type="button"
-            variant="secondary"
+            variant="glass"
             onClick={handleGoogleSignIn}
             isSubmitting={isSubmitting}
             loadingText={t('signin.signingIn')}
+            startIcon={<Image src="/images/logo/icons8-google-48.svg" alt="Google icon" width={24} height={24} />}
+            fullWidth
           >
             {t('signin.continueWithGoogle')}
           </FormButton>
         </Box>
 
         {/* Enlaces de navegación */}
-        <Box sx={{ textAlign: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: 2,
+          }}
+        >
           <Button
             component={Link}
             href={getLocalizedRoute('/auth/reset-password')}
@@ -268,37 +281,31 @@ const SignIn: React.FC = () => {
             sx={{
               textTransform: 'none',
               color: 'primary.main',
+              transition: 'all 0.2s ease-in-out',
               '&:hover': {
                 backgroundColor: 'transparent',
-                textDecoration: 'underline'
-              }
+                textDecoration: 'underline',
+                color: 'primary.dark',
+              },
             }}
           >
             {t('signin.forgotPassword')}
           </Button>
-        </Box>
-
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {t('signin.noAccount')}{' '}
-            <Button
-              component={Link}
-              href={getLocalizedRoute('/auth/signup')}
-              variant="text"
-              sx={{
-                textTransform: 'none',
-                color: 'primary.main',
-                padding: 0,
-                minWidth: 'auto',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  textDecoration: 'underline'
-                }
-              }}
-            >
-              {t('signin.createAccount')}
-            </Button>
-          </Typography>
+          <Button
+            component={Link}
+            href={getLocalizedRoute('/auth/signup')}
+            variant="text"
+            sx={{
+              textTransform: 'none',
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {t('signin.createAccount')}
+          </Button>
         </Box>
       </Paper>
     </Box>

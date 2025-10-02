@@ -7,13 +7,17 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
     Box,
     Typography,
-    TextField,
     Button,
     Snackbar,
     Alert,
     useTheme,
     IconButton,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
 } from '@mui/material';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import MenuCloseIcon from '@mui/icons-material/Menu';
@@ -40,6 +44,7 @@ export default function RoomPage() {
     const [name, setName] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showRemovedDialog, setShowRemovedDialog] = useState(false);
 
     // Obtener el usuario autenticado
     const { currentUser } = useAuth();
@@ -101,7 +106,12 @@ export default function RoomPage() {
             console.log('Usuario detectado como unido a la sala');
             setIsJoined(true);
         }
-    }, [storeRoomId, roomId, participants]);
+
+        const participantId = localStorage.getItem(`participant_id_${roomId}`);
+        if (isJoined && participantId && !participants.some(p => p.id === participantId)) {
+            setShowRemovedDialog(true);
+        }
+    }, [storeRoomId, roomId, participants, isJoined]);
 
     // Verificar si hay un nombre de invitado en localStorage cada 500ms hasta encontrarlo
     useEffect(() => {
@@ -1164,7 +1174,23 @@ export default function RoomPage() {
                         </Box>
                     </Box>
                 )}
+                <Dialog open={showRemovedDialog} onClose={() => setShowRemovedDialog(false)}>
+                    <DialogTitle>{t('removedFromRoomTitle')}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            {t('removedFromRoomMessage')}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => {
+                            setShowRemovedDialog(false);
+                            leaveRoom();
+                            router.push(getLocalizedRoute('/'));
+                        }}>{t('ok')}</Button>
+                    </DialogActions>
+                </Dialog>
             </Box>
         </ProtectedRoute>
     );
 }
+

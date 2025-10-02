@@ -48,6 +48,8 @@ export interface FormButtonProps extends Omit<ButtonProps, 'children'> {
   isSubmitting?: boolean;
   loadingText?: string;
   children: React.ReactNode;
+  startIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 // Main FormButton component
@@ -56,6 +58,8 @@ export const FormButton: React.FC<FormButtonProps> = ({
   loadingText,
   disabled,
   children,
+  startIcon,
+  fullWidth,
   ...buttonProps
 }) => {
   const isDisabled = disabled || isSubmitting;
@@ -64,17 +68,22 @@ export const FormButton: React.FC<FormButtonProps> = ({
     <Button
       {...buttonProps}
       disabled={isDisabled}
+      sx={{ width: fullWidth ? '100%' : 'auto', ...buttonProps.sx }}
     >
       <ButtonContent isLoading={isSubmitting}>
-        {isSubmitting && (
+        {isSubmitting ? (
           <>
             <SpinnerWrapper>
               <SpinnerIcon />
             </SpinnerWrapper>
             {loadingText || 'Loading...'}
           </>
+        ) : (
+          <>
+            {startIcon && <span style={{ marginRight: 8 }}>{startIcon}</span>}
+            {children}
+          </>
         )}
-        {!isSubmitting && children}
       </ButtonContent>
     </Button>
   );

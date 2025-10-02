@@ -628,5 +628,8 @@
   "featureGuard": {
     "requiresHigherPlan": "This feature requires a higher plan",
     "upgradePlan": "Upgrade Plan"
-  }
+  },
+  "removedFromRoomTitle": "You have been removed",
+  "removedFromRoomMessage": "The moderator has removed you from the room.",
+  "ok": "OK"
 }

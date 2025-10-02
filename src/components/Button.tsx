@@ -47,18 +47,21 @@ export const PrimaryButton = styled(BaseButton)`
   background: linear-gradient(45deg, ${props => props.theme.colors.primary.main} 30%, ${props => props.theme.colors.primary.dark} 90%);
   color: ${props => props.theme.colors.text.primary};
   box-shadow: ${props => props.theme.shadows.small};
+  transition: all 0.3s ease-in-out;
+  background-size: 200% 200%;
+  background-position: 0% 50%;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(45deg, ${props => props.theme.colors.primary.dark} 30%, ${props => props.theme.colors.primary.main} 90%);
-    transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 4px 15px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.25)`}, 0 2px 8px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.15)`};
+    background-position: 100% 50%;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.3)`}, 0 3px 10px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.2)`};
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: 0px 2px 4px ${props => `rgba(${hexToRgb(props.theme.colors.primary.main)}, 0.2)`};
   }
-
+  
   &:disabled {
     background: ${props => props.theme.colors.text.secondary};
     color: ${props => props.theme.colors.text.disabled};
@@ -123,9 +126,29 @@ export const TertiaryButton = styled(BaseButton)`
   }
 `;
 
+// Glass Button Variant
+export const GlassButton = styled(BaseButton)`
+  background: rgba(255, 255, 255, 0.1);
+  color: ${props => props.theme.colors.text.primary};
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: ${props => props.theme.colors.text.disabled};
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+`;
+
 // Button component props interface
 export interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'tertiary';
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'glass';
   disabled?: boolean;
   children: React.ReactNode;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -133,6 +156,7 @@ export interface ButtonProps {
   'aria-label'?: string;
   className?: string;
   style?: React.CSSProperties;
+  sx?: React.CSSProperties;
 }
 
 // Main Button component
@@ -145,6 +169,7 @@ export const Button: React.FC<ButtonProps> = ({
   'aria-label': ariaLabel,
   className,
   style,
+  sx,
 }) => {
   const getButtonComponent = () => {
     switch (variant) {
@@ -152,6 +177,8 @@ export const Button: React.FC<ButtonProps> = ({
         return SecondaryButton;
       case 'tertiary':
         return TertiaryButton;
+      case 'glass':
+        return GlassButton;
       default:
         return PrimaryButton;
     }
@@ -166,7 +193,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       aria-label={ariaLabel}
       className={className}
-      style={style}
+      style={{ ...style, ...sx }}
     >
       {children}
     </ButtonComponent>

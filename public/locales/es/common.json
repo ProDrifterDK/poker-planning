@@ -628,5 +628,8 @@
   "featureGuard": {
     "requiresHigherPlan": "Esta función requiere un plan superior",
     "upgradePlan": "Actualizar Plan"
-  }
+  },
+  "removedFromRoomTitle": "Has sido eliminado de la sala",
+  "removedFromRoomMessage": "El moderador te ha eliminado de la sala.",
+  "ok": "Aceptar"
 }
