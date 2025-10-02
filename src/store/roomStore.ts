@@ -365,6 +365,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
                   estimation?: number | string;
                   role?: string;
                   active?: boolean;
+                  removed?: boolean;
                 };
                 return {
                   id: key,
@@ -374,6 +375,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
                   role: (participant.role as UserRole) || UserRole.PARTICIPANT,
                   // Incluir el estado activo del participante
                   active: participant.active,
+                  removed: participant.removed,
                   // Opcionalmente, podemos añadir el userId si está disponible
                   userId: undefined
                 };
@@ -589,7 +591,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
         try {
           const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
-          await update(participantRef, { active: false });
+          await update(participantRef, { active: false, removed: true });
         } catch (error) {
           const appError = createError(
             ErrorType.UPDATE_FAILED,

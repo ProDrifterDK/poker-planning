@@ -95,27 +95,39 @@ export default function RoomPage() {
 
     // Verificar si el usuario ya está en la sala
     const [isJoined, setIsJoined] = useState(false);
+    const [wasRemoved, setWasRemoved] = useState(false);
 
     // Estado para controlar cuándo intentar la auto-unión
     const [shouldAttemptJoin, setShouldAttemptJoin] = useState(false);
 
-    // Actualizar el estado isJoined cuando cambian los datos del store
+    // Efecto para manejar el estado de "unido" y detectar si ha sido eliminado
     useEffect(() => {
-        const joined = storeRoomId === roomId && participants.length > 0;
-        if (joined) {
-            console.log('Usuario detectado como unido a la sala');
-            setIsJoined(true);
+        const participantId = localStorage.getItem(`participant_id_${roomId}`);
+        if (!participantId) return;
+
+        const currentParticipant = participants.find(p => p.id === participantId);
+        const isParticipantInRoom = !!currentParticipant;
+
+        if (storeRoomId === roomId && isParticipantInRoom && !currentParticipant.removed) {
+            if (!isJoined) {
+                console.log('Usuario detectado como unido a la sala');
+                setIsJoined(true);
+            }
         }
 
-        const participantId = localStorage.getItem(`participant_id_${roomId}`);
-        if (isJoined && participantId && !participants.some(p => p.id === participantId)) {
+        // Nueva lógica de detección de eliminación
+        // Nueva lógica de detección de eliminación
+        if (isJoined && currentParticipant && currentParticipant.removed) {
+            console.log('Usuario ha sido eliminado de la sala');
             setShowRemovedDialog(true);
+            setIsJoined(false); // Marcar como "no unido" para evitar acciones posteriores
+            setWasRemoved(true); // Marcar como eliminado para evitar re-unión
         }
     }, [storeRoomId, roomId, participants, isJoined]);
 
     // Verificar si hay un nombre de invitado en localStorage cada 500ms hasta encontrarlo
     useEffect(() => {
-        if (!isJoined && !shouldAttemptJoin) {
+        if (!isJoined && !shouldAttemptJoin && !wasRemoved) {
             const checkInterval = setInterval(() => {
                 const guestName = localStorage.getItem('guestName');
                 if (guestName) {
@@ -128,7 +140,7 @@ export default function RoomPage() {
 
             return () => clearInterval(checkInterval);
         }
-    }, [isJoined, shouldAttemptJoin]);
+    }, [isJoined, shouldAttemptJoin, wasRemoved]);
 
     // Función para verificar si el usuario ya está en la sala
     const isUserAlreadyInRoom = useCallback(() => {
@@ -166,6 +178,9 @@ export default function RoomPage() {
         try {
             // Verificar si estamos en el cliente
             if (typeof window === 'undefined') return false;
+
+            // No intentar unirse si el usuario fue eliminado
+            if (wasRemoved) return false;
 
             // Verificar si ya estamos unidos a la sala
             if (isJoined) return true;
@@ -251,7 +266,7 @@ export default function RoomPage() {
             console.error("Error al verificar sesión persistente:", error);
             return false;
         }
-    }, [roomId, isJoined, name, joinRoomWithName, currentUser, participants, isUserAlreadyInRoom]);
+    }, [roomId, isJoined, name, joinRoomWithName, currentUser, participants, isUserAlreadyInRoom, wasRemoved]);
 
     // Usar el nombre del usuario autenticado o invitado
     useEffect(() => {
@@ -287,7 +302,7 @@ export default function RoomPage() {
 
     // Auto-unirse a la sala cuando shouldAttemptJoin cambia a true
     useEffect(() => {
-        if (!isJoined && roomId && name && shouldAttemptJoin) {
+        if (!isJoined && roomId && name && shouldAttemptJoin && !wasRemoved) {
             console.log("Intentando auto-unirse a la sala con nombre:", name);
 
             // Verificar primero si el usuario ya está en la sala
@@ -352,7 +367,7 @@ export default function RoomPage() {
                 clearTimeout(forceJoinTimeout);
             };
         }
-    }, [isJoined, roomId, name, joinRoomWithName, shouldAttemptJoin, isUserAlreadyInRoom]);
+    }, [isJoined, roomId, name, joinRoomWithName, shouldAttemptJoin, isUserAlreadyInRoom, wasRemoved]);
 
     // Función para actualizar el nombre del moderador
     const updateModeratorName = useCallback(async () => {
@@ -550,6 +565,13 @@ export default function RoomPage() {
             console.error('Error al salir de la sala:', error);
             setErrorMessage(t('errors.leaveRoomFailed'));
         }
+    };
+
+    const handleAcknowledgeRemoval = () => {
+        setShowRemovedDialog(false);
+        leaveRoom();
+        localStorage.removeItem(`participant_id_${roomId}`);
+        router.push(getLocalizedRoute('/'));
     };
 
     // Toggle sidebar
@@ -1182,11 +1204,7 @@ export default function RoomPage() {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => {
-                            setShowRemovedDialog(false);
-                            leaveRoom();
-                            router.push(getLocalizedRoute('/'));
-                        }}>{t('ok')}</Button>
+                        <Button onClick={handleAcknowledgeRemoval}>{t('ok')}</Button>
                     </DialogActions>
                 </Dialog>
             </Box>

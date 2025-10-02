@@ -7,6 +7,7 @@ export interface Participant {
   role: UserRole;
   userId?: string; // ID del usuario autenticado (si está disponible)
   active?: boolean; // Indica si el participante está activo en la sala
+  removed?: boolean; // Indica si el participante ha sido eliminado
 }
 
 export interface Room {
