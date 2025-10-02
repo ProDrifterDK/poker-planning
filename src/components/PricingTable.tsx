@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { Button } from './Button';
 import { darkEmotionTheme } from '../styles/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -250,7 +251,8 @@ interface PricingCardProps {
 
 // Main PricingTable component
 export const PricingTable: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [isYearly, setIsYearly] = useState(false);
 
   // Define pricing plans
@@ -300,46 +302,66 @@ export const PricingTable: React.FC = () => {
   };
   
   // PricingCard component
-  const PricingCard: React.FC<PricingCardProps> = ({ planKey, popular, isYearly }) => {
+  const PricingCard: React.FC<PricingCardProps> = ({
+    planKey,
+    popular,
+    isYearly
+  }) => {
     const { t } = useTranslation();
     const priceDisplay = getPriceDisplay(planKey);
-  
+
+    const handleCTAClick = () => {
+      const currentLang = i18n.language || 'en';
+      router.push(`/${currentLang}/auth/signup`);
+    };
+
     return (
       <CardWrapper popular={popular}>
         {popular && <PopularBadge>Most Popular</PopularBadge>}
         <PricingCardContainer popular={popular}>
-          <PricingCardTitle>{t(`plansSection.${planKey}.title`)}</PricingCardTitle>
-          <PricingCardSubtitle>{t(`plansSection.${planKey}.subtitle`)}</PricingCardSubtitle>
-  
+          <PricingCardTitle>
+            {t(`plansSection.${planKey}.title`)}
+          </PricingCardTitle>
+          <PricingCardSubtitle>
+            {t(`plansSection.${planKey}.subtitle`)}
+          </PricingCardSubtitle>
+
           <PlanDescription>
             {t(`plansSection.${planKey}.description`)}
           </PlanDescription>
-  
+
           <PriceDisplay>
             <PriceAmount>{priceDisplay.amount}</PriceAmount>
             {priceDisplay.period && (
               <PricePeriod>{priceDisplay.period}</PricePeriod>
             )}
           </PriceDisplay>
-  
+
           {isYearly && planKey !== 'free' && (
             <SavingsBadge>
               {t('plansSection.billingToggle.save')}
             </SavingsBadge>
           )}
-  
+
           <FeaturesList>
-            {(t(`plansSection.${planKey}.features`, { returnObjects: true }) as string[]).map((feature, index) => (
+            {(
+              t(`plansSection.${planKey}.features`, {
+                returnObjects: true
+              }) as string[]
+            ).map((feature, index) => (
               <FeatureItem key={index}>
                 <CheckmarkIcon />
                 {feature}
               </FeatureItem>
             ))}
           </FeaturesList>
-  
+
           <Button
             variant={popular ? 'primary' : 'secondary'}
-            aria-label={`${t(`plansSection.${planKey}.title`)} - ${t(`plansSection.${planKey}.cta`)}`}
+            onClick={handleCTAClick}
+            aria-label={`${t(`plansSection.${planKey}.title`)} - ${t(
+              `plansSection.${planKey}.cta`
+            )}`}
           >
             {t(`plansSection.${planKey}.cta`)}
           </Button>

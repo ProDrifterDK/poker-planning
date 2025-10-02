@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
 import { Button } from './Button';
@@ -144,12 +145,13 @@ export interface HeroSectionProps {
 
 // Main HeroSection component
 export const HeroSection: React.FC<HeroSectionProps> = ({ className }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
   const theme = useTheme();
 
   const handleCTAClick = () => {
-    // Placeholder for CTA action
-    console.log('Hero CTA clicked');
+    const currentLang = i18n.language || 'en';
+    router.push(`/${currentLang}/auth/signup`);
   };
 
   return (

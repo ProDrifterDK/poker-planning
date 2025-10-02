@@ -26,6 +26,7 @@ const BackgroundGlow = styled.div`
   height: 200%;
   background: radial-gradient(circle, rgba(18, 151, 253, 0.1) 0%, transparent 70%);
   z-index: 1;
+  pointer-events: none;
 `;
 
 const CTAContent = styled.div`
@@ -97,11 +98,6 @@ const TestimonialText = styled.blockquote`
   }
 `;
 
-const CTAButtonSection = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
 
 const CTAButton = styled(Button)`
   font-size: ${({ theme }) => (theme as unknown as Theme).typography.h4.fontSize};
@@ -146,16 +142,22 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({ className }) => {
             </TestimonialSection>
           </AnimatedSection>
 
-          <AnimatedSection animation="scale-up" delay={0.4}>
-            <CTAButtonSection>
-              <CTAButton
-                variant="primary"
-                onClick={handleCTAClick}
-                aria-label={t('finalCTA.cta')}
-              >
-                {t('finalCTA.cta')}
-              </CTAButton>
-            </CTAButtonSection>
+          <AnimatedSection
+            animation="scale-up"
+            delay={0.4}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <CTAButton
+              variant="primary"
+              onClick={handleCTAClick}
+              aria-label={t('finalCTA.cta')}
+            >
+              {t('finalCTA.cta')}
+            </CTAButton>
           </AnimatedSection>
         </CTAContent>
       </AnimatedSection>

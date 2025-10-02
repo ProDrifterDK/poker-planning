@@ -230,9 +230,9 @@ interface NavigationLink {
 }
 
 const marketingNavigationLinks: NavigationLink[] = [
-  { href: '#features', labelKey: 'header.navigation.features' },
-  { href: '#pricing', labelKey: 'header.navigation.pricing' },
-  { href: '#about', labelKey: 'header.navigation.about' },
+  { href: 'features', labelKey: 'header.navigation.features' },
+  { href: 'pricing', labelKey: 'header.navigation.pricing' },
+  { href: 'about', labelKey: 'header.navigation.about' },
 ];
 
 interface HeaderProps {
@@ -300,15 +300,21 @@ export default function Header({ variant: propVariant }: HeaderProps) {
           </>
         ) : (
           <Navigation $isOpen={isMobileMenuOpen}>
-            {marketingNavigationLinks.map(link => (
-              <NavLink
-                key={link.href}
-                href={link.href}
-                onClick={closeMobileMenu}
-              >
-                {t(link.labelKey)}
-              </NavLink>
-            ))}
+            {marketingNavigationLinks.map(link => {
+              const isHomePage = pathname.length <= 3; // Basic check for /en, /es, or /
+              const linkHref = isHomePage
+                ? `#${link.href}`
+                : `/${i18n.language}/#${link.href}`;
+              return (
+                <NavLink
+                  key={link.href}
+                  href={linkHref}
+                  onClick={closeMobileMenu}
+                >
+                  {t(link.labelKey)}
+                </NavLink>
+              );
+            })}
             <MobileMenuActions>
               <ThemeToggleButton />
               <LanguageSelector />
