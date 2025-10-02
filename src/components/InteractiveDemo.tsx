@@ -1,19 +1,30 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import AnimatedSection from './AnimatedSection';
+import { motion } from 'framer-motion';
 
-// Spacious section container that commands attention
-const DemoSection = styled.section`
+const AnimatedGradientBackground = styled.section`
   min-height: 80vh;
-  background: linear-gradient(135deg, ${props => props.theme.colors.background.paper} 0%, ${props => props.theme.colors.background.default} 100%);
+  padding: ${({ theme }) => theme.spacing(16)} ${({ theme }) => theme.spacing(6)};
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing(16)} ${({ theme }) => theme.spacing(6)};
   position: relative;
   overflow: hidden;
+
+  background: ${props => props.theme.palette.mode === 'dark'
+    ? `linear-gradient(45deg, ${props.theme.palette.primary.dark}, ${props.theme.palette.secondary.dark}, ${props.theme.palette.primary.dark}, ${props.theme.palette.secondary.dark})`
+    : `linear-gradient(45deg, ${props.theme.palette.primary.light}, ${props.theme.palette.secondary.light}, ${props.theme.palette.primary.light}, ${props.theme.palette.background.paper})`
+  };
+  background-size: 400% 400%;
+  animation: gradientAnimation 15s ease infinite;
+
+  @keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     min-height: 70vh;
@@ -26,98 +37,22 @@ const DemoSection = styled.section`
   }
 `;
 
-// Content wrapper to center and constrain width
-const DemoContent = styled.div`
-  max-width: 1400px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-`;
-
-// Section heading
-const DemoHeading = styled.h2`
-  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
-  font-size: ${({ theme }) => theme.typography.fontSizes.h2};
-  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
-  line-height: ${({ theme }) => theme.typography.lineHeights.heading};
-  color: ${props => props.theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
-  background: linear-gradient(135deg, ${props => props.theme.colors.text.primary} 0%, ${props => props.theme.colors.primary.main} 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
-    font-size: 2.5rem;
-    margin-bottom: ${({ theme }) => theme.spacing(3)};
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
-    font-size: 2rem;
-  }
-`;
-
-// Descriptive paragraph
-const DemoDescription = styled.p`
-  font-family: ${({ theme }) => theme.typography.fontFamily.body};
-  font-size: ${({ theme }) => theme.typography.fontSizes.body};
-  line-height: ${({ theme }) => theme.typography.lineHeights.body};
-  color: ${props => props.theme.colors.text.secondary};
-  margin: 0 0 ${({ theme }) => theme.spacing(12)} 0;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
-    font-size: 1rem;
-    margin-bottom: ${({ theme }) => theme.spacing(8)};
-    max-width: none;
-  }
-`;
-
-// Large demo container - the main focal point
-const DemoContainer = styled.div`
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  position: relative;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
-    max-width: 600px;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
-    max-width: none;
-  }
-`;
-
-// Interactive demo placeholder with distinct styling
-const DemoPlaceholder = styled.div`
+const GlassmorphicCard = styled(motion.div)`
   width: 100%;
   height: 500px;
-  background: linear-gradient(145deg, ${props => props.theme.colors.background.default} 0%, ${props => props.theme.colors.border.main} 100%);
-  border: 2px dashed ${props => props.theme.colors.border.light};
-  border-radius: ${({ theme }) => theme.shape.borderRadius}px;
+  background: ${props => props.theme.palette.mode === 'dark' ? 'rgba(40, 40, 40, 0.25)' : 'rgba(255, 255, 255, 0.25)'};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid ${props => props.theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.18)'};
+  box-shadow: ${props => props.theme.shadows.primaryGlow};
+  border-radius: ${({ theme }) => theme.shape.borderRadius * 2}px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    border-color: ${props => props.theme.colors.primary.main};
-    background: linear-gradient(145deg, ${props => props.theme.colors.background.paper} 0%, ${props => props.theme.colors.border.light} 100%);
-    transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.primaryGlow};
-  }
-
-  &:focus-within {
-    border-color: ${props => props.theme.colors.primary.main};
-    box-shadow: ${props => props.theme.shadows.primaryGlow};
-  }
+  padding: ${({ theme }) => theme.spacing(4)};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     height: 400px;
@@ -128,93 +63,69 @@ const DemoPlaceholder = styled.div`
   }
 `;
 
-// Placeholder icon
-const PlaceholderIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  margin-bottom: ${({ theme }) => theme.spacing(4)};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(18, 151, 253, 0.1);
-  border-radius: 50%;
+const DemoContent = styled.div`
+  max-width: 1400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+`;
 
-  svg {
-    width: 40px;
-    height: 40px;
-    stroke: ${props => props.theme.colors.primary.main};
-    stroke-width: 2;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
-    width: 60px;
-    height: 60px;
+const DemoHeading = styled.h2`
+  font-family: ${({ theme }) => theme.typography.fontFamily.heading};
+  font-size: ${({ theme }) => theme.typography.fontSizes.h2};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  line-height: ${({ theme }) => theme.typography.lineHeights.heading};
+  color: ${props => props.theme.palette.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
+    font-size: 2.5rem;
     margin-bottom: ${({ theme }) => theme.spacing(3)};
-
-    svg {
-      width: 30px;
-      height: 30px;
-    }
+  }
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
+    font-size: 2rem;
   }
 `;
 
-// Placeholder text
-const PlaceholderText = styled.p`
+const DemoDescription = styled.p`
   font-family: ${({ theme }) => theme.typography.fontFamily.body};
-  font-size: 1.125rem;
-  color: ${props => props.theme.colors.text.secondary};
-  margin: 0;
-  text-align: center;
-  max-width: 400px;
+  font-size: ${({ theme }) => theme.typography.fontSizes.body};
+  line-height: ${({ theme }) => theme.typography.lineHeights.body};
+  color: ${props => props.theme.palette.text.primary};
+  margin: 0 auto ${({ theme }) => theme.spacing(12)} auto;
+  max-width: 700px;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
     font-size: 1rem;
+    margin-bottom: ${({ theme }) => theme.spacing(8)};
+    max-width: none;
   }
+`;
 
+const DemoContainer = styled.div`
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.values.md}px) {
+    max-width: 600px;
+  }
   @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
-    font-size: 0.875rem;
-    max-width: 250px;
+    max-width: none;
   }
 `;
 
-// Background decoration elements
-const BackgroundElement = styled.div`
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(18, 151, 253, 0.05) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 1;
-
-  @media (max-width: 768px) {
-    width: 150px;
-    height: 150px;
-    top: 5%;
-    left: 5%;
-  }
-`;
-
-// InteractiveDemo component props
 export interface InteractiveDemoProps {
   className?: string;
 }
 
-// Main InteractiveDemo component
 export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({ className }) => {
-  const { t, i18n } = useTranslation();
-  const router = useRouter();
-
-  const handleDemoClick = () => {
-    // Navigate to signup page with current language
-    const currentLang = i18n.language || 'en';
-    router.push(`/${currentLang}/auth/signup`);
-  };
+  const { t } = useTranslation();
 
   return (
-    <DemoSection className={className}>
-      <BackgroundElement />
+    <AnimatedGradientBackground className={className}>
       <AnimatedSection animation="fade-up" delay={0.1}>
         <DemoContent>
           <AnimatedSection animation="fade-down" delay={0.2}>
@@ -222,7 +133,7 @@ export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({ className }) =
               {t('interactiveDemo.title')}
             </DemoHeading>
           </AnimatedSection>
-
+          
           <AnimatedSection animation="fade-up" delay={0.3}>
             <DemoDescription>
               {t('interactiveDemo.description')}
@@ -231,42 +142,14 @@ export const InteractiveDemo: React.FC<InteractiveDemoProps> = ({ className }) =
 
           <AnimatedSection animation="scale-up" delay={0.4}>
             <DemoContainer>
-              <DemoPlaceholder
-                onClick={handleDemoClick}
-                role="button"
-                tabIndex={0}
-                aria-label="Interactive demo placeholder - click to interact"
-                onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleDemoClick();
-                  }
-                }}
-              >
-                <PlaceholderIcon>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="m22 7-10 5L2 7" />
-                  </svg>
-                </PlaceholderIcon>
-
-                <PlaceholderText>
-                  Interactive Demo Placeholder
-                  <br />
-                  <small>Click to launch demo experience</small>
-                </PlaceholderText>
-              </DemoPlaceholder>
+              <GlassmorphicCard>
+                <video src="/videos/planning-room-demo.mp4" loop autoPlay muted style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </GlassmorphicCard>
             </DemoContainer>
           </AnimatedSection>
         </DemoContent>
       </AnimatedSection>
-    </DemoSection>
+    </AnimatedGradientBackground>
   );
 };
 
