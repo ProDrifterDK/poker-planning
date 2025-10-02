@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  TextField,
-  Button,
   Typography,
   Paper,
   Divider,
   Alert,
   CircularProgress,
-  Link as MuiLink,
-  LinearProgress
+  Button,
+  Avatar
 } from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useTheme } from '@mui/material/styles';
+import Image from 'next/image';
 import { useAuth } from '@/context/authContext';
+import { Input } from '@/components/forms/Input';
+import { FormButton } from '@/components/forms/FormButton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -57,15 +56,10 @@ const SignUp: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  // Estados para los requisitos de contraseña
-  const [hasMinLength, setHasMinLength] = useState(false);
-  const [hasUpperCase, setHasUpperCase] = useState(false);
-  const [hasLowerCase, setHasLowerCase] = useState(false);
-  const [hasNumber, setHasNumber] = useState(false);
-  const [hasSpecialChar, setHasSpecialChar] = useState(false);
   const { signUp, signInWithGoogleProvider, error, clearError, currentUser } = useAuth();
   const router = useRouter();
-  const { t, i18n } = useTranslation('auth');
+  const { t } = useTranslation('auth');
+  const theme = useTheme();
 
   // Redireccionar si el usuario está autenticado o si el registro fue exitoso
   useEffect(() => {
@@ -103,18 +97,6 @@ const SignUp: React.FC = () => {
     }
   }, [currentUser, success, router]);
 
-  // Función para verificar los requisitos de la contraseña
-  const checkPasswordRequirements = (password: string) => {
-    const minLength = 8;
-
-    // Verificar cada requisito y actualizar los estados
-    setHasMinLength(password.length >= minLength);
-    setHasUpperCase(/[A-Z]/.test(password));
-    setHasLowerCase(/[a-z]/.test(password));
-    setHasNumber(/\d/.test(password));
-    setHasSpecialChar(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password));
-  };
-
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
@@ -123,7 +105,6 @@ const SignUp: React.FC = () => {
       // Actualizar la fortaleza de la contraseña si el campo es la contraseña
       if (setter === setPassword) {
         setPasswordStrength(calculatePasswordStrength(value));
-        checkPasswordRequirements(value);
       }
 
       if (formError) setFormError(null);
@@ -155,7 +136,7 @@ const SignUp: React.FC = () => {
     }
 
     if (!hasSpecialChar) {
-      return { valid: false, message: t('signup.specialCharRequired', 'Password must include at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?)') };
+      return { valid: false, message: t('signup.specialCharRequired', 'Password must include at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?') };
     }
 
     return { valid: true, message: '' };
@@ -175,7 +156,7 @@ const SignUp: React.FC = () => {
     if (/[a-z]/.test(password)) strength += 15; // Minúsculas
     if (/\d/.test(password)) strength += 15;    // Números
     if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 20; // Caracteres especiales
-
+    
     // Complejidad adicional
     const uniqueChars = new Set(password).size;
     strength += Math.min(10, uniqueChars / 2); // Hasta 10 puntos por caracteres únicos
@@ -236,10 +217,8 @@ const SignUp: React.FC = () => {
     try {
       await signUp(email, password, name);
       setSuccess(true); // Establecer estado de éxito
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // El error ya se maneja en el contexto de autenticación
-      // No registramos el error en la consola por razones de seguridad
       setSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -250,9 +229,7 @@ const SignUp: React.FC = () => {
     setIsSubmitting(true);
     try {
       await signInWithGoogleProvider();
-      // La redirección se manejará en el componente de protección de rutas
     } catch (error) {
-      // El error ya se maneja en el contexto de autenticación
       console.error('Error al iniciar sesión con Google:', error);
     } finally {
       setIsSubmitting(false);
@@ -265,19 +242,38 @@ const SignUp: React.FC = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        p: 2,
+        minHeight: '100vh',
+        padding: 2,
+        background: `linear-gradient(45deg, ${theme.palette.background.default} 30%, ${theme.palette.primary.main} 150%)`,
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          padding: { xs: 3, sm: 4 },
           width: '100%',
           maxWidth: 400,
-          borderRadius: theme => theme.shape.borderRadius,
+          borderRadius: 2,
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+          backdropFilter: 'blur(10px)',
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: theme.shadows[10],
         }}
       >
-        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Avatar
+            src="/images/logo/logo.svg"
+            alt="Logo"
+            sx={{ width: 64, height: 64, backgroundColor: 'transparent' }}
+          />
+        </Box>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          textAlign="center"
+          sx={{ mb: 5, fontWeight: theme => theme.typography.fontWeightBold }}
+        >
           {t('signup.title')}
         </Typography>
 
@@ -288,204 +284,119 @@ const SignUp: React.FC = () => {
         )}
 
         {(error || formError) && !success && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
             {error || formError}
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <TextField
-            label={t('signup.name')}
-            fullWidth
-            margin="normal"
-            variant="outlined"
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Input
+            placeholder={t('signup.name')}
             value={name}
             onChange={handleInputChange(setName)}
             disabled={isSubmitting}
             required
           />
-
-          <TextField
-            label={t('signup.email')}
+          <Input
+            placeholder={t('signup.email')}
             type="email"
-            fullWidth
-            margin="normal"
-            variant="outlined"
             value={email}
             onChange={handleInputChange(setEmail)}
             disabled={isSubmitting}
             required
           />
-
-          <TextField
-            label={t('signup.password')}
+          <Input
+            placeholder={t('signup.password')}
             type="password"
-            fullWidth
-            margin="normal"
-            variant="outlined"
             value={password}
             onChange={handleInputChange(setPassword)}
             disabled={isSubmitting}
             required
-            helperText={
-              <Box sx={{ mt: 0.5 }}>
-                <Typography variant="caption" display="block">
-                  {t('signup.passwordRequirements', 'Password must have:')}
-                </Typography>
-                <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                  <Box component="li" sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: theme => theme.palette.mode === 'dark' ? (hasMinLength ? 'success.main' : 'text.secondary') : (hasMinLength ? 'success.dark' : 'text.secondary'),
-                    transition: 'color 0.3s'
-                  }}>
-                    {hasMinLength ?
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
-                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    <Typography variant="caption">
-                      {t('signup.minLength', 'At least 8 characters')}
-                    </Typography>
-                  </Box>
-
-                  <Box component="li" sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: theme => theme.palette.mode === 'dark' ? (hasUpperCase ? 'success.main' : 'text.secondary') : (hasUpperCase ? 'success.dark' : 'text.secondary'),
-                    transition: 'color 0.3s'
-                  }}>
-                    {hasUpperCase ?
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
-                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    <Typography variant="caption">
-                      {t('signup.upperCase', 'At least one uppercase letter')}
-                    </Typography>
-                  </Box>
-
-                  <Box component="li" sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: theme => theme.palette.mode === 'dark' ? (hasLowerCase ? 'success.main' : 'text.secondary') : (hasLowerCase ? 'success.dark' : 'text.secondary'),
-                    transition: 'color 0.3s'
-                  }}>
-                    {hasLowerCase ?
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
-                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    <Typography variant="caption">
-                      {t('signup.lowerCase', 'At least one lowercase letter')}
-                    </Typography>
-                  </Box>
-
-                  <Box component="li" sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: theme => theme.palette.mode === 'dark' ? (hasNumber ? 'success.main' : 'text.secondary') : (hasNumber ? 'success.dark' : 'text.secondary'),
-                    transition: 'color 0.3s'
-                  }}>
-                    {hasNumber ?
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
-                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    <Typography variant="caption">
-                      {t('signup.number', 'At least one number')}
-                    </Typography>
-                  </Box>
-
-                  <Box component="li" sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: theme => theme.palette.mode === 'dark' ? (hasSpecialChar ? 'success.main' : 'text.secondary') : (hasSpecialChar ? 'success.dark' : 'text.secondary'),
-                    transition: 'color 0.3s'
-                  }}>
-                    {hasSpecialChar ?
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} /> :
-                      <ErrorOutlineIcon sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    <Typography variant="caption">
-                      {t('signup.specialChar', 'At least one special character (!@#$%^&*)')}
-                    </Typography>
-                  </Box>
-                </Box>
-                {password && (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" display="block">
-                      {t('signup.strength', 'Strength')}: {getStrengthText(passwordStrength)}
-                    </Typography>
-                    <Box
-                      sx={{
-                        height: 4,
-                        width: '100%',
-                        bgcolor: 'grey.300',
-                        borderRadius: '2px',
-                        mt: 0.5
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          height: '100%',
-                          width: `${passwordStrength}%`,
-                          bgcolor: getStrengthColor(passwordStrength),
-                          borderRadius: 'inherit',
-                          transition: 'width 0.3s, background-color 0.3s'
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            }
           />
-
-          <TextField
-            label={t('signup.confirmPassword')}
+          {password && (
+            <Box sx={{ width: '100%', mt: -1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="caption" sx={{ color: getStrengthColor(passwordStrength) }}>
+                  {getStrengthText(passwordStrength)}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  height: 4,
+                  width: '100%',
+                  bgcolor: 'action.hover',
+                  borderRadius: '2px',
+                }}
+              >
+                <Box
+                  sx={{
+                    height: '100%',
+                    width: `${passwordStrength}%`,
+                    bgcolor: getStrengthColor(passwordStrength),
+                    borderRadius: 'inherit',
+                    transition: 'width 0.3s, background-color 0.3s',
+                  }}
+                />
+              </Box>
+            </Box>
+          )}
+          <Input
+            placeholder={t('signup.confirmPassword')}
             type="password"
-            fullWidth
-            margin="normal"
-            variant="outlined"
             value={confirmPassword}
             onChange={handleInputChange(setConfirmPassword)}
             disabled={isSubmitting}
             required
           />
-
-          <Button
+          <FormButton
+            variant="primary"
             type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={isSubmitting}
-            sx={{ mt: 2, mb: 2, textTransform: "none" }}
+            isSubmitting={isSubmitting}
+            loadingText={t('signup.signingUp')}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : t('signup.submit')}
-          </Button>
-        </form>
-        <Divider sx={{ my: 2 }}>{t('signup.or', 'or')}</Divider>
-
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleSignIn}
-          disabled={isSubmitting}
-          sx={{ mb: 2, textTransform: "none" }}
-        >
-          {t('signup.continueWithGoogle', 'Continue with Google')}
-        </Button>
-
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2">
-            {t('signup.alreadyAccount')}{' '}
-            <MuiLink
-              component={Link}
-              href={getLocalizedRoute('/auth/signin')}
-              underline="hover"
-            >
-              {t('signup.login')}
-            </MuiLink>
+            {t('signup.submit')}
+          </FormButton>
+        </Box>
+        <Divider sx={{ my: 4 }}>
+          <Typography variant="caption" color="text.secondary">
+            {t('signup.or', 'or')}
           </Typography>
+        </Divider>
+        <Box sx={{ mt: 4, mb: 4 }}>
+          <FormButton
+            type="button"
+            variant="glass"
+            onClick={handleGoogleSignIn}
+            isSubmitting={isSubmitting}
+            loadingText={t('signin.signingIn')}
+            startIcon={<Image src="/images/logo/icons8-google-48.svg" alt="Google icon" width={24} height={24} />}
+            fullWidth
+          >
+            {t('signup.continueWithGoogle', 'Continue with Google')}
+          </FormButton>
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Typography variant="body2" component="span">
+            {t('signup.alreadyAccount')}{' '}
+          </Typography>
+          <Button
+            component={Link}
+            href={getLocalizedRoute('/auth/signin')}
+            variant="text"
+            sx={{
+              textTransform: 'none',
+              color: 'text.secondary',
+              p: 0,
+              ml: 1,
+              '&:hover': {
+                backgroundColor: 'transparent',
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {t('signup.login')}
+          </Button>
         </Box>
       </Paper>
     </Box>
