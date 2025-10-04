@@ -27,7 +27,16 @@ declare module "@mui/material/styles" {
       text?: string;
     };
   }
+
+  interface TypographyOptions {
+    fontFamilyMono?: string;
+  }
+ 
+  interface Typography {
+    fontFamilyMono: string;
+  }
 }
+// Trigger reload
 
 // Emotion theme types for styled-components
 export interface EmotionColor {

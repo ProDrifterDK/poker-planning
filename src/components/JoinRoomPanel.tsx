@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -8,15 +8,25 @@ import {
   Paper,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/authContext';
 
 interface JoinRoomPanelProps {
   onJoinRoom: (roomCode: string) => void;
   isLoading: boolean;
+  name: string;
+  onNameChange: (name: string) => void;
 }
 
-const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading }) => {
+const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, name, onNameChange }) => {
   const { t } = useTranslation(['room', 'common']);
+  const { currentUser } = useAuth();
   const [roomCode, setRoomCode] = useState('');
+
+  useEffect(() => {
+    if (currentUser?.displayName && !name) {
+      onNameChange(currentUser.displayName);
+    }
+  }, [currentUser, name, onNameChange]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +35,7 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading }) 
     }
   };
 
-  const isButtonDisabled = !roomCode.trim() || isLoading;
+  const isButtonDisabled = !roomCode.trim() || !name.trim() || isLoading;
 
   return (
     <Paper
@@ -49,6 +59,17 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading }) 
         </Typography>
       </Box>
       <Box component="form" onSubmit={handleJoin} sx={{ display: 'contents' }}>
+        <TextField
+          id="your-name-input-join"
+          label={t('join.yourName')}
+          variant="outlined"
+          fullWidth
+          value={name}
+          onChange={(e) => onNameChange(e.target.value)}
+          disabled={isLoading || !!currentUser?.displayName}
+          required
+          helperText={currentUser?.displayName ? t('usingProfileName', 'Usando tu nombre de perfil') : ''}
+        />
         <TextField
           id="room-code-input"
           label={t('join.roomCode')}

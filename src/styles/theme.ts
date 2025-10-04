@@ -1,4 +1,4 @@
-import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles";
 
 // Sleek Innovator Color Palette
 const sleekInnovatorColors = {
@@ -685,3 +685,5 @@ export const darkEmotionTheme = {
     small: '0px 2px 4px -1px rgba(0,0,0,0.2)',
   },
 };
+
+
