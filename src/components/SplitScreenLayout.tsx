@@ -1,10 +1,50 @@
 import React from 'react';
-import { Grid, Divider, Box, useTheme, useMediaQuery } from '@mui/material';
+import styled from 'styled-components';
+import { Divider, useTheme, useMediaQuery, Theme } from '@mui/material';
 
 interface SplitScreenLayoutProps {
   leftPanel: React.ReactNode;
   rightPanel: React.ReactNode;
 }
+
+const MobileContainer = styled.div<{ theme: Theme }>`
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing(2)};
+`;
+
+const StyledLeftPanelWrapper = styled.div<{ theme: Theme }>`
+  margin-bottom: ${({ theme }) => theme.spacing(4)};
+`;
+
+const StyledRightPanelWrapper = styled.div<{ theme: Theme }>`
+  margin-top: ${({ theme }) => theme.spacing(4)};
+`;
+
+const DesktopContainer = styled.main`
+  display: flex;
+  height: 100vh;
+`;
+
+const Panel = styled.div<{ theme: Theme }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing(4)};
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.palette.action.hover};
+  }
+`;
+
+const DesktopLeftPanel = styled(Panel)`
+  width: 41.666667%; /* 5/12 for md={5} */
+`;
+
+const DesktopRightPanel = styled(Panel)`
+  width: 57.5%; /* 6.9 / 12 for md={6.9} */
+`;
 
 const SplitScreenLayout: React.FC<SplitScreenLayoutProps> = ({ leftPanel, rightPanel }) => {
   const theme = useTheme();
@@ -12,54 +52,20 @@ const SplitScreenLayout: React.FC<SplitScreenLayoutProps> = ({ leftPanel, rightP
 
   if (isMobile) {
     return (
-      <Box sx={{ width: '100%', p: 2 }}>
-        <Box mb={4}>{leftPanel}</Box>
+      <MobileContainer theme={theme}>
+        <StyledLeftPanelWrapper theme={theme}>{leftPanel}</StyledLeftPanelWrapper>
         <Divider />
-        <Box mt={4}>{rightPanel}</Box>
-      </Box>
+        <StyledRightPanelWrapper theme={theme}>{rightPanel}</StyledRightPanelWrapper>
+      </MobileContainer>
     );
   }
 
   return (
-    <Grid container component="main" sx={{ height: '100vh' }}>
-      <Grid
-        item
-        xs={12}
-        md={5} // Approximately 40%
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 4,
-          transition: 'background-color 0.3s ease',
-          '&:hover': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      >
-        {leftPanel}
-      </Grid>
+    <DesktopContainer>
+      <DesktopLeftPanel theme={theme}>{leftPanel}</DesktopLeftPanel>
       <Divider orientation="vertical" flexItem />
-      <Grid
-        item
-        xs={12}
-        md={6.9} // Approximately 60%
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 4,
-          transition: 'background-color 0.3s ease',
-          '&:hover': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      >
-        {rightPanel}
-      </Grid>
-    </Grid>
+      <DesktopRightPanel theme={theme}>{rightPanel}</DesktopRightPanel>
+    </DesktopContainer>
   );
 };
 

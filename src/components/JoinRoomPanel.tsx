@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Paper,
-} from '@mui/material';
+import { Box, Typography, TextField, Button, CircularProgress, Paper, Theme, useTheme } from '@mui/material';
+import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/authContext';
 
@@ -17,9 +11,34 @@ interface JoinRoomPanelProps {
   onNameChange: (name: string) => void;
 }
 
+const StyledPaper = styled(Paper)<{ theme: Theme }>`
+  padding: ${({ theme }) => theme.spacing(4)};
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(3)};
+  text-align: center;
+`;
+
+const StyledButton = styled(Button)<{ theme: Theme }>`
+  height: 56px;
+  text-transform: none;
+  font-size: 1rem;
+  transition: ${({ theme }) =>
+    theme.transitions.create(['background-color', 'transform'], {
+      duration: theme.transitions.duration.short,
+    })};
+
+  &:hover {
+    transform: ${({ disabled }) => (disabled ? 'none' : 'translateY(-2px)')};
+  }
+`;
+
 const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, name, onNameChange }) => {
   const { t } = useTranslation(['room', 'common']);
   const { currentUser } = useAuth();
+  const theme = useTheme();
   const [roomCode, setRoomCode] = useState('');
 
   useEffect(() => {
@@ -38,18 +57,7 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, na
   const isButtonDisabled = !roomCode.trim() || !name.trim() || isLoading;
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        p: 4,
-        width: '100%',
-        maxWidth: 400,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-        textAlign: 'center',
-      }}
-    >
+    <StyledPaper elevation={3} theme={theme}>
       <Box>
         <Typography variant="h4" component="h2" gutterBottom>
           {t('join.title')}
@@ -80,29 +88,18 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, na
           disabled={isLoading}
           required
         />
-        <Button
+        <StyledButton
           type="submit"
           variant="contained"
           color="primary"
           size="large"
           disabled={isButtonDisabled}
-          sx={{
-            height: 56,
-            textTransform: 'none',
-            fontSize: '1rem',
-            transition: (theme) =>
-              theme.transitions.create(['background-color', 'transform'], {
-                duration: theme.transitions.duration.short,
-              }),
-            '&:hover': {
-              transform: isButtonDisabled ? 'none' : 'translateY(-2px)',
-            },
-          }}
+          theme={theme}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : t('join.submit')}
-        </Button>
+        </StyledButton>
       </Box>
-    </Paper>
+    </StyledPaper>
   );
 };
 
