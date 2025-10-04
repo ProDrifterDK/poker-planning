@@ -12,11 +12,11 @@ const MobileContainer = styled.div<{ theme: Theme }>`
   padding: ${({ theme }) => theme.spacing(2)};
 `;
 
-const StyledLeftPanelWrapper = styled.div<{ theme: Theme }>`
+const StyledLeftPanelWrapper = styled.section<{ theme: Theme }>`
   margin-bottom: ${({ theme }) => theme.spacing(4)};
 `;
 
-const StyledRightPanelWrapper = styled.div<{ theme: Theme }>`
+const StyledRightPanelWrapper = styled.section<{ theme: Theme }>`
   margin-top: ${({ theme }) => theme.spacing(4)};
 `;
 
@@ -25,7 +25,7 @@ const DesktopContainer = styled.main`
   height: 100vh;
 `;
 
-const Panel = styled.div<{ theme: Theme }>`
+const Panel = styled.section<{ theme: Theme }>`
   display: flex;
   flex-direction: column;
   align-items: center;
