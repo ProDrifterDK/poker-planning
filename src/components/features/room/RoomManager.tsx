@@ -64,6 +64,7 @@ export default function RoomManager() {
       await joinRoomWithName(roomId, name);
       router.push(getLocalizedRoute(`/room/${roomId}`));
     } catch (error) {
+      console.error('Error creating room:', error);
     }
   };
 
@@ -105,11 +106,11 @@ export default function RoomManager() {
         } 
       />
 
-      <Container maxWidth="md" sx={{ my: 4 }}>
+      <Container maxWidth="sm" sx={{ my: 4 }}>
         <ActiveRoomsList />
       </Container>
       
-      <Container maxWidth="sm" sx={{ mb: 4 }}>
+      <Container maxWidth="xs" sx={{ mb: 4 }}>
         <SubscriptionLimits />
       </Container>
     </Box>

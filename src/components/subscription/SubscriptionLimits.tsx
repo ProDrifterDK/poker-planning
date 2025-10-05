@@ -50,7 +50,7 @@ export default function SubscriptionLimits() {
         width: '100%',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifySelf: 'center' }}>
         <PlanIcon plan={currentPlan} />
         <Typography variant="h6" sx={{ ml: 1.5, flexGrow: 1 }}>
           {planDetails.name} {t('subscription.plan', 'Plan')}
