@@ -57,16 +57,16 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, na
   const isButtonDisabled = !roomCode.trim() || !name.trim() || isLoading;
 
   return (
-    <StyledPaper elevation={3} theme={theme}>
+    <StyledPaper elevation={3} theme={theme} role="region" aria-labelledby="join-room-title">
       <Box>
-        <Typography variant="h4" component="h2" gutterBottom>
+        <Typography variant="h4" component="h2" gutterBottom id="join-room-title">
           {t('join.title')}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" id="join-room-description">
           {t('joinRoomDescription', 'Ingresa el código de sala que te compartieron para unirte a la sesión de estimación.')}
         </Typography>
       </Box>
-      <Box component="form" onSubmit={handleJoin} sx={{ display: 'contents' }}>
+      <Box component="form" onSubmit={handleJoin} sx={{ display: 'contents' }} aria-busy={isLoading}>
         <TextField
           id="your-name-input-join"
           label={t('join.yourName')}
@@ -77,6 +77,8 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, na
           disabled={isLoading || !!currentUser?.displayName}
           required
           helperText={currentUser?.displayName ? t('usingProfileName', 'Usando tu nombre de perfil') : ''}
+          aria-describedby={currentUser?.displayName ? "your-name-helper-text" : undefined}
+          FormHelperTextProps={{ id: 'your-name-helper-text' }}
         />
         <TextField
           id="room-code-input"
@@ -95,6 +97,7 @@ const JoinRoomPanel: React.FC<JoinRoomPanelProps> = ({ onJoinRoom, isLoading, na
           size="large"
           disabled={isButtonDisabled}
           theme={theme}
+          aria-label={isLoading ? t('join.loading', 'Joining room...') : t('join.submit')}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : t('join.submit')}
         </StyledButton>
