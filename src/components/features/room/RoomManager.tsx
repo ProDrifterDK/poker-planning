@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography, Divider } from "@mui/material";
+import { Box, Typography, Divider, Container } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
@@ -17,26 +17,7 @@ import JoinRoomPanel from './JoinRoomPanel';
 import CreateRoomPanel from './CreateRoomPanel';
 import { OnboardingButton } from "../../Onboarding";
 import { useAuth } from "@/context/authContext";
-
-const supportedLocales = ['es', 'en'];
-
-const getLocalizedRoute = (route: string): string => {
-  let lang = 'es'; 
-  
-  if (typeof window !== 'undefined') {
-    const i18nLang = window.localStorage.getItem('i18nextLng');
-    if (i18nLang && supportedLocales.includes(i18nLang)) {
-      lang = i18nLang;
-    } else {
-      const urlLang = window.location.pathname.split('/')[1];
-      if (supportedLocales.includes(urlLang)) {
-        lang = urlLang;
-      }
-    }
-  }
-  
-  return `/${lang}${route}`;
-};
+import { getLocalizedRoute } from "@/utils/routeUtils";
 
 export default function RoomManager() {
   const router = useRouter();
@@ -124,13 +105,13 @@ export default function RoomManager() {
         } 
       />
 
-      <Box sx={{ my: 4, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Container maxWidth="md" sx={{ my: 4 }}>
         <ActiveRoomsList />
-      </Box>
-
-      <Box sx={{ mt: 4, opacity: 0.85, textAlign: 'center' }}>
+      </Container>
+      
+      <Container maxWidth="sm" sx={{ mb: 4 }}>
         <SubscriptionLimits />
-      </Box>
+      </Container>
     </Box>
   );
 }
