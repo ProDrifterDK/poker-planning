@@ -61,7 +61,8 @@ export default function RoomManager() {
 
     try {
       const roomId = await createRoom(selectedSeries, roomTitle.trim() || undefined);
-      await joinRoomWithName(roomId, name);
+      const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+      await joinRoomWithName(roomId, name, photoURL);
       router.push(getLocalizedRoute(`/room/${roomId}`));
     } catch (error) {
       console.error('Error creating room:', error);

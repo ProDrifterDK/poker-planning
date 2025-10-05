@@ -18,6 +18,7 @@ interface CardProps {
     noSelection: boolean; // Para manejar el estado de "sin carta seleccionada"
     showCorners?: boolean; // true/false para decidir si mostrar esquinas
     fontSize?: string | number; // <-- nuevo prop para tamaño de fuente
+    reveal?: boolean; // Para saber si estamos en estado de revelación
 }
 
 export default function Card({
@@ -28,7 +29,8 @@ export default function Card({
     sx,
     noSelection,
     showCorners = true,
-    fontSize = '2.5rem'
+    fontSize = '2.5rem',
+    reveal = false
 }: CardProps) {
     const theme = useTheme();
     // Usamos useMediaQuery para detectar si estamos en un dispositivo móvil
@@ -130,11 +132,15 @@ export default function Card({
                         height: '100%',
                         backfaceVisibility: 'hidden',
                         backgroundColor: noSelection
-                            ? cardPalette.noSelectionBg
-                            : cardPalette.defaultBg,
+                            ? 'transparent' // Transparente cuando no hay selección
+                            : reveal
+                            ? theme.palette.background.paper // Blanco cuando se revelan las cartas
+                            : cardPalette.defaultBg, // Color por defecto cuando está seleccionado pero no revelado
 
                         borderRadius: 2,  // 1 = 4px en MUI spacing
-                        boxShadow: selected
+                        boxShadow: noSelection
+                            ? 'none' // Sin sombra cuando no hay selección
+                            : selected
                             ? cardPalette.boxShadowSelected
                             : cardPalette.boxShadow,
 
@@ -143,13 +149,15 @@ export default function Card({
                         alignItems: 'center',
                         justifyContent: 'center',
 
-                        // Aplicamos el borde directamente sin animarlo
-                        border: selected
+                        // Aplicamos el borde según el estado
+                        border: noSelection
+                            ? `2px dashed ${theme.palette.warning.main}` // Borde amarillento discontinuo cuando no hay selección
+                            : selected
                             ? `3px solid ${cardPalette.borderSelected}`
                             : `1px solid ${cardPalette.border}`,
                     }}
                 >
-                    {value !== undefined && (
+                    {(value !== undefined || (!noSelection && !reveal)) && (
                         <>
                             {/* Valor central */}
                             <motion.div
@@ -168,15 +176,20 @@ export default function Card({
                                         textAlign: 'center',
                                         fontFamily: 'serif',
                                         fontSize: isMobile ? `calc(${fontSize} * 0.7)` : fontSize,
-                                        color: cardPalette.text || theme.palette.text.primary,
+                                        color: noSelection
+                                            ? theme.palette.warning.main // Color amarillento cuando no hay selección
+                                            : reveal
+                                            ? theme.palette.text.primary // Color de texto normal cuando se revela
+                                            : cardPalette.text || theme.palette.text.primary,
                                     }}
                                 >
-                                    {value}
+                                    {/* Mostrar "?" cuando está seleccionado pero no revelado, o el valor real cuando está revelado */}
+                                    {reveal ? value : (!noSelection ? '?' : '')}
                                 </Typography>
                             </motion.div>
 
-                            {/* Muestra esquinas solo si showCorners === true */}
-                            {showCorners && (
+                            {/* Muestra esquinas solo si showCorners === true y estamos revelando */}
+                            {showCorners && reveal && value && (
                                 <>
                                     {/* Decoración superior izquierda */}
                                     <motion.div
@@ -189,7 +202,7 @@ export default function Card({
                                             left: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text || theme.palette.text.primary,
+                                            color: theme.palette.text.primary,
                                         }}
                                     >
                                         {value}
@@ -206,13 +219,32 @@ export default function Card({
                                             right: isMobile ? 5 : 8,
                                             fontSize: isMobile ? 10 : 14,
                                             fontWeight: 'bold',
-                                            color: cardPalette.text || theme.palette.text.primary,
+                                            color: theme.palette.text.primary,
                                             transform: 'rotate(180deg)',
                                         }}
                                     >
                                         {value}
                                     </motion.div>
                                 </>
+                            )}
+                            
+                            {/* Mostrar texto de placeholder cuando no hay selección */}
+                            {noSelection && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 0.5 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <Typography
+                                        sx={{
+                                            fontSize: isMobile ? '0.7rem' : '0.875rem',
+                                            color: theme.palette.warning.main,
+                                            opacity: 0.7,
+                                        }}
+                                    >
+                                        {t('cards.noSelection') || 'No vote'}
+                                    </Typography>
+                                </motion.div>
                             )}
                         </>
                     )}

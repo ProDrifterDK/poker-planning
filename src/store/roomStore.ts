@@ -63,7 +63,7 @@ interface RoomState {
 interface RoomActions {
   // Acciones para la sala
   createRoom: (seriesKey: string, title?: string) => Promise<string>;
-  joinRoomWithName: (roomId: string, name: string) => Promise<void>;
+  joinRoomWithName: (roomId: string, name: string, photoURL?: string) => Promise<void>;
   leaveRoom: () => void;
   removeParticipant: (participantId: string) => Promise<void>;
 
@@ -242,7 +242,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       },
 
       // Unirse a una sala existente
-      joinRoomWithName: async (roomId: string, name: string) => {
+      joinRoomWithName: async (roomId: string, name: string, photoURL?: string) => {
         const errorStore = useErrorStore.getState();
         set({ isLoading: true, error: null });
 
@@ -329,13 +329,15 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               joinedAt: Date.now(),
               active: true,
               role: UserRole.PARTICIPANT, // Asignar rol de participante por defecto
-              participantId // Guardar el ID para referencia
+              participantId, // Guardar el ID para referencia
+              ...(photoURL && { photoURL }) // Incluir photoURL si está disponible
             });
           } else {
-            // Si el participante ya existe, solo actualizar su estado a activo
+            // Si el participante ya existe, solo actualizar su estado a activo y photoURL si cambió
             await update(participantRef, {
               active: true,
-              lastActive: Date.now()
+              lastActive: Date.now(),
+              ...(photoURL && { photoURL }) // Actualizar photoURL si está disponible
             });
           }
 
@@ -485,7 +487,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               ErrorType.JOIN_ROOM_FAILED,
               "No se pudo unir a la sala. Verifica el código e intenta nuevamente.",
               { originalError: error, roomId },
-              () => get().joinRoomWithName(roomId, name) // Acción de recuperación: reintentar
+              () => get().joinRoomWithName(roomId, name, undefined) // Acción de recuperación: reintentar
             );
             errorStore.setError(appError);
             set({ error: appError.message });

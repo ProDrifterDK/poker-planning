@@ -81,7 +81,7 @@ const getReadableErrorMessage = (error: FirebaseError): string => {
 };
 
 // Definir la interfaz para el contexto
-interface AuthContextType {
+export interface AuthContextType {
   currentUser: User | null;
   userRole: UserRole | null;
   loading: boolean;

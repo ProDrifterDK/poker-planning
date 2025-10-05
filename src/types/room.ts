@@ -6,6 +6,7 @@ export interface Participant {
   estimation?: number | string;
   role: UserRole;
   userId?: string; // ID del usuario autenticado (si está disponible)
+  photoURL?: string; // URL de la imagen de perfil del usuario
   active?: boolean; // Indica si el participante está activo en la sala
   removed?: boolean; // Indica si el participante ha sido eliminado
 }
@@ -34,4 +35,9 @@ export interface Issue {
   createdAt: number;
   status: 'pending' | 'estimated' | 'skipped';
   average?: string | null;
+}
+
+export interface Vote {
+  value: number | string;
+  timestamp: number;
 }

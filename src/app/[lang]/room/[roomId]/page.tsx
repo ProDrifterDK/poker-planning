@@ -35,7 +35,10 @@ import { useRoomStore } from '@/store/roomStore';
 import { useAuth } from '@/context/authContext';
 import { ref, update } from 'firebase/database';
 import { realtimeDb } from '@/lib/firebaseConfig';
+import { Vote } from '@/types/room';
 import { getLocalizedRoute } from '@/utils/routeUtils';
+import PokerTable from '@/components/features/room/PokerTable';
+import EstimationDeck from '@/components/features/room/EstimationDeck';
 export default function RoomPage() {
     const { t } = useTranslation('common');
     const theme = useTheme();
@@ -243,7 +246,8 @@ export default function RoomPage() {
                     if (userName.trim()) {
                         try {
                             console.log(`Intentando unirse a la sala ${roomId} con el nombre ${userName} (sesión persistente)`);
-                            await joinRoomWithName(roomId, userName);
+                            const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+                            await joinRoomWithName(roomId, userName, photoURL);
                             console.log('Unido a la sala exitosamente (sesión persistente)');
                             // Actualizar el estado isJoined directamente
                             setIsJoined(true);
@@ -336,7 +340,8 @@ export default function RoomPage() {
                 console.log(`No se encontró ID de participante para la sala ${roomId}, se creará uno nuevo`);
 
                 // Solo intentar unirse si no hay un ID de participante existente
-                joinRoomWithName(roomId, name)
+                const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+                joinRoomWithName(roomId, name, photoURL)
                     .then(() => {
                         console.log('Auto-unión exitosa');
                         // Actualizar el estado isJoined directamente
@@ -506,7 +511,8 @@ export default function RoomPage() {
                 }
             }
 
-            await joinRoomWithName(roomId, userName);
+            const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+            await joinRoomWithName(roomId, userName, photoURL);
             console.log('Unido a la sala exitosamente (unión manual)');
             // Actualizar el estado isJoined directamente
             setIsJoined(true);
@@ -550,6 +556,7 @@ export default function RoomPage() {
     };
 
     const { counts, avg } = calculateSummary();
+
 
     // Verificar si todos los participantes activos han estimado
     const allParticipantsHaveEstimated = participants
@@ -728,193 +735,23 @@ export default function RoomPage() {
                                 </IconButton>
                             </Box>
 
-                            {/* Lista de participantes y sus cartas */}
-                            <Box
-                                display="flex"
-                                justifyContent="center"
-                                alignItems="center"
-                                flexWrap={{ xs: 'wrap', sm: 'wrap' }} // Cambiar a wrap en móviles para evitar scroll horizontal
-                                gap={{ xs: 2, sm: 3, md: 4 }}
-                                marginTop={4}
-                                sx={{
-                                    // En móviles, usar un diseño de cuadrícula
-                                    width: '100%',
-                                    maxWidth: '100%', // Evitar que sobresalga del contenedor padre
-                                    px: { xs: 1, sm: 2 },
-                                    py: { xs: 3, sm: 4 },
-                                    overflowX: 'hidden', // Evitar scroll horizontal
-                                    overflowY: 'visible',
-                                    position: 'relative',
-                                    // Añadir margen inferior en móviles para dejar espacio para las cartas de opciones y el footer
-                                    mb: { xs: 16, sm: 0 },
-                                    // Estilos para mejorar la experiencia de scroll
-                                    WebkitOverflowScrolling: 'touch',
-                                    scrollbarWidth: 'none',
-                                    msOverflowStyle: 'none',
-                                    '&::-webkit-scrollbar': {
-                                        display: 'none'
-                                    },
-                                    // Asegurar que las cartas mantengan su tamaño
-                                    '& > *': {
-                                        flexShrink: 0,
-                                    },
-                                    // Centrar el contenido
-                                    justifyContent: 'center',
-                                    // Diseño semicircular en dispositivos móviles
-                                    borderRadius: { xs: '50%', sm: 0 },
-                                    minHeight: { xs: 200, sm: 'auto' },
-                                    // Añadir padding para que las cartas no queden cortadas
-                                    pb: { xs: 2, sm: 4 },
-                                }}
-                            >
-                                {/* Filtrar solo participantes activos - asegurarse de que no se muestren los inactivos */}
-                                {participants
-                                    .filter(p => p.active !== false)
-                                    .map((participant) => {
-                                        const noSelection =
-                                            participant.estimation === null ||
-                                            participant.estimation === undefined;
+                            {/* Mesa de Poker */}
+                            <PokerTable
+                                participants={participants.filter(p => p.active !== false)}
+                                reveal={reveal}
+                                isCurrentUserAdminOrModerator={isCurrentUserAdminOrModerator}
+                                currentUserParticipantId={currentUserParticipant?.id || null}
+                                handleRemoveParticipant={handleRemoveParticipant}
+                                t={t}
+                                currentUser={currentUser}
+                            />
 
-                                        return (
-                                            <Box key={participant.id} textAlign="center" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography
-                                                        variant="body2"
-                                                        gutterBottom
-                                                        sx={{
-                                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            maxWidth: { xs: 70, sm: 100 },
-                                                            mb: 0,
-                                                        }}
-                                                    >
-                                                        {participant.role === 'moderator' ? (
-                                                            <>
-                                                                {participant.name === 'Moderador' ? currentUser?.displayName || 'Moderador' : participant.name}
-                                                                <span style={{
-                                                                    fontSize: '0.7em',
-                                                                    opacity: 0.7,
-                                                                    marginLeft: '3px',
-                                                                    display: 'block'
-                                                                }}>
-                                                                    ({t('room.moderator')})
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            participant.name
-                                                        )}
-                                                    </Typography>
-                                                    {isCurrentUserAdminOrModerator && currentUserParticipant?.id !== participant.id && (
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleRemoveParticipant(participant.id)}
-                                                            aria-label={`Remove ${participant.name}`}
-                                                            sx={{ ml: 0.5, p: 0.2 }}
-                                                        >
-                                                            <PersonRemoveIcon sx={{ fontSize: '1rem' }} />
-                                                        </IconButton>
-                                                    )}
-                                                </Box>
-                                                <Card
-                                                    value={participant.estimation}
-                                                    selected={false}
-                                                    onClick={() => { }}
-                                                    flipped={!reveal && !noSelection}
-                                                    noSelection={noSelection}
-                                                />
-                                            </Box>
-                                        );
-                                    })}
-                            </Box>
-
-                            {/* Opciones de estimación */}
-                            {/* Contenedor de cartas de opciones - Fijo en la parte inferior en móviles */}
-                            <Box
-                                data-onboarding="card-deck"
-                                display="flex"
-                                flexWrap={{ xs: 'nowrap', sm: 'wrap' }}
-                                justifyContent="flex-start"
-                                marginTop={4}
-                                sx={{
-                                    width: '100%',
-                                    maxWidth: '100%',
-                                    px: { xs: 1, sm: 2 },
-                                    py: { xs: 3, sm: 4 },
-                                    // Scroll horizontal solo en móviles
-                                    overflowX: { xs: 'auto', sm: 'hidden' },
-                                    overflowY: 'visible',
-                                    // Posición sticky para que se mantenga al final del contenedor
-                                    position: { xs: 'sticky', sm: 'relative' },
-                                    // Posicionar al final del contenedor
-                                    bottom: 0,
-                                    left: { xs: 0, sm: 'auto' },
-                                    right: { xs: 0, sm: 'auto' },
-                                    zIndex: { xs: 10, sm: 1 },
-                                    backgroundColor: { xs: theme.palette.background.default, sm: 'transparent' },
-                                    boxShadow: {sm: 'none' },
-                                    // Mejorar experiencia de scroll
-                                    WebkitOverflowScrolling: 'touch',
-                                    scrollbarWidth: 'none',
-                                    msOverflowStyle: 'none',
-                                    '&::-webkit-scrollbar': { display: 'none' },
-                                    // Padding para evitar que las cartas queden cortadas
-                                    pb: { xs: 2, sm: 4 },
-                                    pt: { xs: 2, sm: 4 },
-                                    // Espacio para el footer
-                                    mb: { xs: 2, sm: 0 },
-                                    // Efecto de mazo de cartas
-                                    '& > *': {
-                                        flexShrink: 0,
-                                        // Posición relativa para permitir superposición
-                                        position: 'relative',
-                                        // Margen negativo para crear superposición
-                                        marginLeft: { xs: '-10px', sm: '-15px' },
-                                        // El primer elemento no tiene margen negativo
-                                        '&:first-of-type': {
-                                            marginLeft: 0,
-                                        },
-                                        // Efecto de elevación al hacer hover
-                                        '&:hover': {
-                                            zIndex: 2,
-                                            transform: 'translateY(-10px)',
-                                            transition: 'transform 0.2s ease-out',
-                                        },
-                                        // Transición suave para todos los elementos
-                                        transition: 'transform 0.2s ease-out, margin-left 0.1s ease-out',
-                                    },
-                                    // Centrar el contenido en desktop
-                                    justifyContent: { xs: 'flex-start', sm: 'center' },
-                                    // Scroll inicial a la izquierda
-                                    scrollLeft: 0,
-                                    // Añadir padding al inicio para mostrar todas las cartas
-                                    paddingLeft: { xs: '20px', sm: '40px' },
-                                    // Añadir padding al final para mostrar todas las cartas
-                                    paddingRight: { xs: '20px', sm: '40px' },
-                                }}
-                            >
-                                {estimationOptions.map((value, index) => (
-                                    <Card
-                                        key={String(value)}
-                                        value={value}
-                                        selected={selectedEstimation === value}
-                                        onClick={() => handleSelectEstimation(value)}
-                                        flipped={false}
-                                        noSelection={false}
-                                        sx={{
-                                            // Aplicar rotación aleatoria sutil para efecto de mazo
-                                            transform: `rotate(${(index % 3 - 1) * 1.5}deg)`,
-                                            // Aumentar z-index cuando está seleccionada
-                                            zIndex: selectedEstimation === value ? 3 : 1,
-                                            // Elevar ligeramente la carta seleccionada
-                                            ...(selectedEstimation === value && {
-                                                marginTop: '-10px',
-                                            }),
-                                        }}
-                                    />
-                                ))}
-                            </Box>
+                            {/* Estimation options deck */}
+                            <EstimationDeck
+                                estimationOptions={estimationOptions}
+                                selectedEstimation={selectedEstimation}
+                                onSelectEstimation={handleSelectEstimation}
+                            />
 
                             {/* Botones de Revelar / Volver a Votar */}
                             <Box marginTop={4} display="flex" justifyContent="center" gap={2}>
@@ -1047,6 +884,7 @@ export default function RoomPage() {
                                                                 flipped={false}
                                                                 noSelection={false}
                                                                 onClick={() => { }}
+                                                                reveal={true}
                                                             />
                                                             <Typography
                                                                 variant="body2"

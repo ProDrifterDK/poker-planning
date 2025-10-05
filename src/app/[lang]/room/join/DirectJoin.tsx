@@ -130,7 +130,8 @@ export default function DirectJoin() {
       }
 
       setIsJoining(true);
-      await joinRoomWithName(roomCode, userName);
+      const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+      await joinRoomWithName(roomCode, userName, photoURL);
       router.push(getLocalizedRoute(`/room/${roomCode}`));
     } catch (error) {
       console.error("Error al unirse a la sala:", error);

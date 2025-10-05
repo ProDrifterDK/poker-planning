@@ -110,7 +110,8 @@ export default function ClientJoin() {
       if (userName && roomCode && !isSubmitting && !isLoading && !error) {
         setIsSubmitting(true);
         try {
-          await joinRoomWithName(roomCode, userName);
+          const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+          await joinRoomWithName(roomCode, userName, photoURL);
           router.push(getLocalizedRoute(`/room/${roomCode}`));
         } catch (error) {
           console.error("Error al unirse automáticamente a la sala:", error);
@@ -151,7 +152,8 @@ export default function ClientJoin() {
 
     setIsSubmitting(true);
     try {
-      await joinRoomWithName(roomCode, name);
+      const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+      await joinRoomWithName(roomCode, name, photoURL);
       router.push(getLocalizedRoute(`/room/${roomCode}`));
     } catch (error) {
       console.error("Error al unirse a la sala:", error);
