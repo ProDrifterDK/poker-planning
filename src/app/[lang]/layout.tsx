@@ -1,11 +1,11 @@
 import '../../styles/globals.css';
 import { ReactNode } from 'react';
 import Providers from '../providers';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import ErrorDisplay from '../../components/ErrorDisplay';
+import Header from '../../components/core/Header';
+import Footer from '../../components/core/Footer';
+import ErrorDisplay from '../../components/core/ErrorDisplay';
 import { OnboardingTooltip } from '../../components/Onboarding';
-import AdBlockerWarning from '../../components/AdBlockerWarning';
+import AdBlockerWarning from '@/features/ads/AdBlockerWarning';
 import OnboardingWrapper from '../../components/Onboarding/OnboardingWrapper';
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {

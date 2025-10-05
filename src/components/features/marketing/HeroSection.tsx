@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
-import { Button } from './Button';
-import { InformationCard } from './InfoCard';
-import AnimatedSection from './AnimatedSection';
+import { Button } from '../../core/Button';
+import { InformationCard } from '../../core/InfoCard';
+import AnimatedSection from '../../core/AnimatedSection';
 
 // Full-page hero container
 const HeroContainer = styled.section`

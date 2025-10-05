@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useRef, useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import FeatureGuard from './FeatureGuard';
+import FeatureGuard from '@/components/core/FeatureGuard';
 import Advertisement from './Advertisement';
 import { MIN_CONTENT_HEIGHT_FOR_ADS } from '@/config/adConfig';
 

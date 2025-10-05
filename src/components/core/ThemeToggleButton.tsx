@@ -2,7 +2,7 @@
 
 import styled from '@emotion/styled';
 import { HalfMoon, SunLight } from 'iconoir-react';
-import { useThemeMode } from '../context/themeContext';
+import { useThemeMode } from '../../context/themeContext';
 import { useTranslation } from 'react-i18next';
 
 // Styled components

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { Button } from './Button';
-import { darkEmotionTheme } from '../styles/theme';
+import { Button } from '../../core/Button';
+import { darkEmotionTheme } from '../../../styles/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import AnimatedSection from './AnimatedSection';
+import AnimatedSection from '../../core/AnimatedSection';
 
 // Styled container for the pricing section
 const PricingSection = styled.section`

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import styled from '@emotion/styled';
 import { Theme } from '@mui/material/styles';
-import { Button } from './Button';
-import AnimatedSection from './AnimatedSection';
+import { Button } from '../../core/Button';
+import AnimatedSection from '../../core/AnimatedSection';
 
 const CTAContainer = styled.section`
   background: linear-gradient(135deg, ${({ theme }) => (theme as unknown as Theme).palette.background.default} 0%, ${({ theme }) => (theme as unknown as Theme).palette.background.paper} 100%);

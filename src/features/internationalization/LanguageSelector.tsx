@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import styled from '@emotion/styled';
-import { i18n } from '../../next-i18next.config.js';
+import { i18n } from '../../../next-i18next.config.js';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@emotion/react';
-import { darkEmotionTheme } from '../styles/theme';
+import { darkEmotionTheme } from '@/styles/theme';
 
 // Styled components using Sleek Innovator design system
 const LanguageSelectorContainer = styled.div`

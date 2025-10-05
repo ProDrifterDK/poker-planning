@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { useTranslation } from 'react-i18next';
-import { InformationCard } from './InfoCard';
-import AnimatedSection from './AnimatedSection';
+import { InformationCard } from '../../core/InfoCard';
+import AnimatedSection from '../../core/AnimatedSection';
 import {
   User,
   Flash,

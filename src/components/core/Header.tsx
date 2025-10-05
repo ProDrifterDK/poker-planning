@@ -7,11 +7,11 @@ import styled from '@emotion/styled';
 import { Button } from './Button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '../context/authContext';
-import UserMenu from './auth/UserMenu';
+import { useAuth } from '../../context/authContext';
+import UserMenu from '../auth/UserMenu';
 import { Typography } from '@mui/material';
 import ThemeToggleButton from './ThemeToggleButton';
-import LanguageSelector from './LanguageSelector';
+import LanguageSelector from '@/features/internationalization/LanguageSelector';
 import { Settings } from 'iconoir-react';
 
 const AnimatedSettings = styled(Settings, {

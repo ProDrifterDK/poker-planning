@@ -10,12 +10,12 @@ import { getPlanLookupKey } from "@/utils/planUtils";
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/types/subscription";
 import { useTranslation } from "react-i18next";
 import SessionPersistence from "./SessionPersistence";
-import SubscriptionLimits from "./subscription/SubscriptionLimits";
+import SubscriptionLimits from "../../subscription/SubscriptionLimits";
 import ActiveRoomsList from "./ActiveRoomsList";
-import SplitScreenLayout from './SplitScreenLayout';
+import SplitScreenLayout from '../../core/SplitScreenLayout';
 import JoinRoomPanel from './JoinRoomPanel';
 import CreateRoomPanel from './CreateRoomPanel';
-import { OnboardingButton } from "./Onboarding";
+import { OnboardingButton } from "../../Onboarding";
 import { useAuth } from "@/context/authContext";
 
 const supportedLocales = ['es', 'en'];

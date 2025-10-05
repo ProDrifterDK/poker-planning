@@ -11,7 +11,7 @@ import CurrentSubscription from '@/components/subscription/CurrentSubscription';
 import PaymentHistory from '@/components/subscription/PaymentHistory';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
-import LanguageAwareComponent from '@/components/LanguageAwareComponent';
+import LanguageAwareComponent from '@/features/internationalization/LanguageAwareComponent';
 
 // Lista de idiomas soportados
 const supportedLocales = ['es', 'en'];

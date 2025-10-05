@@ -4,7 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { ThemeProviderWrapper } from '../context/themeContext';
 import { AuthProvider } from '../context/authContext';
 import { LanguageProvider } from '../context/languageContext';
-import ClientOnly from '@/components/ClientOnly';
+import ClientOnly from '@/components/core/ClientOnly';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n-client';
 import AOS from 'aos';

@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { Button, ButtonProps } from '../Button';
+import { Button, ButtonProps } from '../core/Button';
 
 // Loading spinner animation
 const spin = keyframes`

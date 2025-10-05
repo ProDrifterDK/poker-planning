@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import Image from 'next/image';
-import AnimatedSection from './AnimatedSection';
+import AnimatedSection from '../../core/AnimatedSection';
 
 
 const companyLogos = [
