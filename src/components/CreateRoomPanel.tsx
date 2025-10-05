@@ -82,16 +82,16 @@ const CreateRoomPanel: React.FC<CreateRoomPanelProps> = ({
   const isButtonDisabled = !name.trim() || isLoading || !canCreateRoom;
 
   return (
-    <StyledPaper elevation={3} theme={theme}>
+    <StyledPaper elevation={3} theme={theme} role="region" aria-labelledby="create-room-title">
       <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="h4" component="h2" gutterBottom>
+        <Typography variant="h4" component="h2" gutterBottom id="create-room-title">
           {t('create.title')}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" id="create-room-description">
           {t('createRoomDescription', 'Crea una nueva sala y comparte el código con tu equipo para comenzar a estimar.')}
         </Typography>
       </Box>
-      <Box component="form" onSubmit={handleCreate} sx={{ display: 'contents' }}>
+      <Box component="form" onSubmit={handleCreate} sx={{ display: 'contents' }} aria-busy={isLoading}>
         <TextField
           id="your-name-input-create"
           label={t('join.yourName')}
@@ -102,6 +102,8 @@ const CreateRoomPanel: React.FC<CreateRoomPanelProps> = ({
           disabled={isLoading || !!currentUser?.displayName}
           required
           helperText={currentUser?.displayName ? t('usingProfileName', 'Usando tu nombre de perfil') : ''}
+          aria-describedby={currentUser?.displayName ? "your-name-helper-text-create" : undefined}
+          FormHelperTextProps={{ id: 'your-name-helper-text-create' }}
         />
         <TextField
           id="room-title-input"
@@ -145,6 +147,7 @@ const CreateRoomPanel: React.FC<CreateRoomPanelProps> = ({
               disabled={isButtonDisabled}
               fullWidth
               theme={theme}
+              aria-label={isLoading ? t('create.loading', 'Creating room...') : t('create.submit')}
             >
               {isLoading ? <CircularProgress size={24} color="inherit" /> : t('create.submit')}
             </StyledButton>
