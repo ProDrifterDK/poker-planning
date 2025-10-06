@@ -359,11 +359,21 @@ export default function RoomPage() {
                         clearTimeout(forceJoinTimeout);
                     });
             } else {
-                console.log(`ID de participante existente para la sala ${roomId}: ${existingParticipantId}, no es necesario unirse de nuevo`);
-                // Si ya existe un ID de participante, simplemente actualizar el estado
-                setIsJoined(true);
-                clearTimeout(autoJoinTimeout);
-                clearTimeout(forceJoinTimeout);
+                console.log(`ID de participante existente para la sala ${roomId}: ${existingParticipantId}, forzando la reconexión`);
+                const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
+                joinRoomWithName(roomId, name, photoURL)
+                    .then(() => {
+                        console.log('Re-conexión forzada exitosa');
+                        setIsJoined(true);
+                        clearTimeout(autoJoinTimeout);
+                        clearTimeout(forceJoinTimeout);
+                    })
+                    .catch(error => {
+                        console.error('Error al forzar la re-conexión:', error);
+                        setErrorMessage(t('errors.autoJoinFailed'));
+                        clearTimeout(autoJoinTimeout);
+                        clearTimeout(forceJoinTimeout);
+                    });
             }
 
             // Limpiar los timeouts cuando el componente se desmonte

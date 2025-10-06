@@ -51,9 +51,14 @@ interface RoomParticipant {
   participantId?: string;
 }
 
+interface Session {
+  active: boolean;
+}
+
 interface RtdbRoomData {
   metadata?: RoomMetadata;
   participants?: Record<string, RoomParticipant>;
+  sessions?: Record<string, Session>;
 }
 
 /**
@@ -83,7 +88,6 @@ export default function ActiveRoomsList() {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching active rooms for user:', currentUser.uid);
         
         // First try to get rooms from Realtime Database
         const rooms: Room[] = [];
@@ -95,7 +99,6 @@ export default function ActiveRoomsList() {
           
           if (roomsSnapshot.exists()) {
             const roomsData = roomsSnapshot.val();
-            console.log('Found rooms in RTDB:', roomsData);
             
             // Process each room
             for (const [roomId, roomData] of Object.entries(roomsData)) {
@@ -104,11 +107,20 @@ export default function ActiveRoomsList() {
               
               // Skip if no metadata
               if (!typedRoomData.metadata) {
-                console.log(`Room ${roomId} has no metadata, skipping`);
                 continue;
               }
 
+              // If metadata.active is explicitly false, the room is not active
               if (typedRoomData.metadata.active === false) {
+                  continue;
+              }
+              
+              // A room is active if it has at least one session with active: true
+              const isRoomActive = typedRoomData.sessions
+                ? Object.values(typedRoomData.sessions).some(session => session.active === true)
+                : false;
+
+              if (!isRoomActive) {
                 continue;
               }
               
@@ -116,31 +128,26 @@ export default function ActiveRoomsList() {
               
               // Check if this room was created by the current user
               // Note: Some rooms might have 'anonymous' as creatorId
-              console.log(`Room ${roomId} creator:`, metadata.creatorId);
               
               let isUserRoom = false;
               
               // Check if the room was created by the current user
               if (metadata.creatorId === currentUser.uid) {
-                console.log(`Room ${roomId} was created by current user (exact match)`);
                 isUserRoom = true;
               }
               // For rooms with 'anonymous' creatorId, check if the current user is a moderator participant
               else if (metadata.creatorId === 'anonymous' && typedRoomData.participants) {
                 // Get the current user's ID
                 const userId = currentUser.uid;
-                console.log(`Checking if user ${userId} is a moderator in room ${roomId}`);
                 
                 // Get the participant IDs for this room from localStorage
                 const participantId = localStorage.getItem(`participant_id_${roomId}`);
-                console.log(`User's participant ID for this room: ${participantId}`);
                 
                 if (participantId) {
                   // Check if this participant ID exists in the room and is a moderator
                   const participant = typedRoomData.participants[participantId];
                   
-                  if (participant && participant.role === 'moderator' && participant.active !== false) {
-                    console.log(`User ${userId} is a moderator in room ${roomId} with participant ID ${participantId}`);
+                  if (participant && participant.role === 'moderator') {
                     isUserRoom = true;
                   } else {
                     console.log(`User ${userId} is NOT a moderator in room ${roomId} or participant not found`);
@@ -151,7 +158,6 @@ export default function ActiveRoomsList() {
               }
               
               if (isUserRoom) {
-                console.log(`Adding room ${roomId} to user's active rooms`);
                 
                 // Get participant count
                 let participantsCount = 0;
@@ -176,7 +182,6 @@ export default function ActiveRoomsList() {
         
         // If no rooms found in RTDB, try Firestore as fallback
         if (rooms.length === 0) {
-          console.log('No rooms found in RTDB, trying Firestore');
           
           try {
             // Query Firestore for rooms created by the current user
@@ -186,7 +191,6 @@ export default function ActiveRoomsList() {
             );
             
             const querySnapshot = await getDocs(roomsQuery);
-            console.log('Firestore query result:', querySnapshot.docs.length, 'rooms found');
             
             // Process each room
             for (const doc of querySnapshot.docs) {
@@ -195,8 +199,6 @@ export default function ActiveRoomsList() {
               
               // Skip inactive rooms
               if (roomData.active === false) continue;
-              
-              console.log(`Processing Firestore room ${roomId}:`, roomData);
               
               // Get participant count from Realtime Database
               let participantsCount = 0;
@@ -226,8 +228,6 @@ export default function ActiveRoomsList() {
             console.error('Error fetching rooms from Firestore:', firestoreError);
           }
         }
-        
-        console.log(`Found ${rooms.length} active rooms for user ${currentUser.uid}`);
         
         // Sort rooms by creation date (newest first)
         rooms.sort((a, b) => b.createdAt - a.createdAt);
@@ -269,7 +269,21 @@ export default function ActiveRoomsList() {
   };
   
   // Join a room
-  const handleJoinRoom = (roomId: string) => {
+  const handleJoinRoom = async (roomId: string) => {
+    const participantId = localStorage.getItem(`participant_id_${roomId}`);
+    
+    if (roomId && participantId) {
+      try {
+        const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+        await update(participantRef, {
+          active: true,
+          lastActive: Date.now(),
+        });
+      } catch (error) {
+        console.error('Error reactivating participant:', error);
+      }
+    }
+
     router.push(getLocalizedRoute(`/room/${roomId}`));
   };
 

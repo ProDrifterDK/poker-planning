@@ -145,7 +145,6 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               const { currentUser } = JSON.parse(authData);
               if (currentUser && currentUser.uid) {
                 creatorId = currentUser.uid;
-                console.log(`Creating room with creator ID: ${creatorId}`);
               }
             }
           } catch (error) {
@@ -166,7 +165,6 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             title: title || i18next.t('room.defaultRoomTitle', { roomId }) // Usar el título proporcionado o uno por defecto
           };
           
-          console.log(`Storing room ${roomId} metadata in RTDB:`, roomMetadata);
           await update(ref(realtimeDb, `rooms/${roomId}/metadata`), roomMetadata);
           
           // También guardar en Firestore para asegurar consistencia
@@ -182,7 +180,6 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             
             const firestoreRoomRef = doc(firestore, 'rooms', roomId);
             await setDoc(firestoreRoomRef, firestoreRoomData);
-            console.log(`Room ${roomId} metadata stored in Firestore:`, firestoreRoomData);
           } catch (firestoreError) {
             console.error('Error storing room metadata in Firestore:', firestoreError);
             // No propagamos el error para no interrumpir la creación de la sala
@@ -339,6 +336,16 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               lastActive: Date.now(),
               ...(photoURL && { photoURL }) // Actualizar photoURL si está disponible
             });
+
+            // Proactively update the local state to ensure immediate UI feedback
+            const existingParticipants = get().participants;
+            const updatedParticipants = existingParticipants.map(p => {
+              if (p.id === participantId) {
+                return { ...p, active: true };
+              }
+              return p;
+            });
+            set({ participants: updatedParticipants });
           }
 
           // Guardar el ID del participante en el estado local
@@ -353,6 +360,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           const roomRef = ref(realtimeDb, `rooms/${roomId}`);
           // Guardar IDs y título
           set({ roomId, sessionId, roomTitle });
+          // Ensure the local state is updated immediately for rejoining users
           const unsubscribe = onValue(roomRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
@@ -502,7 +510,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       // Salir de la sala
       leaveRoom: async () => {
         const errorStore = useErrorStore.getState();
-        const { roomId, currentParticipantId, participants } = get();
+        const { roomId, currentParticipantId } = get();
 
         if (!roomId) {
           const appError = createError(
@@ -522,49 +530,39 @@ export const useRoomStore = create<RoomState & RoomActions>()(
               lastActive: Date.now(),
               estimation: null // Limpiar la estimación para que no afecte a la votación
             });
+            
+            // Después de marcar como inactivo, obtener la lista FRESCA de participantes
+            const participantsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/participants`));
+            if (participantsSnapshot.exists()) {
+                const participantsData = participantsSnapshot.val() as Record<string, Participant>;
+                const activeParticipants = Object.values(participantsData).filter(p => p.active === true);
 
-            // Verificar si este era el último participante activo
-            // Filtrar los participantes activos, excluyendo al que acaba de salir
-            const activeParticipants = participants.filter(
-              p => p.active !== false && p.id !== currentParticipantId
-            );
-
-            // Si no quedan participantes activos, eliminar la sala
-            if (activeParticipants.length === 0) {
-
-              // Marcar la sala como inactiva para que pueda ser eliminada por un proceso de limpieza
-              const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
-              await update(roomRef, {
-                active: false,
-                lastActive: Date.now(),
-                markedForDeletion: true
-              });
-
-              // También podríamos eliminar la sala directamente, pero es más seguro
-              // marcarla para eliminación y tener un proceso separado que las elimine
-              // después de un cierto tiempo (por ejemplo, 24 horas)
+                // Si no quedan participantes activos, marcar la sala como inactiva
+                if (activeParticipants.length === 0) {
+                    const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+                    await update(roomRef, {
+                        active: false,
+                        lastActive: Date.now(),
+                        markedForDeletion: true
+                    });
+                    
+                    // Ahora, y solo ahora, intentar la escritura en Firestore
+                    try {
+                        const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+                        await updateDoc(firestoreRoomRef, {
+                          active: false,
+                          lastActive: Date.now()
+                        });
+                    } catch (firestoreError) {
+                        console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
+                    }
+                }
             }
           }
 
-          // Limpiar el estado local
-          set({ ...initialState });
+          // No limpiar el estado local aquí para evitar race conditions al reunirse
+          // set({ ...initialState });
           
-          // Intentar marcar la sala como inactiva en Firestore
-          // Nota: Esto puede fallar debido a permisos, pero no es crítico
-          // ya que la sala se marca como inactiva en Realtime Database
-          try {
-            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
-            await updateDoc(firestoreRoomRef, {
-              active: false,
-              lastActive: Date.now()
-            });
-            console.log(`Room ${roomId} marked as inactive in Firestore`);
-          } catch (firestoreError) {
-            // No mostrar el error en consola para evitar ruido
-            // Este error es esperado debido a las reglas de seguridad
-            // y no afecta la funcionalidad principal
-            console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
-          }
         } catch (error) {
           console.error("Error al salir de la sala:", error);
           const appError = createError(
@@ -613,7 +611,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       selectEstimation: async (value: number | string) => {
         const errorStore = useErrorStore.getState();
         const { roomId, sessionId, reveal, participants, currentIssueId, currentParticipantId } = get();
-
+        
         if (!roomId || !sessionId) {
           const appError = createError(
             ErrorType.VALIDATION_ERROR,

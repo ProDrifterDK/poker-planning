@@ -32,7 +32,6 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
       
       try {
         setIsLoading(true);
-        console.log(`Fetching room data for room: ${roomId}`);
         
         // First, try to get the room data from the Realtime Database
         const rtdbRoomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
@@ -40,27 +39,22 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
         
         if (rtdbSnapshot.exists()) {
           const rtdbRoomData = rtdbSnapshot.val();
-          console.log('Room data from RTDB:', rtdbRoomData);
           
           if (rtdbRoomData.creatorPlan) {
-            console.log(`Found creator plan in RTDB: ${rtdbRoomData.creatorPlan}`);
             setCreatorPlan(rtdbRoomData.creatorPlan);
             return;
           }
         }
         
         // If not found in RTDB, try Firestore
-        console.log('Checking Firestore for room data');
         const firestoreRoomRef = doc(firestore, 'rooms', roomId);
         const firestoreRoomDoc = await getDoc(firestoreRoomRef);
         
         if (firestoreRoomDoc.exists()) {
           const firestoreRoomData = firestoreRoomDoc.data();
-          console.log('Room data from Firestore:', firestoreRoomData);
           
           // Check if the creator's plan is stored in the room metadata
           if (firestoreRoomData.creatorPlan) {
-            console.log(`Found creator plan in Firestore: ${firestoreRoomData.creatorPlan}`);
             setCreatorPlan(firestoreRoomData.creatorPlan);
           } else {
             // If not stored in metadata (for older rooms), try to get it from the creator's user data
@@ -71,20 +65,16 @@ export default function ParticipantCounter({ roomCreatorPlan }: ParticipantCount
               return;
             }
             
-            console.log(`Looking up creator (${creatorId}) subscription`);
             // Get the creator's user data to find their subscription plan
             const userRef = doc(firestore, 'users', creatorId);
             const userDoc = await getDoc(userRef);
             
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              console.log('Creator user data:', userData);
               const plan = userData.subscriptionPlan || SubscriptionPlan.FREE;
-              console.log(`Setting creator plan from user data: ${plan}`);
               setCreatorPlan(plan);
             } else {
               // Default to FREE if user not found
-              console.log('Creator user not found, defaulting to FREE plan');
               setCreatorPlan(SubscriptionPlan.FREE);
             }
           }

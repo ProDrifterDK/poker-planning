@@ -100,7 +100,18 @@ export default function SessionPersistence() {
   }
 
   // Función para volver a la sala
-  const returnToRoom = () => {
+  const returnToRoom = async () => {
+    if (roomId && participantId) {
+      try {
+        const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+        await update(participantRef, {
+          active: true,
+          lastActive: Date.now(),
+        });
+      } catch (error) {
+        console.error('Error reactivating participant:', error);
+      }
+    }
     router.push(getLocalizedRoute(`/room/${roomId}`));
   };
 
