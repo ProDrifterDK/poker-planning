@@ -41,7 +41,7 @@
     "jspdf-autotable": "^5.0.2",
     "marked": "^15.0.7",
     "negotiator": "^1.0.0",
-    "next": "^15.5.2",
+    "next": "^15.5.7",
     "next-i18next": "^15.4.2",
     "node-fetch": "^2.7.0",
     "oauth": "^0.10.2",
