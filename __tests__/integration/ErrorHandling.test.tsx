@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
-import ErrorDisplay from '@/components/ErrorDisplay';
+import ErrorDisplay from '@/components/core/ErrorDisplay';
 import { useErrorStore, ErrorType, createError } from '@/store/errorStore';
 
 // Mock theme
