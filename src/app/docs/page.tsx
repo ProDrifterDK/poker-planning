@@ -1,6 +1,7 @@
 import React from 'react';
-import { Typography, Container, Paper, Box, List, ListItem, ListItemText, ListItemIcon, Breadcrumbs, Link } from '@mui/material';
-import NextLink from 'next/link';
+import { Typography, Container, Paper, Box, List, ListItemText, ListItemIcon, Breadcrumbs } from '@mui/material';
+import NextMuiLink from '@/components/core/NextMuiLink';
+import NextMuiListItem from '@/components/core/NextMuiListItem';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import BuildIcon from '@mui/icons-material/Build';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -38,9 +39,9 @@ export default function DocsPage() {
         <Container maxWidth="md" sx={{ py: 4 }}>
             <Box mb={4}>
                 <Breadcrumbs aria-label="breadcrumb">
-                    <Link component={NextLink} href="/" color="inherit">
+                    <NextMuiLink href="/" color="inherit">
                         Inicio
-                    </Link>
+                    </NextMuiLink>
                     <Typography color="text.primary">Documentación</Typography>
                 </Breadcrumbs>
             </Box>
@@ -56,9 +57,8 @@ export default function DocsPage() {
             <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
                 <List>
                     {documentationSections.map((section, index) => (
-                        <ListItem
+                        <NextMuiListItem
                             key={index}
-                            component={NextLink}
                             href={section.link}
                             sx={{
                                 borderBottom: index < documentationSections.length - 1 ? '1px solid rgba(0, 0, 0, 0.1)' : 'none',
@@ -75,7 +75,7 @@ export default function DocsPage() {
                                 secondary={section.description}
                                 primaryTypographyProps={{ fontWeight: 'bold' }}
                             />
-                        </ListItem>
+                        </NextMuiListItem>
                     ))}
                 </List>
             </Paper>
