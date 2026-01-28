@@ -1,6 +1,6 @@
 import React from 'react';
-import { Typography, Container, Paper, Box, Breadcrumbs, Link } from '@mui/material';
-import NextLink from 'next/link';
+import { Typography, Container, Paper, Box, Breadcrumbs } from '@mui/material';
+import NextMuiLink from '@/components/core/NextMuiLink';
 import fs from 'fs';
 import path from 'path';
 import { marked } from 'marked';
@@ -24,12 +24,12 @@ export default async function RolesAndPermissionsPage() {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box mb={4}>
         <Breadcrumbs aria-label="breadcrumb">
-          <Link component={NextLink} href="/" color="inherit">
+          <NextMuiLink href="/" color="inherit">
             Inicio
-          </Link>
-          <Link component={NextLink} href="/docs" color="inherit">
+          </NextMuiLink>
+          <NextMuiLink href="/docs" color="inherit">
             Documentación
-          </Link>
+          </NextMuiLink>
           <Typography color="text.primary">Roles y Permisos</Typography>
         </Breadcrumbs>
       </Box>
