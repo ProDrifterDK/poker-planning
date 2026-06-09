@@ -117,6 +117,23 @@ def test_production_configuration_rejects_fake_billing_and_e2e(monkeypatch):
         Settings()
 
 
+def test_staging_accepts_railway_postgres_url_with_psycopg_driver(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_x")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_MONTH", "price_pro_month")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_YEAR", "price_pro_year")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_MONTH", "price_ent_month")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+
+    assert Settings().normalized_database_url == "postgresql+psycopg://user:pass@example.com/db"
+
+
 def test_staging_requires_signed_stripe_webhooks(monkeypatch):
     monkeypatch.setenv("APP_ENV", "staging")
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
