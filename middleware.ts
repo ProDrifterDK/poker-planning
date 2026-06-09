@@ -31,7 +31,7 @@ function getLocale(request: NextRequest): string {
   try {
     // Usar el primer idioma soportado que coincida con las preferencias del navegador
     return match(languages, locales, locales[0]);
-  } catch (error) {
+  } catch {
     // Si hay algún error, usar el primer idioma de la lista como fallback
     return locales[0];
   }
@@ -46,19 +46,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Manejar archivos HTML de suscripción de PayPal
+  // Manejar archivos HTML legacy de PayPal: ya no son parte del flujo de billing.
   if (pathname.includes('paypal-') && pathname.endsWith('.html')) {
-    const locale = getLocale(request);
-    
-    // Si el archivo ya tiene un sufijo de idioma, no hacer nada
-    if (pathname.includes('-en.html') || pathname.includes('-es.html')) {
-      return NextResponse.next();
-    }
-    
-    // Redirigir al archivo con el sufijo de idioma correcto
-    const newPath = pathname.replace('.html', `-${locale}.html`);
-    request.nextUrl.pathname = newPath;
-    return NextResponse.redirect(request.nextUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${getLocale(request)}/settings/subscription`;
+    return NextResponse.redirect(url);
   }
   
   // Verificar si ya hay un idioma en la URL
@@ -82,6 +74,9 @@ export function middleware(request: NextRequest) {
   const shouldLocalize = localizedRoutes.some(route =>
     pathname === route || pathname.startsWith(`${route}/`)
   );
+  if (!shouldLocalize) {
+    return NextResponse.next();
+  }
   
   // Obtener el idioma preferido del usuario
   const locale = getLocale(request);

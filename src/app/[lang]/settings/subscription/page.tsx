@@ -172,14 +172,15 @@ export default function SubscriptionPage() {
           
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {Object.entries(localizedPlans)
-              .filter(([key, plan]) => plan.billingInterval === 'month')
+              .filter(([, plan]) => plan.billingInterval === 'month')
               .map(([key, plan]) => (
                 <Grid item xs={12} md={4} key={key}>
                   <PlanCard
                     plan={plan}
                     planKey={key}
                     isCurrentPlan={
-                      currentSubscription?.plan === plan.id
+                      currentSubscription?.plan === plan.id &&
+                      (plan.id === SubscriptionPlan.FREE || currentSubscription?.billingInterval === plan.billingInterval)
                     }
                     userId={userId || ''}
                   />
@@ -193,14 +194,15 @@ export default function SubscriptionPage() {
           
           <Grid container spacing={3}>
             {Object.entries(localizedPlans)
-              .filter(([key, plan]) => plan.billingInterval === 'year' && plan.id !== SubscriptionPlan.FREE)
+              .filter(([, plan]) => plan.billingInterval === 'year' && plan.id !== SubscriptionPlan.FREE)
               .map(([key, plan]) => (
                 <Grid item xs={12} md={4} key={key}>
                   <PlanCard
                     plan={plan}
                     planKey={key}
                     isCurrentPlan={
-                      currentSubscription?.plan === plan.id
+                      currentSubscription?.plan === plan.id &&
+                      (plan.id === SubscriptionPlan.FREE || currentSubscription?.billingInterval === plan.billingInterval)
                     }
                     userId={userId || ''}
                   />

@@ -7,9 +7,9 @@
 
 import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore, auth, updateUserProfile } from './firebaseConfig';
+import { billingApi, BillingApiError } from './billingApi';
 import { cancelSubscription } from './subscriptionService';
 import { User, EmailAuthProvider, reauthenticateWithCredential, updateEmail, deleteUser } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Función para redimensionar una imagen
 async function resizeImage(file: File, maxWidth: number = 300, maxHeight: number = 300): Promise<string> {
@@ -290,7 +290,19 @@ export async function deleteUserAccount(currentPassword: string) {
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
     
-    // Buscar y cancelar suscripciones activas
+    // Cancelar cualquier suscripción backend/Stripe antes de borrar el usuario.
+    // Si esto falla, se bloquea la eliminación para evitar dejar cobros huérfanos.
+    try {
+      await billingApi.cancelCurrentSubscription('Cuenta eliminada por el usuario');
+    } catch (billingError) {
+      console.error('Error al cancelar/verificar suscripción backend:', billingError);
+      const message = billingError instanceof BillingApiError
+        ? billingError.message
+        : 'No se pudo cancelar la suscripción activa';
+      throw new Error(`No se pudo eliminar la cuenta: ${message}`);
+    }
+
+    // Buscar y cancelar suscripciones legacy activas en Firestore
     const subscriptionsRef = collection(firestore, 'subscriptions');
     const q = query(
       subscriptionsRef,
@@ -300,13 +312,11 @@ export async function deleteUserAccount(currentPassword: string) {
     
     const querySnapshot = await getDocs(q);
     
-    // Cancelar cada suscripción activa
+    // Cancelar cada suscripción legacy activa
     for (const doc of querySnapshot.docs) {
-      const subscriptionData = doc.data();
-      console.log(`Cancelando suscripción ${doc.id} para usuario ${user.uid}`);
+      console.log(`Cancelando suscripción legacy ${doc.id} para usuario ${user.uid}`);
       
       try {
-        // Cancelar la suscripción en PayPal y en nuestra base de datos
         await cancelSubscription(doc.id, 'Cuenta eliminada por el usuario');
       } catch (subscriptionError) {
         console.error('Error al cancelar suscripción:', subscriptionError);
