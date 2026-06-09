@@ -1,4 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   env: {
@@ -11,32 +15,14 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     
-    // Firebase Admin (para webhooks)
-    FIREBASE_ADMIN_CLIENT_EMAIL: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-    // No incluimos FIREBASE_ADMIN_PRIVATE_KEY aquí porque Vercel lo maneja de forma especial
-    
-    // PayPal
-    NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
-    NEXT_PUBLIC_PAYPAL_RETURN_URL: process.env.NEXT_PUBLIC_PAYPAL_RETURN_URL,
-    NEXT_PUBLIC_PAYPAL_CANCEL_URL: process.env.NEXT_PUBLIC_PAYPAL_CANCEL_URL,
-    PAYPAL_ENVIRONMENT: process.env.PAYPAL_ENVIRONMENT
-  },
-  // Configuración para API routes que manejan webhooks de PayPal
-  async headers() {
-    return [
-      {
-        source: '/api/webhooks/paypal',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/json',
-          },
-        ],
-      },
-    ];
+    // Billing API
+    NEXT_PUBLIC_BILLING_API_BASE_URL: process.env.NEXT_PUBLIC_BILLING_API_BASE_URL,
   },
   compiler: {
     emotion: true,
+  },
+  turbopack: {
+    root: projectRoot,
   },
 };
 

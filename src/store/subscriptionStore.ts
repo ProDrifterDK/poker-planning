@@ -1,479 +1,265 @@
 /**
- * Store para gestionar el estado de las suscripciones
+ * Store para gestionar el estado de las suscripciones.
+ *
+ * Billing authority now lives in the FastAPI backend. This store is only a UI/cache layer.
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
-  SubscriptionPlan,
-  UserSubscription,
+  BillingInterval,
+  PlanFeatures,
   PaymentHistory,
   SUBSCRIPTION_PLANS,
+  SubscriptionPlan,
   SubscriptionStatus,
-  PlanFeatures
+  UserSubscription
 } from '@/types/subscription';
-import {
-  getUserSubscription,
-  createSubscription,
-  cancelSubscription,
-  getUserPaymentHistory,
-  hasFeatureAccess,
-  canCreateRoom,
-  canAddParticipant
-} from '@/lib/subscriptionService';
-import {
-  getPayPalPlanId,
-  createSubscription as createPaypalSubscription,
-  executeSubscription as executePaypalSubscription,
-  cancelSubscription as cancelPaypalSubscription
-} from '@/lib/paypalSdk';
-import { PaymentMethod } from '@/types/subscription';
+import { canAddParticipant } from '@/lib/subscriptionService';
+import { billingApi } from '@/lib/billingApi';
 
-/**
- * Función auxiliar para obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
- *
- * @param plan - El plan de suscripción
- * @returns La clave correcta para buscar en SUBSCRIPTION_PLANS
- */
-const getPlanLookupKey = (plan: SubscriptionPlan): string => {
-  // Primero intentar con la clave simple
-  let planLookupKey: string = plan as string;
-  
-  // Si no existe, intentar con la clave compuesta (plan-month)
-  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-    planLookupKey = `${plan}-month`;
+const getPlanLookupKey = (
+  plan: SubscriptionPlan,
+  billingInterval?: BillingInterval | null
+): string => {
+  if (plan === SubscriptionPlan.FREE) {
+    return SubscriptionPlan.FREE;
   }
-  
-  // Si sigue sin existir, usar el plan FREE como fallback
-  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-    console.error(`Plan no encontrado: ${plan}, usando FREE como fallback`);
-    planLookupKey = SubscriptionPlan.FREE;
-  }
-  
-  return planLookupKey;
+
+  const interval = billingInterval || BillingInterval.MONTH;
+  const key = `${plan}-${interval}`;
+  return SUBSCRIPTION_PLANS[key] ? key : `${plan}-${BillingInterval.MONTH}`;
 };
 
-// Tipos para el store
+const isSubscriptionStillEffective = (subscription: UserSubscription): boolean => {
+  if (subscription.status !== SubscriptionStatus.CANCELLED) {
+    return true;
+  }
+
+  if (!subscription.endDate) {
+    return false;
+  }
+
+  return new Date(subscription.endDate) >= new Date();
+};
+
 interface SubscriptionState {
-  // Estado
   currentSubscription: UserSubscription | null;
   paymentHistory: PaymentHistory[];
   loading: boolean;
   error: string | null;
   paymentUrl: string | null;
-  
-  // Acciones
-  fetchUserSubscription: (userId: string) => Promise<UserSubscription | null>;
-  fetchPaymentHistory: (userId: string) => Promise<void>;
-  subscribeToPlan: (userId: string, plan: SubscriptionPlan, subscriptionId?: string) => Promise<string>;
+
+  fetchUserSubscription: (userId?: string) => Promise<UserSubscription | null>;
+  fetchPaymentHistory: (userId?: string) => Promise<void>;
+  subscribeToPlan: (
+    userId: string,
+    plan: SubscriptionPlan,
+    billingInterval?: BillingInterval
+  ) => Promise<string>;
   cancelCurrentSubscription: (reason?: string) => Promise<boolean>;
-  executeSubscription: (token: string, userId: string, plan?: SubscriptionPlan) => Promise<void>;
+  executeSubscription: (token: string, userId?: string, plan?: SubscriptionPlan) => Promise<void>;
+  confirmCheckoutSession: (sessionId: string) => Promise<UserSubscription | null>;
+  clearSubscription: () => void;
   clearError: () => void;
-  
-  // Utilidades
+
   canUserAccessFeature: (feature: keyof PlanFeatures) => boolean;
   canUserCreateRoom: () => boolean;
   canRoomAddParticipant: (roomId: string) => Promise<boolean>;
   getCurrentPlan: () => SubscriptionPlan;
+  getMaxParticipants: () => number;
+  getMaxActiveRooms: () => number;
 }
 
-// Crear el store
 export const useSubscriptionStore = create<SubscriptionState>()(
   persist(
     (set, get) => ({
-      // Estado inicial
       currentSubscription: null,
       paymentHistory: [],
       loading: false,
       error: null,
       paymentUrl: null,
-      
-      // Obtener la suscripción del usuario
-      fetchUserSubscription: async (userId: string) => {
+
+      fetchUserSubscription: async () => {
         try {
           set({ loading: true, error: null });
-          
-          // Forzar una consulta fresca a la base de datos
-          const subscription = await getUserSubscription(userId);
-          
-          // Actualizar el estado con la suscripción obtenida
+          const subscription = await billingApi.getCurrentSubscription();
           set({ currentSubscription: subscription, loading: false });
-          
-          // Forzar una actualización del localStorage
-          localStorage.removeItem('poker-planning-subscription');
-          
           return subscription;
         } catch (error) {
           console.error('Error al obtener suscripción:', error);
           set({
             error: error instanceof Error ? error.message : 'Error desconocido al obtener suscripción',
-            loading: false
+            loading: false,
           });
           return null;
         }
       },
-      
-      // Obtener el historial de pagos
-      fetchPaymentHistory: async (userId: string) => {
+
+      fetchPaymentHistory: async () => {
         try {
           set({ loading: true, error: null });
-          const history = await getUserPaymentHistory(userId);
+          const history = await billingApi.getPaymentHistory();
           set({ paymentHistory: history, loading: false });
         } catch (error) {
           console.error('Error al obtener historial de pagos:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'Error desconocido al obtener historial de pagos', 
-            loading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Error desconocido al obtener historial de pagos',
+            loading: false,
           });
         }
       },
-      // Suscribirse a un plan
-      subscribeToPlan: async (userId: string, plan: SubscriptionPlan, subscriptionId?: string) => {
+
+      subscribeToPlan: async (_userId, plan, billingInterval = BillingInterval.MONTH) => {
         try {
           set({ loading: true, error: null, paymentUrl: null });
-          
-          // Si es plan FREE, crear suscripción directamente
+
           if (plan === SubscriptionPlan.FREE) {
-            await createSubscription(userId, plan, PaymentMethod.PAYPAL);
-            set({ loading: false });
+            const subscription = await billingApi.cancelCurrentSubscription('Downgraded to free plan');
+            set({ currentSubscription: subscription, loading: false });
             return '';
           }
-          
-          // Si se proporciona un ID de suscripción (desde PayPal JS SDK)
-          if (subscriptionId) {
-            console.log(`Creando suscripción con ID de PayPal: ${subscriptionId}`);
-            // Crear suscripción en nuestra base de datos con el ID proporcionado
-            await createSubscription(
-              userId,
-              plan,
-              PaymentMethod.PAYPAL,
-              subscriptionId, // ID de pago
-              subscriptionId  // ID de suscripción
-            );
-            set({ loading: false });
-            return '';
-          }
-          
-          // Para planes de pago sin ID de suscripción, obtener el ID del plan en PayPal
-          const planLookupKey = getPlanLookupKey(plan);
-          const planDetails = SUBSCRIPTION_PLANS[planLookupKey];
-          const interval = 'MONTH'; // Por defecto mensual, podría ser un parámetro adicional
-          const paypalPlanId = await getPayPalPlanId(
-            plan, // Usar el enum del plan directamente
-            interval
-          );
-          
-          // Crear suscripción en PayPal
-          const approvalUrl = await createPaypalSubscription(paypalPlanId);
-          
-          set({ paymentUrl: approvalUrl, loading: false });
-          return approvalUrl;
-          return approvalUrl;
+
+          const checkout = await billingApi.createCheckoutSession({
+            plan,
+            billingInterval,
+            locale: typeof window !== 'undefined'
+              ? window.location.pathname.split('/')[1] || 'es'
+              : 'es',
+          });
+          set({ paymentUrl: checkout.checkoutUrl, loading: false });
+          return checkout.checkoutUrl;
         } catch (error) {
           console.error('Error al suscribirse al plan:', error);
-          set({ 
-            error: error instanceof Error ? error.message : 'Error desconocido al suscribirse al plan', 
-            loading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Error desconocido al suscribirse al plan',
+            loading: false,
           });
           return '';
         }
       },
-      
-      // Cancelar suscripción actual
+
       cancelCurrentSubscription: async (reason?: string) => {
-        const { currentSubscription } = get();
-        
-        if (!currentSubscription) {
-          set({ error: 'No hay suscripción activa para cancelar' });
-          return false;
-        }
-        
         try {
           set({ loading: true, error: null });
-          
-          // Si tiene ID de suscripción en PayPal, cancelarla allí también
-          if (currentSubscription.subscriptionId) {
-            await cancelPaypalSubscription(
-              currentSubscription.subscriptionId,
-              reason || 'Cancelado por el usuario'
-            );
-          }
-          
-          // Cancelar en nuestra base de datos
-          await cancelSubscription(
-            currentSubscription.id,
-            reason || 'Cancelado por el usuario'
-          );
-          
-          // Obtener el ID del usuario
-          const userId = currentSubscription.userId;
-          
-          // Actualizar el estado local de la suscripción actual
-          // Mantenemos el mismo plan pero marcamos como cancelada y sin renovación automática
-          set({
-            currentSubscription: {
-              ...currentSubscription,
-              status: SubscriptionStatus.CANCELLED,
-              autoRenew: false,
-              cancelDate: new Date().toISOString(),
-              cancelReason: reason || 'Cancelado por el usuario'
-            },
-            loading: false
-          });
-          
-          // Recargar la suscripción del usuario para asegurarnos de tener los datos actualizados
-          await get().fetchUserSubscription(userId);
-          
+          const subscription = await billingApi.cancelCurrentSubscription(reason || 'Cancelado por el usuario');
+          set({ currentSubscription: subscription, loading: false });
           return true;
         } catch (error) {
           console.error('Error al cancelar suscripción:', error);
           set({
             error: error instanceof Error ? error.message : 'Error desconocido al cancelar suscripción',
-            loading: false
+            loading: false,
           });
           return false;
         }
       },
-      
-      // Ejecutar suscripción después de aprobación de PayPal
-      executeSubscription: async (token: string, userId: string, plan?: SubscriptionPlan) => {
+
+      executeSubscription: async (token: string) => {
+        await get().confirmCheckoutSession(token);
+      },
+
+      confirmCheckoutSession: async (sessionId: string) => {
         try {
           set({ loading: true, error: null });
-          
-          // Ejecutar suscripción en PayPal
-          const subscriptionDetails = await executePaypalSubscription(token, userId, plan);
-          
-          // Usar el plan proporcionado o determinar el plan basado en los detalles
-          let subscriptionPlan = plan;
-          
-          // Asegurarse de que el plan sea una enumeración válida
-          if (typeof subscriptionPlan === 'string') {
-            if (subscriptionPlan.toLowerCase() === 'enterprise') {
-              subscriptionPlan = SubscriptionPlan.ENTERPRISE;
-            } else if (subscriptionPlan.toLowerCase() === 'pro') {
-              subscriptionPlan = SubscriptionPlan.PRO;
-            } else if (subscriptionPlan.toLowerCase() === 'free') {
-              subscriptionPlan = SubscriptionPlan.FREE;
-            }
-          }
-          
-          // Si aún no tenemos un plan válido, usar PRO por defecto
-          if (!subscriptionPlan) {
-            subscriptionPlan = SubscriptionPlan.PRO;
-          }
-          
-          console.log(`Ejecutando suscripción con plan: ${subscriptionPlan}`);
-          
-          // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
-          const planLookupKey = getPlanLookupKey(subscriptionPlan);
-          
-          // Si el plan no existe, actualizar subscriptionPlan a FREE
-          if (planLookupKey === SubscriptionPlan.FREE && subscriptionPlan !== SubscriptionPlan.FREE) {
-            subscriptionPlan = SubscriptionPlan.FREE;
-          }
-          
-          console.log(`Clave de plan determinada: ${planLookupKey}`);
-          
-          // Crear suscripción en nuestra base de datos
-          const subscription = await createSubscription(
-            userId,
-            subscriptionPlan as SubscriptionPlan, // Asegurar que se trata como SubscriptionPlan
-            PaymentMethod.PAYPAL,
-            subscriptionDetails.id, // Usar el ID de la suscripción como paymentId
-            subscriptionDetails.id  // Usar el ID de la suscripción como subscriptionId
-          );
-          
-          console.log(`Suscripción creada en la base de datos:`, subscription);
-          
-          // Actualizar el estado con la nueva suscripción
-          set({
-            currentSubscription: subscription,
-            loading: false,
-            paymentUrl: null
-          });
-          
-          // Forzar una actualización del localStorage
-          localStorage.removeItem('poker-planning-subscription');
-          
-          // Forzar una recarga de la suscripción para asegurarnos de tener los datos actualizados
-          await get().fetchUserSubscription(userId);
-          
-          console.log(`Estado actualizado con la nueva suscripción`);
+          const subscription = await billingApi.confirmCheckoutSession(sessionId);
+          set({ currentSubscription: subscription, loading: false, paymentUrl: null });
+          return subscription;
         } catch (error) {
-          console.error('Error al ejecutar suscripción:', error);
+          console.error('Error al confirmar checkout:', error);
           set({
-            error: error instanceof Error ? error.message : 'Error desconocido al ejecutar suscripción',
-            loading: false
+            error: error instanceof Error ? error.message : 'Error desconocido al confirmar checkout',
+            loading: false,
           });
+          return null;
         }
       },
-      
-      // Limpiar error
+
+      clearSubscription: () => set({ currentSubscription: null, paymentHistory: [], paymentUrl: null }),
       clearError: () => set({ error: null }),
-      
-      // Verificar si el usuario puede acceder a una característica
+
       canUserAccessFeature: (feature) => {
         const { currentSubscription } = get();
-        
-        // Si no hay suscripción, usar plan FREE
-        if (!currentSubscription) {
+        if (!currentSubscription || !isSubscriptionStillEffective(currentSubscription)) {
           return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
         }
-        
-        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
-        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
-          // Verificar si la fecha de finalización aún no ha llegado
-          const endDate = new Date(currentSubscription.endDate);
-          const now = new Date();
-          
-          // Si la fecha de finalización ya pasó, usar plan FREE
-          if (endDate < now) {
-            return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
-          }
-          
-          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
-          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
-        }
-        
-        // Usar el plan actual
-        const plan = currentSubscription.plan;
-        
-        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
-        const planLookupKey = getPlanLookupKey(plan);
-        
+
+        const planLookupKey = getPlanLookupKey(
+          currentSubscription.plan,
+          currentSubscription.billingInterval
+        );
         const featureValue = SUBSCRIPTION_PLANS[planLookupKey].features[feature];
-        
-        if (typeof featureValue === 'boolean') {
-          return featureValue;
-        }
-        
-        if (typeof featureValue === 'number') {
-          return featureValue > 0;
-        }
-        
-        return false;
+        return typeof featureValue === 'boolean' ? featureValue : featureValue > 0;
       },
-      
-      // Verificar si el usuario puede crear una sala
+
       canUserCreateRoom: () => {
         const { currentSubscription } = get();
-        
-        // Si no hay suscripción, usar plan FREE
-        if (!currentSubscription) {
-          return false; // Por defecto, no permitir crear salas sin suscripción
+        if (!currentSubscription || !isSubscriptionStillEffective(currentSubscription)) {
+          return false;
         }
-        
-        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
-        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
-          // Verificar si la fecha de finalización aún no ha llegado
-          const endDate = new Date(currentSubscription.endDate);
-          const now = new Date();
-          
-          // Si la fecha de finalización ya pasó, usar plan FREE
-          if (endDate < now) {
-            return false; // No permitir crear salas si la suscripción ha expirado
-          }
-          
-          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
-          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
-        }
-        
-        // Usar el plan actual
-        const plan = currentSubscription.plan;
-        
-        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
-        const planLookupKey = getPlanLookupKey(plan);
-        
+
+        const planLookupKey = getPlanLookupKey(
+          currentSubscription.plan,
+          currentSubscription.billingInterval
+        );
         const maxRooms = SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
-        
-        // Si el usuario es Free y tiene una sesión activa en localStorage, no permitir crear más salas
-        if (plan === SubscriptionPlan.FREE) {
-          // Verificar si hay una sesión activa en localStorage
+
+        if (currentSubscription.plan === SubscriptionPlan.FREE && typeof window !== 'undefined') {
           const storageData = localStorage.getItem('poker-planning-storage');
           if (storageData) {
             try {
-              const sessionData = JSON.parse(storageData);
-              const state = sessionData.state;
-              
-              if (state && state.roomId) {
-                console.log(`Usuario Free con sala activa: ${state.roomId}`);
-                return false; // No permitir crear más salas
+              const state = JSON.parse(storageData).state;
+              if (state?.roomId) {
+                return false;
               }
             } catch (error) {
               console.error('Error al verificar sesión persistente:', error);
             }
           }
         }
-        
-        // Para usuarios Pro y Enterprise, permitir crear hasta el máximo de salas
+
         return maxRooms > 0;
       },
-      
-      // Verificar si una sala puede añadir más participantes
+
       canRoomAddParticipant: async (roomId: string) => {
         try {
           return await canAddParticipant(roomId);
         } catch (error) {
           console.error('Error al verificar si puede añadir participante:', error);
-          return true; // Por defecto, permitir
+          return true;
         }
       },
-      
-      // Obtener el plan actual
+
       getCurrentPlan: () => {
         const { currentSubscription } = get();
-        
-        // Si no hay suscripción, usar plan FREE
-        if (!currentSubscription) {
+        if (!currentSubscription || !isSubscriptionStillEffective(currentSubscription)) {
           return SubscriptionPlan.FREE;
         }
-        
-        // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
-        if (currentSubscription.status === SubscriptionStatus.CANCELLED) {
-          // Verificar si la fecha de finalización aún no ha llegado
-          const endDate = new Date(currentSubscription.endDate);
-          const now = new Date();
-          
-          // Si la fecha de finalización ya pasó, usar plan FREE
-          if (endDate < now) {
-            return SubscriptionPlan.FREE;
-          }
-          
-          // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
-          console.log(`Suscripción cancelada pero aún activa hasta ${endDate.toLocaleDateString()}`);
-        }
-        
-        // Usar el plan actual
         return currentSubscription.plan;
       },
-      
-      // Obtener el número máximo de participantes permitidos para el plan actual
+
       getMaxParticipants: () => {
-        // Usar la función getCurrentPlan para obtener el plan actual considerando suscripciones canceladas
-        const plan = get().getCurrentPlan();
-        
-        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
-        const planLookupKey = getPlanLookupKey(plan);
-        
-        return SUBSCRIPTION_PLANS[planLookupKey].features.maxParticipants;
+        const { currentSubscription } = get();
+        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+          ? currentSubscription.plan
+          : SubscriptionPlan.FREE;
+        const billingInterval = currentSubscription?.billingInterval;
+        return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxParticipants;
       },
-      
-      // Obtener el número máximo de salas activas permitidas para el plan actual
+
       getMaxActiveRooms: () => {
-        // Usar la función getCurrentPlan para obtener el plan actual considerando suscripciones canceladas
-        const plan = get().getCurrentPlan();
-        
-        // Obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
-        const planLookupKey = getPlanLookupKey(plan);
-        
-        return SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
-      }
+        const { currentSubscription } = get();
+        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+          ? currentSubscription.plan
+          : SubscriptionPlan.FREE;
+        const billingInterval = currentSubscription?.billingInterval;
+        return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxActiveRooms;
+      },
     }),
     {
       name: 'poker-planning-subscription',
       partialize: (state) => ({
-        currentSubscription: state.currentSubscription,
-        paymentHistory: state.paymentHistory
-      })
+        paymentHistory: state.paymentHistory,
+      }),
     }
   )
 );

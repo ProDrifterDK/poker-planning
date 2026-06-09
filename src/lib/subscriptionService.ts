@@ -219,8 +219,12 @@ export async function hasFeatureAccess(
     
     // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
     if (subscription.status === SubscriptionStatus.CANCELLED) {
-      // Verificar si la fecha de finalización aún no ha llegado
-      const endDate = new Date(subscription.endDate);
+      const endDateString = subscription.endDate;
+      if (!endDateString) {
+        return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
+      }
+
+      const endDate = new Date(endDateString);
       const now = new Date();
       
       // Si la fecha de finalización ya pasó, usar plan FREE
@@ -331,8 +335,12 @@ export async function canCreateRoom(userId: string): Promise<boolean> {
     
     // Verificar si la suscripción está cancelada pero aún dentro del período de facturación
     if (subscription.status === SubscriptionStatus.CANCELLED) {
-      // Verificar si la fecha de finalización aún no ha llegado
-      const endDate = new Date(subscription.endDate);
+      const endDateString = subscription.endDate;
+      if (!endDateString) {
+        return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features.maxActiveRooms > 0;
+      }
+
+      const endDate = new Date(endDateString);
       const now = new Date();
       
       // Si la fecha de finalización ya pasó, usar plan FREE
@@ -437,17 +445,22 @@ export async function canAddParticipant(roomId: string): Promise<boolean> {
           
           // Si la suscripción está cancelada, verificar si aún está dentro del período de facturación
           if (subscription.status === SubscriptionStatus.CANCELLED) {
-            const endDate = new Date(subscription.endDate);
-            const now = new Date();
-            
-            if (endDate > now) {
-              // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
-              console.log(`Subscription cancelled but still active until ${endDate.toLocaleDateString()}`);
-              plan = subscription.plan;
-            } else {
-              // Si la fecha de finalización ya pasó, usar plan FREE
-              console.log(`Subscription cancelled and expired on ${endDate.toLocaleDateString()}`);
+            const endDateString = subscription.endDate;
+            if (!endDateString) {
               plan = SubscriptionPlan.FREE;
+            } else {
+              const endDate = new Date(endDateString);
+              const now = new Date();
+
+              if (endDate > now) {
+                // Si aún no ha llegado la fecha de finalización, seguir usando el plan actual
+                console.log(`Subscription cancelled but still active until ${endDate.toLocaleDateString()}`);
+                plan = subscription.plan;
+              } else {
+                // Si la fecha de finalización ya pasó, usar plan FREE
+                console.log(`Subscription cancelled and expired on ${endDate.toLocaleDateString()}`);
+                plan = SubscriptionPlan.FREE;
+              }
             }
           } else {
             // Si la suscripción está activa, usar su plan

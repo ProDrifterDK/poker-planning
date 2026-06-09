@@ -34,7 +34,10 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   const localizedPlans = getLocalizedSubscriptionPlans(lang as string);
   
   // Formatear fechas
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) {
+      return t('subscription.notApplicable', 'No aplica');
+    }
     const date = new Date(dateString);
     return date.toLocaleDateString(lang === 'es' ? 'es-CL' : 'en-US', {
       year: 'numeric',
@@ -57,12 +60,16 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
   };
   
   // Obtener detalles del plan
-  const planLookupKey = getPlanLookupKey(subscription.plan);
+  const planLookupKey = getPlanLookupKey(subscription.plan, subscription.billingInterval);
   const planDetails = localizedPlans[planLookupKey];
   
   // Calcular días restantes
   const calculateRemainingDays = () => {
-    const endDate = new Date(subscription.endDate);
+    const endDateString = subscription.endDate;
+    if (!endDateString) {
+      return 0;
+    }
+    const endDate = new Date(endDateString);
     const today = new Date();
     const diffTime = endDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -105,7 +112,9 @@ export default function CurrentSubscription({ subscription }: CurrentSubscriptio
             <Typography variant="body1" paragraph>
               <strong>{t('subscription.price', 'Precio')}:</strong> {planDetails.price === 0
                 ? t('subscription.free', 'Gratis')
-                : t('subscription.pricePerMonth', '${{price}}/mes', { price: planDetails.price.toFixed(2) })}
+                : planDetails.billingInterval === 'year'
+                  ? t('subscription.pricePerYear', '${{price}}/año', { price: planDetails.price.toFixed(2) })
+                  : t('subscription.pricePerMonth', '${{price}}/mes', { price: planDetails.price.toFixed(2) })}
             </Typography>
             
             {/* Mostrar detalles adicionales solo para planes de pago */}

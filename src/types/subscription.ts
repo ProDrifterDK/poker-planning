@@ -61,6 +61,7 @@ export enum SubscriptionStatus {
 // Payment method
 export enum PaymentMethod {
   PAYPAL = 'paypal',
+  STRIPE = 'stripe',
   CREDIT_CARD = 'credit_card'
 }
 
@@ -69,13 +70,17 @@ export interface UserSubscription {
   id: string;
   userId: string;
   plan: SubscriptionPlan;
+  planKey?: string;
+  billingInterval?: BillingInterval | null;
   status: SubscriptionStatus;
   startDate: string; // ISO date string
-  endDate: string; // ISO date string
+  endDate?: string | null; // ISO date string
   autoRenew: boolean;
   paymentMethod: PaymentMethod;
-  paymentId?: string; // Payment ID in PayPal
-  subscriptionId?: string; // Subscription ID in PayPal
+  paymentId?: string; // Provider payment/subscription ID
+  subscriptionId?: string; // Provider subscription ID
+  providerSubscriptionId?: string;
+  cancelAtPeriodEnd?: boolean;
   cancelDate?: string; // ISO date string when subscription was cancelled
   cancelReason?: string; // Reason for cancellation
 }

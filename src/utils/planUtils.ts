@@ -1,28 +1,32 @@
 /**
  * Utilidades para trabajar con planes de suscripción
  */
-import { SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { BillingInterval, SubscriptionPlan, SUBSCRIPTION_PLANS } from '@/types/subscription';
 
 /**
- * Función auxiliar para obtener la clave correcta para buscar en SUBSCRIPTION_PLANS
- * 
- * @param plan - El plan de suscripción
- * @returns La clave correcta para buscar en SUBSCRIPTION_PLANS
+ * Función auxiliar para obtener la clave correcta para buscar en SUBSCRIPTION_PLANS.
+ * Preserva el intervalo cuando el backend lo entrega para distinguir Pro mensual/anual.
  */
-export const getPlanLookupKey = (plan: SubscriptionPlan): string => {
-  // Primero intentar con la clave simple
-  let planLookupKey: string = plan as string;
-  
-  // Si no existe, intentar con la clave compuesta (plan-month)
-  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-    planLookupKey = `${plan}-month`;
+export const getPlanLookupKey = (
+  plan: SubscriptionPlan,
+  billingInterval?: BillingInterval | null
+): string => {
+  if (plan === SubscriptionPlan.FREE) {
+    return SubscriptionPlan.FREE;
   }
-  
-  // Si sigue sin existir, usar el plan FREE como fallback
-  if (!SUBSCRIPTION_PLANS[planLookupKey]) {
-    console.error(`Plan no encontrado: ${plan}, usando FREE como fallback`);
-    planLookupKey = SubscriptionPlan.FREE;
+
+  const interval = billingInterval || BillingInterval.MONTH;
+  const planLookupKey = `${plan}-${interval}`;
+
+  if (SUBSCRIPTION_PLANS[planLookupKey]) {
+    return planLookupKey;
   }
-  
-  return planLookupKey;
+
+  const monthlyFallback = `${plan}-${BillingInterval.MONTH}`;
+  if (SUBSCRIPTION_PLANS[monthlyFallback]) {
+    return monthlyFallback;
+  }
+
+  console.error(`Plan no encontrado: ${plan}, usando FREE como fallback`);
+  return SubscriptionPlan.FREE;
 };
