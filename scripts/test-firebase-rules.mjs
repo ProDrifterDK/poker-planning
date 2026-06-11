@@ -150,10 +150,11 @@ try {
 
   await assertSucceeds(
     update(ref(aliceDb, 'rooms/backend-room/participants/participant-alice'), {
-      active: false,
+      estimation: 5,
       firebaseUid: 'alice',
       participantId: 'participant-alice',
       role: 'moderator',
+      active: true,
       lastActive: 123456,
     })
   );
@@ -166,13 +167,34 @@ try {
     })
   );
 
+  await assertFails(
+    update(ref(aliceDb, 'rooms/backend-room/participants/participant-alice'), {
+      firebaseUid: 'alice',
+      participantId: 'participant-alice',
+      role: 'moderator',
+      active: false,
+      lastActive: 123456,
+    })
+  );
+
   await assertSucceeds(
+    update(ref(bobDb, 'rooms/backend-room/participants/participant-bob'), {
+      estimation: 8,
+      firebaseUid: 'bob',
+      participantId: 'participant-bob',
+      role: 'participant',
+      active: true,
+      lastActive: 123457,
+    })
+  );
+
+  await assertFails(
     update(ref(bobDb, 'rooms/backend-room/participants/participant-bob'), {
       active: false,
       firebaseUid: 'bob',
       participantId: 'participant-bob',
       role: 'participant',
-      lastActive: 123457,
+      lastActive: 123458,
     })
   );
 
@@ -180,6 +202,25 @@ try {
     update(ref(aliceDb, 'rooms/backend-room/participants/participant-bob'), {
       active: false,
       removed: true,
+    })
+  );
+
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await update(ref(admin.database(), 'rooms/backend-room/participants/participant-bob'), {
+      active: false,
+      removed: true,
+      lastActive: 123459,
+    });
+  });
+
+  await assertFails(
+    update(ref(bobDb, 'rooms/backend-room/participants/participant-bob'), {
+      active: true,
+      removed: false,
+      firebaseUid: 'bob',
+      participantId: 'participant-bob',
+      role: 'participant',
+      lastActive: 123460,
     })
   );
 
@@ -200,7 +241,7 @@ try {
 
   await assertFails(updateDoc(doc(aliceFirestore, 'rooms', 'backend-room'), { active: false }));
 
-  console.log('Firebase room rules passed: direct room metadata/session/participant writes denied.');
+  console.log('Firebase room rules passed: direct room writes denied and participant lifecycle flags are backend-owned.');
 } finally {
   await testEnv.cleanup();
 }

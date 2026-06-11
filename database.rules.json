@@ -20,7 +20,7 @@
         },
         "participants": {
           "$participantId": {
-            ".write": "auth != null && data.exists() && newData.exists() && data.child('firebaseUid').val() === auth.uid && newData.child('firebaseUid').val() === data.child('firebaseUid').val() && newData.child('participantId').val() === data.child('participantId').val() && newData.child('role').val() === data.child('role').val()"
+            ".write": "auth != null && data.exists() && newData.exists() && data.child('firebaseUid').val() === auth.uid && newData.child('firebaseUid').val() === data.child('firebaseUid').val() && newData.child('participantId').val() === data.child('participantId').val() && newData.child('role').val() === data.child('role').val() && newData.child('active').val() === data.child('active').val() && newData.child('removed').val() === data.child('removed').val() && newData.child('joinedAt').val() === data.child('joinedAt').val()"
           }
         },
         "issues": {
