@@ -5,8 +5,7 @@ from app.api.routes.billing import router as billing_router
 from app.api.routes.health import router as health_router
 from app.api.routes.webhooks import router as webhooks_router
 from app.core.settings import get_settings
-from app.db import models  # noqa: F401
-from app.db.session import Base, engine
+from app.db.init_db import init_db
 
 
 def create_app() -> FastAPI:
@@ -23,7 +22,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def startup() -> None:
-        Base.metadata.create_all(bind=engine)
+        init_db()
 
     app.include_router(health_router)
     app.include_router(billing_router)

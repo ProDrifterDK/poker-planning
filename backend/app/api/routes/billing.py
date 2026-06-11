@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, db_session
 from app.schemas.billing import (
     AuthenticatedUser,
     BillingMeResponse,
+    BillingProvider,
     CancelSubscriptionRequest,
     CheckoutConfirmResponse,
     CheckoutSessionCreate,
@@ -42,10 +43,11 @@ def create_checkout_session(
 @router.post("/checkout-sessions/{session_id}/confirm", response_model=CheckoutConfirmResponse)
 def confirm_checkout_session(
     session_id: str,
+    provider: BillingProvider | None = Query(default=None),
     user: AuthenticatedUser = Depends(current_user),
     db: Session = Depends(db_session),
 ) -> dict:
-    return BillingService(db).confirm_checkout_session(user, session_id)
+    return BillingService(db).confirm_checkout_session(user, session_id, provider)
 
 
 @router.post("/portal-sessions")

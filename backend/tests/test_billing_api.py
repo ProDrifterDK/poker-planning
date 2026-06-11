@@ -59,6 +59,7 @@ def test_checkout_ignores_user_id_and_only_activates_after_server_confirm(client
     assert checkout["checkoutSessionId"].startswith("fake_cs_")
     assert checkout["provider"] == "stripe"
     assert "/es/settings/subscription/success" in checkout["checkoutUrl"]
+    assert "provider=stripe" in checkout["checkoutUrl"]
 
     before_confirm = client.get("/v1/billing/me", headers=auth_headers).json()
     assert before_confirm["subscription"]["plan"] == "free"
@@ -304,6 +305,7 @@ def test_checkout_request_can_choose_paypal_without_client_side_activation(clien
     checkout = checkout_response.json()
     assert checkout["provider"] == "paypal"
     assert checkout["checkoutSessionId"].startswith("fake_cs_")
+    assert "provider=paypal" in checkout["checkoutUrl"]
 
     before_confirm = client.get("/v1/billing/me", headers=auth_headers).json()
     assert before_confirm["subscription"]["plan"] == "free"
@@ -384,7 +386,7 @@ def test_provider_scoped_checkout_session_ids_can_overlap():
     assert {row.provider for row in rows} == {"stripe", "paypal"}
 
 
-def test_checkout_confirmation_uses_owned_provider_scoped_session(client, other_auth_headers):
+def test_checkout_confirmation_uses_provider_scope_for_same_user_collision(client, auth_headers):
     with SessionLocal() as db:
         db.add_all(
             [
@@ -396,7 +398,7 @@ def test_checkout_confirmation_uses_owned_provider_scoped_session(client, other_
                     checkout_url="https://stripe.example/checkout",
                 ),
                 BillingCheckoutSession(
-                    firebase_uid="bob",
+                    firebase_uid="alice",
                     plan_key="enterprise-month",
                     provider="paypal",
                     provider_session_id="shared_checkout",
@@ -406,13 +408,19 @@ def test_checkout_confirmation_uses_owned_provider_scoped_session(client, other_
         )
         db.commit()
 
-    response = client.post("/v1/billing/checkout-sessions/shared_checkout/confirm", headers=other_auth_headers)
+    ambiguous = client.post("/v1/billing/checkout-sessions/shared_checkout/confirm", headers=auth_headers)
+    assert ambiguous.status_code == 409
+
+    response = client.post(
+        "/v1/billing/checkout-sessions/shared_checkout/confirm?provider=stripe",
+        headers=auth_headers,
+    )
 
     assert response.status_code == 200
     subscription = response.json()["subscription"]
-    assert subscription["userId"] == "bob"
-    assert subscription["plan"] == "enterprise"
-    assert subscription["provider"] == "paypal"
+    assert subscription["userId"] == "alice"
+    assert subscription["plan"] == "pro"
+    assert subscription["provider"] == "stripe"
 
 
 def test_customer_provider_id_map_backfills_legacy_stripe_customer_id():

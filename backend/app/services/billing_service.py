@@ -232,7 +232,10 @@ class BillingService:
         self.ensure_customer(user)
         provider = self.resolve_provider(requested_provider)
         provider_session_id = f"fake_cs_{hashlib.sha1(f'{provider}:{user.uid}:{plan_key}:{utcnow().timestamp()}'.encode()).hexdigest()[:24]}"
-        success_url = f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success?session_id={provider_session_id}"
+        success_url = (
+            f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success"
+            f"?session_id={provider_session_id}&provider={provider}"
+        )
         checkout_url = success_url
 
         if provider == "stripe" and not self.settings.e2e_test_mode:
@@ -280,24 +283,40 @@ class BillingService:
             mode="subscription",
             customer=stripe_customer_id,
             line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
+            success_url=(
+                f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success"
+                "?session_id={CHECKOUT_SESSION_ID}&provider=stripe"
+            ),
             cancel_url=f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/cancel",
             metadata={"firebase_uid": user.uid, "plan_key": plan_key},
             subscription_data={"metadata": {"firebase_uid": user.uid, "plan_key": plan_key}},
         )
         return session.url, session.id
 
-    def confirm_checkout_session(self, user: AuthenticatedUser, provider_session_id: str) -> dict[str, Any]:
-        sessions = self.db.scalars(
-            select(BillingCheckoutSession)
-            .where(BillingCheckoutSession.provider_session_id == provider_session_id)
-            .order_by(BillingCheckoutSession.created_at.desc())
+    def confirm_checkout_session(
+        self, user: AuthenticatedUser, provider_session_id: str, requested_provider: str | None = None
+    ) -> dict[str, Any]:
+        provider = self.resolve_provider(requested_provider) if requested_provider else None
+        all_sessions = self.db.scalars(
+            select(BillingCheckoutSession).where(
+                BillingCheckoutSession.provider_session_id == provider_session_id
+            )
         ).all()
-        if not sessions:
+        if not all_sessions:
             raise HTTPException(status_code=404, detail="Checkout session not found")
-        owned_sessions = [session for session in sessions if session.firebase_uid == user.uid]
+
+        matching_sessions = [session for session in all_sessions if not provider or session.provider == provider]
+        if not matching_sessions:
+            raise HTTPException(status_code=404, detail="Checkout session not found")
+
+        owned_sessions = [session for session in matching_sessions if session.firebase_uid == user.uid]
         if not owned_sessions:
             raise HTTPException(status_code=403, detail="Checkout session belongs to another user")
+        if len(owned_sessions) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Checkout session provider is ambiguous",
+            )
         session = owned_sessions[0]
 
         if session.provider == "stripe" and not self.settings.e2e_test_mode:
