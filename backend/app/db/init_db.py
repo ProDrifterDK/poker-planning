@@ -211,6 +211,30 @@ def _sqlite_rebuild_subscriptions(conn: Connection) -> None:
     )
 
 
+
+
+def _sqlite_add_room_updated_at(conn: Connection, table_name: str) -> None:
+    if not _has_table(conn, table_name) or "updated_at" in _columns(conn, table_name):
+        return
+    quoted = _quote_sqlite_identifier(table_name)
+    conn.execute(
+        text(
+            f"ALTER TABLE {quoted} "
+            "ADD COLUMN updated_at DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00'"
+        )
+    )
+    conn.execute(text(f"UPDATE {quoted} SET updated_at = COALESCE(created_at, updated_at)"))
+
+
+def _postgresql_add_room_updated_at(conn: Connection, table_name: str) -> None:
+    if not _has_table(conn, table_name):
+        return
+    quoted = '"' + table_name.replace('"', '""') + '"'
+    conn.execute(text(f"ALTER TABLE {quoted} ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ"))
+    conn.execute(text(f"UPDATE {quoted} SET updated_at = COALESCE(updated_at, created_at, NOW())"))
+    conn.execute(text(f"ALTER TABLE {quoted} ALTER COLUMN updated_at SET NOT NULL"))
+
+
 def _migrate_sqlite(conn: Connection) -> None:
     if _has_table(conn, "billing_customers") and "provider_customer_ids" not in _columns(conn, "billing_customers"):
         conn.execute(text("ALTER TABLE billing_customers ADD COLUMN provider_customer_ids JSON NOT NULL DEFAULT '{}'"))
@@ -261,6 +285,9 @@ def _migrate_sqlite(conn: Connection) -> None:
                     "ON billing_subscriptions(provider, provider_checkout_session_id)"
                 )
             )
+
+    _sqlite_add_room_updated_at(conn, "planning_rooms")
+    _sqlite_add_room_updated_at(conn, "room_memberships")
 
 
 def _migrate_postgresql(conn: Connection) -> None:
@@ -343,6 +370,9 @@ def _migrate_postgresql(conn: Connection) -> None:
                 "ON billing_subscriptions(provider, provider_checkout_session_id)"
             )
         )
+
+    _postgresql_add_room_updated_at(conn, "planning_rooms")
+    _postgresql_add_room_updated_at(conn, "room_memberships")
 
 
 def migrate_existing_schema(target_engine: Engine) -> None:

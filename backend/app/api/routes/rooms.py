@@ -45,6 +45,16 @@ def leave_room(
     return RoomEntitlementService(db).leave_room(user, room_id)
 
 
+@router.post("/{room_id}/participants/{participant_id}/remove", response_model=RoomLeaveResponse)
+def remove_participant(
+    room_id: str,
+    participant_id: str,
+    user: AuthenticatedUser = Depends(current_user),
+    db: Session = Depends(db_session),
+) -> dict:
+    return RoomEntitlementService(db).remove_participant(user, room_id, participant_id)
+
+
 @router.post("/{room_id}/close")
 def close_room(
     room_id: str,

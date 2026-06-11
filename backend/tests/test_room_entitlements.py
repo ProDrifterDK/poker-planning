@@ -212,3 +212,101 @@ def test_room_lock_query_uses_for_update_for_concurrent_join_serialization():
     sql = str(room_for_update_statement("room-1").compile(dialect=postgresql.dialect()))
 
     assert "FOR UPDATE" in sql
+
+
+
+def test_leave_room_deactivates_sql_membership_and_closes_empty_room(client, auth_headers):
+    created = client.post(
+        "/v1/rooms",
+        json={"title": "Leave me", "seriesKey": "fibonacci", "displayName": "Alice"},
+        headers=auth_headers,
+    )
+    assert created.status_code == 200
+    room_id = created.json()["roomId"]
+    participant_id = created.json()["participantId"]
+
+    response = client.post(f"/v1/rooms/{room_id}/leave", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == {"roomId": room_id, "participantId": participant_id, "active": False, "removed": False}
+    with SessionLocal() as db:
+        room = db.get(PlanningRoom, room_id)
+        membership = db.get(RoomMembership, participant_id)
+    assert room is not None
+    assert room.status == "closed"
+    assert room.closed_at is not None
+    assert membership is not None
+    assert membership.active is False
+
+
+def test_moderator_remove_participant_deactivates_sql_membership(client, auth_headers):
+    created = client.post(
+        "/v1/rooms",
+        json={"title": "Moderated", "seriesKey": "fibonacci", "displayName": "Alice"},
+        headers=auth_headers,
+    )
+    assert created.status_code == 200
+    room_id = created.json()["roomId"]
+    bob_headers = _auth_headers("bob")
+    joined = client.post(
+        f"/v1/rooms/{room_id}/join",
+        json={"displayName": "Bob"},
+        headers=bob_headers,
+    )
+    assert joined.status_code == 200
+    bob_participant_id = joined.json()["participantId"]
+
+    removed = client.post(
+        f"/v1/rooms/{room_id}/participants/{bob_participant_id}/remove",
+        headers=auth_headers,
+    )
+
+    assert removed.status_code == 200
+    assert removed.json() == {
+        "roomId": room_id,
+        "participantId": bob_participant_id,
+        "active": False,
+        "removed": True,
+    }
+    with SessionLocal() as db:
+        membership = db.get(RoomMembership, bob_participant_id)
+        active_count = sum(
+            1
+            for member in db.scalars(select(RoomMembership).where(RoomMembership.room_id == room_id))
+            if member.active
+        )
+    assert membership is not None
+    assert membership.active is False
+    assert active_count == 1
+
+
+def test_non_moderator_cannot_remove_participant(client, auth_headers):
+    created = client.post(
+        "/v1/rooms",
+        json={"title": "Moderated", "seriesKey": "fibonacci", "displayName": "Alice"},
+        headers=auth_headers,
+    )
+    assert created.status_code == 200
+    room_id = created.json()["roomId"]
+    bob_headers = _auth_headers("bob")
+    charlie_headers = _auth_headers("charlie")
+    bob = client.post(f"/v1/rooms/{room_id}/join", json={"displayName": "Bob"}, headers=bob_headers)
+    assert bob.status_code == 200
+    charlie = client.post(
+        f"/v1/rooms/{room_id}/join",
+        json={"displayName": "Charlie"},
+        headers=charlie_headers,
+    )
+    assert charlie.status_code == 200
+
+    response = client.post(
+        f"/v1/rooms/{room_id}/participants/{bob.json()['participantId']}/remove",
+        headers=charlie_headers,
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == {"code": "ROOM_FORBIDDEN", "message": "Moderator access required"}
+    with SessionLocal() as db:
+        bob_membership = db.get(RoomMembership, bob.json()["participantId"])
+    assert bob_membership is not None
+    assert bob_membership.active is True

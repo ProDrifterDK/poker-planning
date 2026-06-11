@@ -209,7 +209,6 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           // Obtener el título de la sala
           const roomTitle = roomMetadata.title || i18next.t('room.defaultRoomTitle', { roomId });
 
-
           // Verificar si la sala está marcada para eliminación o inactiva
           if (roomMetadata.markedForDeletion === true || roomMetadata.active === false) {
             const appError = createError(
@@ -224,12 +223,36 @@ export const useRoomStore = create<RoomState & RoomActions>()(
           const seriesKey = roomMetadata.seriesKey || 'fibonacci';
           const seriesValues = roomMetadata.seriesValues || seriesList[seriesKey];
 
-          // Obtener la sesión activa o crear una nueva
-          const sessionsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/sessions`));
-          let sessionId = null;
+          let joinedViaBackend = false;
+          let backendSessionId: string | null | undefined = null;
+          let participantId = localStorage.getItem(`participant_id_${roomId}`);
 
-          if (sessionsSnapshot.exists()) {
-            // Buscar una sesión activa
+          try {
+            const joined = await billingApi.joinRoom(roomId, {
+              displayName: name,
+              photoURL,
+            });
+            joinedViaBackend = true;
+            participantId = joined.participantId;
+            backendSessionId = joined.sessionId;
+            localStorage.setItem(`participant_id_${roomId}`, participantId);
+          } catch (joinError) {
+            // Legacy rooms created before the backend ledger may not exist in SQL.
+            // Only those 404s may fall back to the old direct Firebase participant path.
+            if (joinError instanceof BillingApiError && joinError.status === 404) {
+              joinedViaBackend = false;
+            } else {
+              throw joinError;
+            }
+          }
+
+          // Obtener la sesión activa. Backend-created rooms should already have
+          // a server-projected active session; clients must not create sessions
+          // for backend-ledger rooms under the hardened rules.
+          const sessionsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/sessions`));
+          let sessionId: string | null = backendSessionId || null;
+
+          if (!sessionId && sessionsSnapshot.exists()) {
             const sessions = sessionsSnapshot.val();
             for (const [id, session] of Object.entries(sessions)) {
               const typedSession = session as SessionData;
@@ -240,8 +263,10 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             }
           }
 
-          // Si no hay sesión activa, crear una nueva
           if (!sessionId) {
+            if (joinedViaBackend) {
+              throw new Error("No hay una sesión activa proyectada por el backend para esta sala.");
+            }
             sessionId = Math.random().toString(36).substring(7);
             await update(ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`), {
               active: true,
@@ -251,48 +276,40 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             });
           }
 
-          // Generar un ID de participante único y guardarlo en localStorage
-          let participantId = localStorage.getItem(`participant_id_${roomId}`);
-          let isNewParticipant = false;
-
           if (!participantId) {
             participantId = Math.random().toString(36).substring(7);
             localStorage.setItem(`participant_id_${roomId}`, participantId);
-            isNewParticipant = true;
           }
 
-          // Verificar si el participante ya existe en la sala
-          const participantsSnapshot = await firebaseGet(ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`));
-
-          // Añadir o actualizar participante
           const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
 
-          if (isNewParticipant || !participantsSnapshot.exists()) {
-            await update(participantRef, {
-              name,
-              joinedAt: Date.now(),
-              active: true,
-              role: UserRole.PARTICIPANT, // Asignar rol de participante por defecto
-              participantId, // Guardar el ID para referencia
-              ...(photoURL && { photoURL }) // Incluir photoURL si está disponible
-            });
-          } else {
-            // Si el participante ya existe, solo actualizar su estado a activo y photoURL si cambió
-            await update(participantRef, {
-              active: true,
-              lastActive: Date.now(),
-              ...(photoURL && { photoURL }) // Actualizar photoURL si está disponible
-            });
+          if (!joinedViaBackend) {
+            const participantsSnapshot = await firebaseGet(participantRef);
+            if (!participantsSnapshot.exists()) {
+              await update(participantRef, {
+                name,
+                joinedAt: Date.now(),
+                active: true,
+                role: UserRole.PARTICIPANT,
+                participantId,
+                ...(photoURL && { photoURL })
+              });
+            } else {
+              await update(participantRef, {
+                active: true,
+                lastActive: Date.now(),
+                ...(photoURL && { photoURL })
+              });
 
-            // Proactively update the local state to ensure immediate UI feedback
-            const existingParticipants = get().participants;
-            const updatedParticipants = existingParticipants.map(p => {
-              if (p.id === participantId) {
-                return { ...p, active: true };
-              }
-              return p;
-            });
-            set({ participants: updatedParticipants });
+              const existingParticipants = get().participants;
+              const updatedParticipants = existingParticipants.map(p => {
+                if (p.id === participantId) {
+                  return { ...p, active: true };
+                }
+                return p;
+              });
+              set({ participants: updatedParticipants });
+            }
           }
 
           // Guardar el ID del participante en el estado local
@@ -300,7 +317,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             currentParticipantId: participantId,
             seriesKey,
             estimationOptions: seriesValues,
-            reveal: false // Asegurarse de que reveal sea false al unirse a una sala
+            reveal: false
           });
 
           // Configurar listeners para la sala
@@ -469,13 +486,37 @@ export const useRoomStore = create<RoomState & RoomActions>()(
         }
 
         try {
-          // Marcar al participante como inactivo en Firebase
+          let legacyRoom = false;
+          try {
+            await billingApi.leaveRoom(roomId);
+          } catch (leaveError) {
+            // Legacy rooms created before the backend ledger may not exist in SQL.
+            if (leaveError instanceof BillingApiError && leaveError.status === 404) {
+              legacyRoom = true;
+            } else {
+              throw leaveError;
+            }
+          }
+
+          if (!legacyRoom) {
+            if (currentParticipantId) {
+              const updatedParticipants = get().participants.map(participant =>
+                participant.id === currentParticipantId
+                  ? { ...participant, active: false, estimation: undefined }
+                  : participant
+              );
+              set({ participants: updatedParticipants });
+            }
+            return;
+          }
+
+          // Legacy fallback: old rooms without backend ledger still use direct Firebase writes.
           if (currentParticipantId) {
             const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${currentParticipantId}`);
             await update(participantRef, {
               active: false,
               lastActive: Date.now(),
-              estimation: null // Limpiar la estimación para que no afecte a la votación
+              estimation: null
             });
             
             // Después de marcar como inactivo, obtener la lista FRESCA de participantes
@@ -486,37 +527,22 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
                 // Si no quedan participantes activos, marcar la sala como inactiva
                 if (activeParticipants.length === 0) {
-                    let legacyRoom = false;
+                    const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+                    await update(roomRef, {
+                        active: false,
+                        lastActive: Date.now(),
+                        markedForDeletion: true
+                    });
+
+                    // Ahora, y solo ahora, intentar la escritura en Firestore
                     try {
-                        await billingApi.closeRoom(roomId);
-                    } catch (closeError) {
-                        // Legacy rooms created before the backend ledger may not exist there;
-                        // keep the old Firebase close path for those only.
-                        if (closeError instanceof BillingApiError && closeError.status === 404) {
-                            legacyRoom = true;
-                        } else {
-                            throw closeError;
-                        }
-                    }
-
-                    if (legacyRoom) {
-                        const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
-                        await update(roomRef, {
-                            active: false,
-                            lastActive: Date.now(),
-                            markedForDeletion: true
+                        const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+                        await updateDoc(firestoreRoomRef, {
+                          active: false,
+                          lastActive: Date.now()
                         });
-
-                        // Ahora, y solo ahora, intentar la escritura en Firestore
-                        try {
-                            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
-                            await updateDoc(firestoreRoomRef, {
-                              active: false,
-                              lastActive: Date.now()
-                            });
-                        } catch (firestoreError) {
-                            console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
-                        }
+                    } catch (firestoreError) {
+                        console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
                     }
                 }
             }
@@ -552,8 +578,29 @@ export const useRoomStore = create<RoomState & RoomActions>()(
         }
 
         try {
-          const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
-          await update(participantRef, { active: false, removed: true });
+          let legacyRoom = false;
+          try {
+            await billingApi.removeParticipant(roomId, participantId);
+          } catch (removeError) {
+            // Legacy rooms created before the backend ledger may not exist in SQL.
+            if (removeError instanceof BillingApiError && removeError.status === 404) {
+              legacyRoom = true;
+            } else {
+              throw removeError;
+            }
+          }
+
+          if (legacyRoom) {
+            const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
+            await update(participantRef, { active: false, removed: true });
+          }
+
+          const updatedParticipants = get().participants.map(participant =>
+            participant.id === participantId
+              ? { ...participant, active: false, removed: true }
+              : participant
+          );
+          set({ participants: updatedParticipants });
         } catch (error) {
           const appError = createError(
             ErrorType.UPDATE_FAILED,

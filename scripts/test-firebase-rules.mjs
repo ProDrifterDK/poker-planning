@@ -99,6 +99,16 @@ try {
     })
   );
 
+  await assertFails(
+    set(ref(charlieDb, 'rooms/backend-room/participants/participant-charlie'), {
+      firebaseUid: 'charlie',
+      participantId: 'participant-charlie',
+      role: 'participant',
+      active: true,
+      name: 'Charlie',
+    })
+  );
+
   await assertSucceeds(
     update(ref(aliceDb, 'rooms/backend-room/sessions/session-backend'), {
       reveal: true,
@@ -163,6 +173,13 @@ try {
       participantId: 'participant-bob',
       role: 'participant',
       lastActive: 123457,
+    })
+  );
+
+  await assertFails(
+    update(ref(aliceDb, 'rooms/backend-room/participants/participant-bob'), {
+      active: false,
+      removed: true,
     })
   );
 

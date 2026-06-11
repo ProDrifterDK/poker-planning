@@ -14,6 +14,9 @@ jest.mock('@/lib/billingApi', () => {
     BillingApiError,
     billingApi: {
       createRoom: jest.fn(),
+      joinRoom: jest.fn(),
+      leaveRoom: jest.fn(),
+      removeParticipant: jest.fn(),
       closeRoom: jest.fn(() => Promise.resolve({ roomId: 'testroom', status: 'closed' })),
     },
   };
@@ -23,9 +26,13 @@ jest.mock('@/lib/billingApi', () => {
 import { useRoomStore } from '@/store/roomStore';
 import { useErrorStore, ErrorType } from '@/store/errorStore';
 import { resetFirebaseMocks } from '../mocks/firebaseMocks';
+import { UserRole } from '@/types/roles';
 
 const billingApiMock = jest.requireMock('@/lib/billingApi').billingApi as {
   createRoom: jest.Mock;
+  joinRoom: jest.Mock;
+  leaveRoom: jest.Mock;
+  removeParticipant: jest.Mock;
   closeRoom: jest.Mock;
 };
 
@@ -64,6 +71,35 @@ describe('Room Store Integration', () => {
         upgradePath: '/es/settings/subscription',
       },
       metadata: {},
+    });
+    billingApiMock.joinRoom.mockResolvedValue({
+      roomId: 'testroom',
+      participantId: 'participant1',
+      sessionId: 'session1',
+      ownerUid: 'alice',
+      status: 'active',
+      role: 'participant',
+      rejoined: false,
+      limits: {
+        maxActiveRooms: 1,
+        maxParticipants: 5,
+      },
+      usage: {
+        activeRooms: 1,
+        activeParticipants: 2,
+      },
+    });
+    billingApiMock.leaveRoom.mockResolvedValue({
+      roomId: 'testroom',
+      participantId: 'participant1',
+      active: false,
+      removed: false,
+    });
+    billingApiMock.removeParticipant.mockResolvedValue({
+      roomId: 'testroom',
+      participantId: 'participant1',
+      active: false,
+      removed: true,
     });
     billingApiMock.closeRoom.mockResolvedValue({ roomId: 'testroom', status: 'closed' });
 
@@ -150,8 +186,14 @@ describe('Room Store Integration', () => {
       // Assert
       const state = useRoomStore.getState();
       expect(state.roomId).toBe(roomId);
+      expect(state.currentParticipantId).toBe('participant1');
       expect(state.isLoading).toBe(false);
       expect(state.error).toBeNull();
+      expect(billingApiMock.joinRoom).toHaveBeenCalledWith(roomId, {
+        displayName: name,
+        photoURL: undefined,
+      });
+      expect(jest.requireMock('firebase/database').update).not.toHaveBeenCalled();
     });
 
     it('should set error when room does not exist', async () => {
@@ -179,6 +221,39 @@ describe('Room Store Integration', () => {
       const errorState = useErrorStore.getState();
       expect(errorState.currentError).not.toBeNull();
       expect(errorState.currentError?.type).toBe(ErrorType.ROOM_NOT_FOUND);
+    });
+  });
+
+  describe('leaveRoom', () => {
+    it('should leave through the backend membership endpoint', async () => {
+      const { joinRoomWithName, leaveRoom } = useRoomStore.getState();
+      await joinRoomWithName('testroom', 'Test User');
+      const updateMock = jest.requireMock('firebase/database').update;
+      updateMock.mockClear();
+
+      await leaveRoom();
+
+      expect(billingApiMock.leaveRoom).toHaveBeenCalledWith('testroom');
+      expect(updateMock).not.toHaveBeenCalled();
+      const participant = useRoomStore.getState().participants.find(p => p.id === 'participant1');
+      expect(participant?.active).toBe(false);
+    });
+  });
+
+  describe('removeParticipant', () => {
+    it('should remove participants through the backend membership endpoint', async () => {
+      useRoomStore.setState({
+        roomId: 'testroom',
+        participants: [{ id: 'participant1', name: 'Test User', role: UserRole.PARTICIPANT, active: true }],
+      });
+
+      await useRoomStore.getState().removeParticipant('participant1');
+
+      expect(billingApiMock.removeParticipant).toHaveBeenCalledWith('testroom', 'participant1');
+      expect(jest.requireMock('firebase/database').update).not.toHaveBeenCalled();
+      const participant = useRoomStore.getState().participants.find(p => p.id === 'participant1');
+      expect(participant?.active).toBe(false);
+      expect(participant?.removed).toBe(true);
     });
   });
 

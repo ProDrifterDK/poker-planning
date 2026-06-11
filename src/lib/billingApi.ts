@@ -88,9 +88,32 @@ export interface RoomLimitDetails {
   upgradePath?: string;
 }
 
-export interface CreateRoomResponse {
+export interface RoomMutationResponse {
   roomId: string;
   participantId: string;
+  sessionId?: string | null;
+  ownerUid: string;
+  status: string;
+  role: 'moderator' | 'participant' | string;
+  rejoined: boolean;
+  limits: {
+    maxActiveRooms: number;
+    maxParticipants: number;
+  };
+  usage?: {
+    activeRooms: number;
+    activeParticipants: number;
+  };
+}
+
+export interface RoomLeaveResponse {
+  roomId: string;
+  participantId: string;
+  active: boolean;
+  removed?: boolean;
+}
+
+export interface CreateRoomResponse extends RoomMutationResponse {
   sessionId: string;
   firebasePath: string;
   title: string;
@@ -99,14 +122,6 @@ export interface CreateRoomResponse {
     participantId: string;
     role: 'moderator' | 'participant';
     displayName: string;
-  };
-  limits: {
-    maxActiveRooms: number;
-    maxParticipants: number;
-  };
-  usage?: {
-    activeRooms: number;
-    activeParticipants: number;
   };
   entitlement?: {
     planKey: string;
@@ -213,6 +228,36 @@ export const billingApi = {
           displayName: input.displayName,
         }),
       }
+    );
+  },
+
+  async joinRoom(roomId: string, input: {
+    displayName: string;
+    photoURL?: string;
+  }): Promise<RoomMutationResponse> {
+    return billingRequest<RoomMutationResponse>(
+      `/v1/rooms/${encodeURIComponent(roomId)}/join`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          displayName: input.displayName,
+          photoURL: input.photoURL,
+        }),
+      }
+    );
+  },
+
+  async leaveRoom(roomId: string): Promise<RoomLeaveResponse> {
+    return billingRequest<RoomLeaveResponse>(
+      `/v1/rooms/${encodeURIComponent(roomId)}/leave`,
+      { method: 'POST' }
+    );
+  },
+
+  async removeParticipant(roomId: string, participantId: string): Promise<RoomLeaveResponse> {
+    return billingRequest<RoomLeaveResponse>(
+      `/v1/rooms/${encodeURIComponent(roomId)}/participants/${encodeURIComponent(participantId)}/remove`,
+      { method: 'POST' }
     );
   },
 

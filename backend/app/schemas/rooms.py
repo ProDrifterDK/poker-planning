@@ -20,6 +20,7 @@ class RoomLeaveResponse(BaseModel):
     roomId: str
     participantId: str
     active: bool
+    removed: bool = False
 
 
 class EntitlementLimitResponse(BaseModel):
@@ -40,6 +41,7 @@ class RoomParticipantResponse(BaseModel):
 class RoomMutationResponse(BaseModel):
     roomId: str
     participantId: str
+    sessionId: str | None = None
     ownerUid: str
     status: str
     role: str

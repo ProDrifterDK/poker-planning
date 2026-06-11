@@ -107,6 +107,70 @@ def _seed_legacy_billing_schema(engine) -> None:
         )
 
 
+def _seed_legacy_room_schema_without_updated_at(engine) -> None:
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE planning_rooms (
+                    id VARCHAR(36) PRIMARY KEY,
+                    owner_uid VARCHAR(128) NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    series_key VARCHAR(64) NOT NULL,
+                    status VARCHAR(32) NOT NULL DEFAULT 'active',
+                    firebase_path VARCHAR(255),
+                    locked_reason VARCHAR(128),
+                    created_at DATETIME NOT NULL,
+                    closed_at DATETIME
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE room_memberships (
+                    id VARCHAR(36) PRIMARY KEY,
+                    room_id VARCHAR(36) NOT NULL,
+                    firebase_uid VARCHAR(128) NOT NULL,
+                    display_name VARCHAR(255) NOT NULL,
+                    photo_url TEXT,
+                    role VARCHAR(32) NOT NULL DEFAULT 'participant',
+                    active BOOLEAN NOT NULL DEFAULT 1,
+                    created_at DATETIME NOT NULL,
+                    last_seen_at DATETIME NOT NULL,
+                    UNIQUE(room_id, firebase_uid)
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                INSERT INTO planning_rooms (
+                    id, owner_uid, title, series_key, status, firebase_path, created_at
+                ) VALUES (
+                    'room-legacy', 'alice', 'Legacy Room', 'fibonacci', 'active',
+                    'rooms/room-legacy', '2026-01-01 00:00:00'
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                INSERT INTO room_memberships (
+                    id, room_id, firebase_uid, display_name, role, active,
+                    created_at, last_seen_at
+                ) VALUES (
+                    'member-legacy', 'room-legacy', 'alice', 'Alice', 'moderator', 1,
+                    '2026-01-01 00:00:00', '2026-01-01 00:00:00'
+                )
+                """
+            )
+        )
+
+
 def test_provider_customer_ids_uses_jsonb_for_postgresql_metadata():
     create_sql = str(CreateTable(BillingCustomer.__table__).compile(dialect=postgresql.dialect()))
 
@@ -206,6 +270,57 @@ def test_existing_legacy_schema_is_migrated_and_backfilled(tmp_path):
                 """
             )
         )
+
+
+def test_room_ledger_updated_at_columns_are_added_to_legacy_sqlite_schema(tmp_path):
+    db_url = f"sqlite:///{tmp_path / 'legacy-rooms.db'}"
+    engine = create_engine(db_url)
+    _seed_legacy_room_schema_without_updated_at(engine)
+
+    migrate_existing_schema(engine)
+    migrate_existing_schema(engine)
+
+    inspector = inspect(engine)
+    room_columns = {column["name"] for column in inspector.get_columns("planning_rooms")}
+    membership_columns = {column["name"] for column in inspector.get_columns("room_memberships")}
+    assert "updated_at" in room_columns
+    assert "updated_at" in membership_columns
+
+    with engine.begin() as conn:
+        room_updated_at = conn.execute(
+            text("SELECT updated_at FROM planning_rooms WHERE id='room-legacy'")
+        ).scalar_one()
+        membership_updated_at = conn.execute(
+            text("SELECT updated_at FROM room_memberships WHERE id='member-legacy'")
+        ).scalar_one()
+    assert room_updated_at is not None
+    assert membership_updated_at is not None
+
+
+def test_postgresql_migration_adds_room_updated_at_columns(monkeypatch):
+    executed: list[str] = []
+
+    class FakeDialect:
+        name = "postgresql"
+
+    class FakeConnection:
+        dialect = FakeDialect()
+
+        def execute(self, statement, *args, **kwargs):
+            executed.append(str(statement))
+
+    monkeypatch.setattr(
+        init_db_module,
+        "_has_table",
+        lambda _conn, table_name: table_name in {"planning_rooms", "room_memberships"},
+    )
+
+    init_db_module._migrate_postgresql(FakeConnection())
+
+    assert any('ALTER TABLE "planning_rooms" ADD COLUMN IF NOT EXISTS updated_at' in stmt for stmt in executed)
+    assert any('ALTER TABLE "room_memberships" ADD COLUMN IF NOT EXISTS updated_at' in stmt for stmt in executed)
+    assert any('ALTER TABLE "planning_rooms" ALTER COLUMN updated_at SET NOT NULL' in stmt for stmt in executed)
+    assert any('ALTER TABLE "room_memberships" ALTER COLUMN updated_at SET NOT NULL' in stmt for stmt in executed)
 
 
 def test_app_startup_migrates_legacy_schema_before_billing_requests(tmp_path, monkeypatch):

@@ -180,8 +180,9 @@ class RoomEntitlementService:
         entitlement: EntitlementSnapshot,
         active_participants: int,
         rejoined: bool = False,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
-        return {
+        data: dict[str, Any] = {
             "roomId": room.id,
             "participantId": membership.id,
             "ownerUid": room.owner_uid,
@@ -197,6 +198,9 @@ class RoomEntitlementService:
                 "activeParticipants": active_participants,
             },
         }
+        if session_id:
+            data["sessionId"] = session_id
+        return data
 
     def _serialize_create(
         self,
@@ -339,6 +343,7 @@ class RoomEntitlementService:
                 existing.last_seen_at = utcnow()
                 self.db.flush()
                 self._write_member_projection(room, existing)
+                session_id = self._ensure_active_session_projection(room)
                 self.db.commit()
                 return self._serialize_mutation(
                     room=room,
@@ -346,6 +351,7 @@ class RoomEntitlementService:
                     entitlement=entitlement,
                     active_participants=active_participants,
                     rejoined=True,
+                    session_id=session_id,
                 )
 
             active_participants = self._active_participant_count(room.id)
@@ -371,12 +377,14 @@ class RoomEntitlementService:
             self.db.flush()
             active_participants += 1
             self._write_member_projection(room, membership)
+            session_id = self._ensure_active_session_projection(room)
             self.db.commit()
             return self._serialize_mutation(
                 room=room,
                 membership=membership,
                 entitlement=entitlement,
                 active_participants=active_participants,
+                session_id=session_id,
             )
         except HTTPException:
             self.db.rollback()
@@ -387,6 +395,9 @@ class RoomEntitlementService:
 
     def leave_room(self, user: AuthenticatedUser, room_id: str) -> dict[str, Any]:
         try:
+            room = self.db.scalar(room_for_update_statement(room_id))
+            if not room:
+                raise HTTPException(status_code=404, detail="Room not found")
             membership = self.db.scalar(
                 select(RoomMembership).where(
                     RoomMembership.room_id == room_id,
@@ -399,8 +410,68 @@ class RoomEntitlementService:
             membership.last_seen_at = utcnow()
             self.db.flush()
             self._write_member_inactive_projection(room_id, membership)
+            if self._active_participant_count(room_id) == 0:
+                room.status = ROOM_CLOSED
+                room.closed_at = utcnow()
+                self.db.flush()
+                self._write_closed_projection(room)
             self.db.commit()
             return {"roomId": room_id, "participantId": membership.id, "active": False}
+        except HTTPException:
+            self.db.rollback()
+            raise
+        except SQLAlchemyError as exc:
+            self.db.rollback()
+            raise self._projection_error("We could not update room membership right now. Please try again.") from exc
+
+    def remove_participant(
+        self, user: AuthenticatedUser, room_id: str, participant_id: str
+    ) -> dict[str, Any]:
+        try:
+            room = self.db.scalar(room_for_update_statement(room_id))
+            if not room or room.status != ROOM_ACTIVE:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={"code": "ROOM_NOT_FOUND", "message": "Active room not found"},
+                )
+            actor = self.db.scalar(
+                select(RoomMembership).where(
+                    RoomMembership.room_id == room_id,
+                    RoomMembership.firebase_uid == user.uid,
+                    RoomMembership.active.is_(True),
+                )
+            )
+            can_remove = room.owner_uid == user.uid or (actor is not None and actor.role == "moderator")
+            if not can_remove:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={"code": "ROOM_FORBIDDEN", "message": "Moderator access required"},
+                )
+
+            membership = self.db.scalar(
+                select(RoomMembership).where(
+                    RoomMembership.room_id == room_id,
+                    RoomMembership.id == participant_id,
+                )
+            )
+            if not membership:
+                raise HTTPException(status_code=404, detail="Room membership not found")
+            membership.active = False
+            membership.last_seen_at = utcnow()
+            self.db.flush()
+            self._write_member_inactive_projection(room_id, membership, removed=True)
+            if self._active_participant_count(room_id) == 0:
+                room.status = ROOM_CLOSED
+                room.closed_at = utcnow()
+                self.db.flush()
+                self._write_closed_projection(room)
+            self.db.commit()
+            return {
+                "roomId": room_id,
+                "participantId": membership.id,
+                "active": False,
+                "removed": True,
+            }
         except HTTPException:
             self.db.rollback()
             raise
@@ -467,14 +538,7 @@ class RoomEntitlementService:
             "active": True,
         }
         realtime_db.reference(f"rooms/{room.id}/metadata").update(metadata)
-        realtime_db.reference(f"rooms/{room.id}/sessions/{session_id}").update(
-            {
-                "active": True,
-                "reveal": False,
-                "currentIssueId": None,
-                "startedAt": timestamp_ms,
-            }
-        )
+        self._write_session_projection(room.id, session_id, timestamp_ms)
         self._write_member_projection(room, membership)
         firestore.client().collection("rooms").document(room.id).set(
             {
@@ -509,15 +573,50 @@ class RoomEntitlementService:
         realtime_db.reference(f"rooms/{room.id}/participants/{membership.id}").update(payload)
         realtime_db.reference(f"rooms/{room.id}/memberUids/{membership.firebase_uid}").set(True)
 
-    def _write_member_inactive_projection(self, room_id: str, membership: RoomMembership) -> None:
+    def _write_session_projection(self, room_id: str, session_id: str, timestamp_ms: int) -> None:
+        from firebase_admin import db as realtime_db
+
+        realtime_db.reference(f"rooms/{room_id}/sessions/{session_id}").update(
+            {
+                "active": True,
+                "reveal": False,
+                "currentIssueId": None,
+                "startedAt": timestamp_ms,
+            }
+        )
+
+    def _ensure_active_session_projection(self, room: PlanningRoom) -> str | None:
+        if self.settings.e2e_test_mode:
+            return None
+        self._ensure_projection_available()
+        from firebase_admin import db as realtime_db
+
+        sessions_ref = realtime_db.reference(f"rooms/{room.id}/sessions")
+        sessions = sessions_ref.get() or {}
+        for session_id, session in sessions.items():
+            if isinstance(session, dict) and session.get("active") is True:
+                return str(session_id)
+
+        session_id = self._new_session_id()
+        self._write_session_projection(room.id, session_id, int(utcnow().timestamp() * 1000))
+        return session_id
+
+    def _write_member_inactive_projection(
+        self, room_id: str, membership: RoomMembership, *, removed: bool = False
+    ) -> None:
         if self.settings.e2e_test_mode:
             return
         self._ensure_projection_available()
         from firebase_admin import db as realtime_db
 
-        realtime_db.reference(f"rooms/{room_id}/participants/{membership.id}").update(
-            {"active": False, "lastActive": int(utcnow().timestamp() * 1000), "estimation": None}
-        )
+        payload: dict[str, Any] = {
+            "active": False,
+            "lastActive": int(utcnow().timestamp() * 1000),
+            "estimation": None,
+        }
+        if removed:
+            payload["removed"] = True
+        realtime_db.reference(f"rooms/{room_id}/participants/{membership.id}").update(payload)
 
     def _write_closed_projection(self, room: PlanningRoom) -> None:
         if self.settings.e2e_test_mode:
