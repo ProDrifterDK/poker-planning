@@ -196,6 +196,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
         }
 
+        // Prefer backend-authoritative features when available
+        if (currentSubscription.features && feature in currentSubscription.features) {
+          const backendValue = currentSubscription.features[feature];
+          if (typeof backendValue === 'boolean') return backendValue;
+          if (typeof backendValue === 'number') return backendValue > 0;
+        }
+
+        // Fall back to local plan matrix
         const planLookupKey = getPlanLookupKey(
           currentSubscription.plan,
           currentSubscription.billingInterval
@@ -256,6 +264,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
+        // Prefer backend-authoritative limit
+        if (currentSubscription?.features?.maxParticipants != null) {
+          return currentSubscription.features.maxParticipants;
+        }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxParticipants;
       },
 
@@ -265,6 +277,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
+        // Prefer backend-authoritative limit
+        if (currentSubscription?.features?.maxActiveRooms != null) {
+          return currentSubscription.features.maxActiveRooms;
+        }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxActiveRooms;
       },
     }),

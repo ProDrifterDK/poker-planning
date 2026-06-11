@@ -102,6 +102,12 @@ export interface UserSubscription {
   cancelAtPeriodEnd?: boolean;
   cancelDate?: string; // ISO date string when subscription was cancelled
   cancelReason?: string; // Reason for cancellation
+  /**
+   * Backend-authoritative feature entitlements from /v1/billing/me.
+   * When present, these take precedence over the local SUBSCRIPTION_PLANS matrix
+   * for UI gating decisions. Falls back to local plan matrix when unavailable.
+   */
+  features?: Partial<PlanFeatures>;
 }
 
 // Payment history
