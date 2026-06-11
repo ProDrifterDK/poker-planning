@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -22,8 +22,36 @@ from app.db.models import (
 from app.domain.plans import PLAN_CATALOG, get_plan, serialize_plan
 from app.schemas.billing import AuthenticatedUser
 
-ACTIVE_STATUSES = {"active", "trialing", "past_due", "cancelled"}
+CURRENT_STATUSES = {"active", "trialing", "past_due"}
+INACTIVE_STATUSES = {"canceled", "incomplete", "pending", "failed", "suspended"}
+NORMALIZED_SUBSCRIPTION_STATUSES = CURRENT_STATUSES | INACTIVE_STATUSES
+ACTIVE_STATUSES = CURRENT_STATUSES
 PUBLIC_BILLING_PROVIDERS = {"stripe", "paypal"}
+
+STRIPE_STATUS_ALIASES = {
+    "active": "active",
+    "trialing": "trialing",
+    "past_due": "past_due",
+    "canceled": "canceled",
+    "cancelled": "canceled",
+    "incomplete": "incomplete",
+    "incomplete_expired": "failed",
+    "unpaid": "failed",
+    "paused": "suspended",
+}
+PAYPAL_STATUS_ALIASES = {
+    "active": "active",
+    "activated": "active",
+    "approved": "pending",
+    "approval_pending": "pending",
+    "created": "pending",
+    "pending": "pending",
+    "suspended": "suspended",
+    "cancelled": "canceled",
+    "canceled": "canceled",
+    "expired": "canceled",
+    "failed": "failed",
+}
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -49,6 +77,84 @@ def _from_unix(value: Any) -> datetime | None:
     if not value:
         return None
     return datetime.fromtimestamp(int(value), timezone.utc)
+
+
+def _from_iso(value: Any) -> datetime | None:
+    if not value or not isinstance(value, str):
+        return None
+    candidate = value.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError:
+        return None
+    return _aware(parsed)
+
+
+def _event_created_at(event: dict[str, Any]) -> datetime | None:
+    return _from_unix(event.get("created")) or _from_iso(event.get("create_time"))
+
+
+def _event_created_marker(value: datetime | None) -> float | None:
+    if not value:
+        return None
+    return _aware(value).timestamp()
+
+
+def _raw_last_event_marker(raw: dict[str, Any] | None) -> float | None:
+    if not raw:
+        return None
+    marker = raw.get("__last_event_created")
+    if marker is None:
+        return None
+    try:
+        return float(marker)
+    except (TypeError, ValueError):
+        return None
+
+
+def _should_apply_event(raw: dict[str, Any] | None, event_created_at: datetime | None) -> bool:
+    new_marker = _event_created_marker(event_created_at)
+    old_marker = _raw_last_event_marker(raw)
+    return new_marker is None or old_marker is None or new_marker >= old_marker
+
+
+def _with_event_metadata(
+    raw: dict[str, Any], event_created_at: datetime | None, event_id: str | None
+) -> dict[str, Any]:
+    result = dict(raw)
+    marker = _event_created_marker(event_created_at)
+    if marker is not None:
+        result["__last_event_created"] = marker
+    if event_id:
+        result["__last_event_id"] = event_id
+    return result
+
+
+def _normalize_status(provider: str, value: Any, fallback: str = "pending") -> str:
+    normalized = str(value or fallback).strip().lower().replace("-", "_")
+    aliases = PAYPAL_STATUS_ALIASES if provider == "paypal" else STRIPE_STATUS_ALIASES
+    return aliases.get(normalized, fallback)
+
+
+def _decode_json_metadata(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return dict(value)
+    if not isinstance(value, str) or not value.strip():
+        return {}
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return {}
+    return dict(parsed) if isinstance(parsed, dict) else {}
+
+
+def _amount_to_cents(value: Any) -> int:
+    if value is None or value == "":
+        return 0
+    try:
+        return int(round(float(value) * 100))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _provider_object_dict(value: Any) -> dict[str, Any]:
@@ -366,7 +472,7 @@ class BillingService:
         if subscription.provider == "stripe" and self.settings.billing_provider == "stripe" and not self.settings.e2e_test_mode:
             self._cancel_stripe_subscription(subscription)
 
-        subscription.status = "cancelled"
+        subscription.status = "active"
         subscription.cancel_at_period_end = True
         subscription.updated_at = utcnow()
         self.db.commit()
@@ -435,13 +541,26 @@ class BillingService:
         current_period_end: datetime | None = None,
         status_value: str = "active",
         force_current: bool = True,
+        cancel_at_period_end: bool | None = None,
+        event_created_at: datetime | None = None,
+        event_id: str | None = None,
     ) -> BillingSubscription:
         plan = get_plan(plan_key)
+        status_value = _normalize_status(provider, status_value, "active")
         now = utcnow()
         start = current_period_start or now
         end = current_period_end or now + timedelta(days=365 if plan.billing_interval == "year" else 30)
         existing = self._find_provider_subscription(provider, provider_subscription_id, provider_checkout_session_id)
+        if existing and not _should_apply_event(existing.raw_provider_object, event_created_at):
+            return existing
+
         should_be_current = self._is_effectively_current(status_value, end)
+        raw = _with_event_metadata(raw_provider_object, event_created_at, event_id)
+        cancel_flag = (
+            bool(cancel_at_period_end)
+            if cancel_at_period_end is not None
+            else bool(raw_provider_object.get("cancel_at_period_end", False))
+        )
 
         if existing:
             other_current_exists = any(
@@ -472,8 +591,8 @@ class BillingService:
             existing.provider_checkout_session_id = provider_checkout_session_id or existing.provider_checkout_session_id
             existing.current_period_start = start
             existing.current_period_end = end
-            existing.cancel_at_period_end = bool(raw_provider_object.get("cancel_at_period_end", False))
-            existing.raw_provider_object = raw_provider_object
+            existing.cancel_at_period_end = cancel_flag
+            existing.raw_provider_object = raw
             self.db.flush()
             return existing
 
@@ -493,8 +612,8 @@ class BillingService:
             provider_checkout_session_id=provider_checkout_session_id,
             current_period_start=start,
             current_period_end=end,
-            cancel_at_period_end=bool(raw_provider_object.get("cancel_at_period_end", False)),
-            raw_provider_object=raw_provider_object,
+            cancel_at_period_end=cancel_flag,
+            raw_provider_object=raw,
             is_current=should_be_current,
         )
         self.db.add(subscription)
@@ -526,18 +645,309 @@ class BillingService:
             current_period_start=current_period_start,
             current_period_end=current_period_end,
             status_value=status_value,
+            cancel_at_period_end=bool(_provider_value(stripe_subscription, "cancel_at_period_end", False)),
             force_current=True,
         )
 
-    def process_stripe_event(self, event: dict[str, Any], payload_bytes: bytes) -> dict[str, Any]:
-        event_id = event.get("id")
-        event_type = event.get("type")
+    def _upsert_payment(
+        self,
+        *,
+        uid: str,
+        provider: str,
+        subscription_id: str | None,
+        provider_invoice_id: str | None,
+        provider_payment_id: str | None,
+        amount_paid_cents: int,
+        currency: str,
+        status_value: str,
+        paid_at: datetime | None,
+        raw_provider_object: dict[str, Any],
+        event_created_at: datetime | None,
+        event_id: str | None,
+    ) -> BillingPayment:
+        lookup = []
+        if provider_invoice_id:
+            lookup.append(BillingPayment.provider_invoice_id == provider_invoice_id)
+        if provider_payment_id:
+            lookup.append(BillingPayment.provider_payment_id == provider_payment_id)
+        existing = None
+        if lookup:
+            existing = self.db.scalar(
+                select(BillingPayment).where(BillingPayment.provider == provider, or_(*lookup))
+            )
+        raw = _with_event_metadata(raw_provider_object, event_created_at, event_id)
+        if existing:
+            if not _should_apply_event(existing.raw_provider_object, event_created_at):
+                return existing
+            existing.firebase_uid = uid
+            existing.subscription_id = subscription_id or existing.subscription_id
+            existing.provider_invoice_id = provider_invoice_id or existing.provider_invoice_id
+            existing.provider_payment_id = provider_payment_id or existing.provider_payment_id
+            existing.amount_paid_cents = amount_paid_cents
+            existing.currency = currency.upper()
+            existing.status = status_value
+            existing.paid_at = paid_at or existing.paid_at
+            existing.raw_provider_object = raw
+            self.db.flush()
+            return existing
+
+        payment = BillingPayment(
+            firebase_uid=uid,
+            subscription_id=subscription_id,
+            provider=provider,
+            provider_invoice_id=provider_invoice_id,
+            provider_payment_id=provider_payment_id,
+            amount_paid_cents=amount_paid_cents,
+            currency=currency.upper(),
+            status=status_value,
+            paid_at=paid_at,
+            raw_provider_object=raw,
+        )
+        self.db.add(payment)
+        self.db.flush()
+        return payment
+
+    def _stripe_invoice_payment_status(self, event_type: str, invoice: dict[str, Any]) -> str:
+        invoice_status = str(invoice.get("status") or "").lower()
+        if event_type in {"invoice.paid", "invoice.payment_succeeded"} or invoice_status == "paid":
+            return "paid"
+        if event_type in {"invoice.payment_failed", "invoice.marked_uncollectible"}:
+            return "failed"
+        if event_type == "invoice.voided" or invoice_status == "void":
+            return "canceled"
+        return "pending"
+
+    def _process_stripe_invoice_event(
+        self,
+        event_id: str,
+        event_type: str,
+        invoice: dict[str, Any],
+        event_created_at: datetime | None,
+    ) -> bool:
+        provider_subscription_id = invoice.get("subscription")
+        subscription = self._find_provider_subscription("stripe", provider_subscription_id, None)
+        metadata = dict(invoice.get("metadata") or {})
+        uid = metadata.get("firebase_uid") or (subscription.firebase_uid if subscription else None)
+        plan_key = metadata.get("plan_key") or (subscription.plan_key if subscription else None)
+        if not uid or not plan_key:
+            return False
+
+        status_value = self._stripe_invoice_payment_status(event_type, invoice)
+        amount = invoice.get("amount_paid") if status_value == "paid" else invoice.get("amount_due")
+        if amount is None:
+            amount = invoice.get("total", 0)
+        paid_at = None
+        status_transitions = invoice.get("status_transitions") or {}
+        if status_value == "paid":
+            paid_at = _from_unix(status_transitions.get("paid_at") or invoice.get("created"))
+        else:
+            paid_at = _from_unix(invoice.get("created"))
+        payment = self._upsert_payment(
+            uid=uid,
+            provider="stripe",
+            subscription_id=subscription.id if subscription else None,
+            provider_invoice_id=invoice.get("id"),
+            provider_payment_id=invoice.get("payment_intent") or invoice.get("charge"),
+            amount_paid_cents=int(amount or 0),
+            currency=invoice.get("currency", "USD"),
+            status_value=status_value,
+            paid_at=paid_at,
+            raw_provider_object=invoice,
+            event_created_at=event_created_at,
+            event_id=event_id,
+        )
+        if subscription and payment.subscription_id is None:
+            payment.subscription_id = subscription.id
+
+        if provider_subscription_id:
+            existing_start = subscription.current_period_start if subscription else None
+            existing_end = subscription.current_period_end if subscription else None
+            subscription_status = "active" if status_value == "paid" else "past_due"
+            if status_value in {"canceled", "pending"}:
+                subscription_status = status_value
+            self._activate_subscription(
+                uid=uid,
+                plan_key=plan_key,
+                provider="stripe",
+                provider_checkout_session_id=None,
+                provider_subscription_id=provider_subscription_id,
+                provider_customer_id=invoice.get("customer"),
+                raw_provider_object={**invoice, "subscription_status_source": event_type},
+                current_period_start=existing_start,
+                current_period_end=existing_end,
+                status_value=subscription_status,
+                cancel_at_period_end=subscription.cancel_at_period_end if subscription else False,
+                force_current=False,
+                event_created_at=event_created_at,
+                event_id=event_id,
+            )
+        return True
+
+    def _paypal_metadata(self, resource: dict[str, Any]) -> dict[str, Any]:
+        metadata = dict(resource.get("metadata") or {})
+        for key in ("custom_id", "custom", "customId"):
+            metadata.update(_decode_json_metadata(resource.get(key)))
+        return metadata
+
+    def _paypal_plan_key(self, resource: dict[str, Any], metadata: dict[str, Any]) -> str | None:
+        if metadata.get("plan_key"):
+            return str(metadata["plan_key"])
+        plan_id = resource.get("plan_id") or (resource.get("plan") or {}).get("id")
+        plan_ids = {
+            self.settings.paypal_plan_pro_month: "pro-month",
+            self.settings.paypal_plan_pro_year: "pro-year",
+            self.settings.paypal_plan_enterprise_month: "enterprise-month",
+            self.settings.paypal_plan_enterprise_year: "enterprise-year",
+        }
+        return plan_ids.get(plan_id)
+
+    def _paypal_subscription_id(self, resource: dict[str, Any]) -> str | None:
+        return (
+            resource.get("billing_agreement_id")
+            or resource.get("subscription_id")
+            or resource.get("subscriptionId")
+            or resource.get("id")
+        )
+
+    def _paypal_payer_id(self, resource: dict[str, Any]) -> str | None:
+        subscriber = resource.get("subscriber") or {}
+        payer = resource.get("payer") or {}
+        payer_info = payer.get("payer_info") or {}
+        return subscriber.get("payer_id") or payer.get("payer_id") or payer_info.get("payer_id")
+
+    def _paypal_period_end(self, resource: dict[str, Any]) -> datetime | None:
+        billing_info = resource.get("billing_info") or {}
+        return _from_iso(billing_info.get("next_billing_time")) or _from_iso(resource.get("next_billing_time"))
+
+    def _paypal_amount(self, resource: dict[str, Any]) -> tuple[int, str]:
+        amount = resource.get("amount") or resource.get("gross_amount") or {}
+        if isinstance(amount, dict):
+            value = amount.get("value") or amount.get("total")
+            currency = amount.get("currency_code") or amount.get("currency") or "USD"
+            return _amount_to_cents(value), str(currency)
+        return 0, "USD"
+
+    def _paypal_payment_status(self, event_type: str, resource: dict[str, Any]) -> str:
+        resource_status = str(resource.get("status") or "").lower()
+        event_type = event_type.upper()
+        if "FAILED" in event_type or resource_status in {"failed", "denied", "declined"}:
+            return "failed"
+        if "COMPLETED" in event_type or "SUCCEEDED" in event_type or resource_status == "completed":
+            return "paid"
+        if "PENDING" in event_type or resource_status == "pending":
+            return "pending"
+        return "paid"
+
+    def _process_paypal_subscription_event(
+        self,
+        event_id: str,
+        event_type: str,
+        resource: dict[str, Any],
+        event_created_at: datetime | None,
+    ) -> bool:
+        metadata = self._paypal_metadata(resource)
+        uid = metadata.get("firebase_uid")
+        plan_key = self._paypal_plan_key(resource, metadata)
+        provider_subscription_id = self._paypal_subscription_id(resource)
+        existing = self._find_provider_subscription("paypal", provider_subscription_id, None)
+        uid = uid or (existing.firebase_uid if existing else None)
+        plan_key = plan_key or (existing.plan_key if existing else None)
+        if not uid or not plan_key or not provider_subscription_id:
+            return False
+
+        if event_type.endswith("CANCELLED") or event_type.endswith("CANCELED"):
+            status_value = "canceled"
+        elif event_type.endswith("SUSPENDED"):
+            status_value = "suspended"
+        elif event_type.endswith("ACTIVATED"):
+            status_value = "active"
+        else:
+            status_value = _normalize_status("paypal", resource.get("status"), "pending")
+        current_period_end = self._paypal_period_end(resource)
+        if status_value == "canceled" and current_period_end is None:
+            current_period_end = utcnow()
+        self._activate_subscription(
+            uid=uid,
+            plan_key=plan_key,
+            provider="paypal",
+            provider_checkout_session_id=None,
+            provider_subscription_id=provider_subscription_id,
+            provider_customer_id=self._paypal_payer_id(resource),
+            raw_provider_object=resource,
+            current_period_end=current_period_end,
+            status_value=status_value,
+            cancel_at_period_end=bool(resource.get("cancel_at_period_end", False)),
+            force_current=status_value in CURRENT_STATUSES,
+            event_created_at=event_created_at,
+            event_id=event_id,
+        )
+        return True
+
+    def _process_paypal_payment_event(
+        self,
+        event_id: str,
+        event_type: str,
+        resource: dict[str, Any],
+        event_created_at: datetime | None,
+    ) -> bool:
+        provider_subscription_id = self._paypal_subscription_id(resource)
+        subscription = self._find_provider_subscription("paypal", provider_subscription_id, None)
+        metadata = self._paypal_metadata(resource)
+        uid = metadata.get("firebase_uid") or (subscription.firebase_uid if subscription else None)
+        plan_key = self._paypal_plan_key(resource, metadata) or (subscription.plan_key if subscription else None)
+        if not uid or not plan_key:
+            return False
+
+        amount_paid_cents, currency = self._paypal_amount(resource)
+        status_value = self._paypal_payment_status(event_type, resource)
+        paid_at = _from_iso(resource.get("time")) or event_created_at
+        self._upsert_payment(
+            uid=uid,
+            provider="paypal",
+            subscription_id=subscription.id if subscription else None,
+            provider_invoice_id=resource.get("invoice_id") or resource.get("invoiceId"),
+            provider_payment_id=resource.get("id"),
+            amount_paid_cents=amount_paid_cents,
+            currency=currency,
+            status_value=status_value,
+            paid_at=paid_at,
+            raw_provider_object=resource,
+            event_created_at=event_created_at,
+            event_id=event_id,
+        )
+        if provider_subscription_id:
+            subscription_status = "active" if status_value == "paid" else "past_due"
+            if status_value == "pending":
+                subscription_status = "pending"
+            self._activate_subscription(
+                uid=uid,
+                plan_key=plan_key,
+                provider="paypal",
+                provider_checkout_session_id=None,
+                provider_subscription_id=provider_subscription_id,
+                provider_customer_id=self._paypal_payer_id(resource),
+                raw_provider_object={**resource, "subscription_status_source": event_type},
+                current_period_start=subscription.current_period_start if subscription else None,
+                current_period_end=subscription.current_period_end if subscription else None,
+                status_value=subscription_status,
+                cancel_at_period_end=subscription.cancel_at_period_end if subscription else False,
+                force_current=False,
+                event_created_at=event_created_at,
+                event_id=event_id,
+            )
+        return True
+
+    def _record_billing_event(
+        self, provider: str, event: dict[str, Any], payload_bytes: bytes
+    ) -> tuple[BillingEvent, bool]:
+        event_id = event.get("id") or event.get("event_id")
+        event_type = event.get("type") or event.get("event_type")
         if not event_id or not event_type:
-            raise HTTPException(status_code=400, detail="Invalid Stripe event")
+            raise HTTPException(status_code=400, detail=f"Invalid {provider.title()} event")
 
         payload_sha = hashlib.sha256(payload_bytes).hexdigest()
         billing_event = BillingEvent(
-            provider="stripe",
+            provider=provider,
             event_id=event_id,
             event_type=event_type,
             payload=event,
@@ -549,10 +959,13 @@ class BillingService:
         except IntegrityError:
             self.db.rollback()
             existing_event = self.db.scalar(
-                select(BillingEvent).where(BillingEvent.provider == "stripe", BillingEvent.event_id == event_id)
+                select(BillingEvent).where(
+                    BillingEvent.provider == provider,
+                    BillingEvent.event_id == event_id,
+                )
             )
             if existing_event and existing_event.processing_status in {"processed", "ignored"}:
-                return {"received": True, "duplicate": True}
+                return existing_event, True
             if not existing_event:
                 raise
             billing_event = existing_event
@@ -561,7 +974,22 @@ class BillingService:
             billing_event.payload_sha256 = payload_sha
             billing_event.processing_status = "received"
             billing_event.error = None
+        return billing_event, False
 
+    def _finish_billing_event(self, billing_event: BillingEvent, handled: bool) -> dict[str, Any]:
+        billing_event.processing_status = "processed" if handled else "ignored"
+        billing_event.processed_at = utcnow()
+        self.db.commit()
+        return {"received": True, "ignored": not handled}
+
+    def process_stripe_event(self, event: dict[str, Any], payload_bytes: bytes) -> dict[str, Any]:
+        billing_event, duplicate = self._record_billing_event("stripe", event, payload_bytes)
+        if duplicate:
+            return {"received": True, "duplicate": True}
+
+        event_id = billing_event.event_id
+        event_type = billing_event.event_type
+        event_created_at = _event_created_at(event)
         handled = False
         try:
             data_object = event.get("data", {}).get("object", {})
@@ -579,15 +1007,19 @@ class BillingService:
                         provider_customer_id=data_object.get("customer"),
                         raw_provider_object=data_object,
                         force_current=True,
+                        event_created_at=event_created_at,
+                        event_id=event_id,
                     )
                     handled = True
             elif event_type in {"customer.subscription.updated", "customer.subscription.deleted"}:
                 metadata = data_object.get("metadata", {})
-                uid = metadata.get("firebase_uid")
-                plan_key = metadata.get("plan_key")
+                provider_subscription_id = data_object.get("id")
+                existing = self._find_provider_subscription("stripe", provider_subscription_id, None)
+                uid = metadata.get("firebase_uid") or (existing.firebase_uid if existing else None)
+                plan_key = metadata.get("plan_key") or (existing.plan_key if existing else None)
                 if uid and plan_key:
                     is_deleted = event_type.endswith("deleted")
-                    status_value = "cancelled" if is_deleted else data_object.get("status", "active")
+                    status_value = "canceled" if is_deleted else data_object.get("status", "active")
                     current_period_end = _from_unix(data_object.get("current_period_end"))
                     if is_deleted and current_period_end is None:
                         current_period_end = utcnow()
@@ -596,20 +1028,73 @@ class BillingService:
                         plan_key=plan_key,
                         provider="stripe",
                         provider_checkout_session_id=None,
-                        provider_subscription_id=data_object.get("id"),
+                        provider_subscription_id=provider_subscription_id,
                         provider_customer_id=data_object.get("customer"),
                         raw_provider_object=data_object,
                         current_period_start=_from_unix(data_object.get("current_period_start")),
                         current_period_end=current_period_end,
                         status_value=status_value,
+                        cancel_at_period_end=bool(data_object.get("cancel_at_period_end", False)),
                         force_current=False,
+                        event_created_at=event_created_at,
+                        event_id=event_id,
                     )
                     handled = True
+            elif event_type in {
+                "invoice.paid",
+                "invoice.payment_succeeded",
+                "invoice.payment_failed",
+                "invoice.marked_uncollectible",
+                "invoice.voided",
+            }:
+                handled = self._process_stripe_invoice_event(
+                    event_id,
+                    event_type,
+                    data_object,
+                    event_created_at,
+                )
 
-            billing_event.processing_status = "processed" if handled else "ignored"
-            billing_event.processed_at = utcnow()
+            return self._finish_billing_event(billing_event, handled)
+        except Exception as exc:
+            billing_event.processing_status = "failed"
+            billing_event.error = str(exc)
             self.db.commit()
-            return {"received": True, "ignored": not handled}
+            raise
+
+    def process_paypal_event(self, event: dict[str, Any], payload_bytes: bytes) -> dict[str, Any]:
+        billing_event, duplicate = self._record_billing_event("paypal", event, payload_bytes)
+        if duplicate:
+            return {"received": True, "duplicate": True}
+
+        event_id = billing_event.event_id
+        event_type = billing_event.event_type.upper()
+        event_created_at = _event_created_at(event)
+        resource = event.get("resource", {})
+        handled = False
+        try:
+            if event_type.startswith("BILLING.SUBSCRIPTION.PAYMENT"):
+                handled = self._process_paypal_payment_event(
+                    event_id,
+                    event_type,
+                    resource,
+                    event_created_at,
+                )
+            elif event_type.startswith("PAYMENT.") or "PAYMENT" in event_type:
+                handled = self._process_paypal_payment_event(
+                    event_id,
+                    event_type,
+                    resource,
+                    event_created_at,
+                )
+            elif event_type.startswith("BILLING.SUBSCRIPTION"):
+                handled = self._process_paypal_subscription_event(
+                    event_id,
+                    event_type,
+                    resource,
+                    event_created_at,
+                )
+
+            return self._finish_billing_event(billing_event, handled)
         except Exception as exc:
             billing_event.processing_status = "failed"
             billing_event.error = str(exc)
