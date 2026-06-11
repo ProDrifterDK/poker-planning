@@ -163,6 +163,147 @@ def test_staging_requires_signed_stripe_webhooks(monkeypatch):
         Settings()
 
 
+def test_production_requires_paypal_env_when_provider_is_paypal(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "paypal")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    for key in [
+        "PAYPAL_CLIENT_ID",
+        "PAYPAL_CLIENT_SECRET",
+        "PAYPAL_ENVIRONMENT",
+        "PAYPAL_WEBHOOK_ID",
+        "PAYPAL_PLAN_PRO_MONTH",
+        "PAYPAL_PLAN_PRO_YEAR",
+        "PAYPAL_PLAN_ENTERPRISE_MONTH",
+        "PAYPAL_PLAN_ENTERPRISE_YEAR",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+
+    with pytest.raises(ValueError) as exc_info:
+        Settings()
+
+    message = str(exc_info.value)
+    for env_name in [
+        "PAYPAL_CLIENT_ID",
+        "PAYPAL_CLIENT_SECRET",
+        "PAYPAL_ENVIRONMENT",
+        "PAYPAL_WEBHOOK_ID",
+        "PAYPAL_PLAN_PRO_MONTH",
+        "PAYPAL_PLAN_PRO_YEAR",
+        "PAYPAL_PLAN_ENTERPRISE_MONTH",
+        "PAYPAL_PLAN_ENTERPRISE_YEAR",
+    ]:
+        assert env_name in message
+
+
+def test_production_accepts_paypal_provider_with_full_env(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "paypal")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("PAYPAL_CLIENT_ID", "client_id_x")
+    monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "client_secret_x")
+    monkeypatch.setenv("PAYPAL_ENVIRONMENT", "live")
+    monkeypatch.setenv("PAYPAL_WEBHOOK_ID", "wh_id_x")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_MONTH", "P-PROMO")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_YEAR", "P-PROYR")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_MONTH", "P-ENTMO")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_YEAR", "P-ENTYR")
+
+    settings = Settings()
+    assert settings.billing_provider == "paypal"
+    assert settings.paypal_environment == "live"
+    status = settings.provider_config_status("paypal")
+    assert status["configured"] is True
+    assert status["webhookConfigured"] is True
+    assert status["environment"] == "live"
+    plans = status["plans"]
+    assert isinstance(plans, dict)
+    assert plans["pro-month"] == "P-PROMO"
+
+
+def test_production_paypal_requires_live_environment(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "paypal")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("PAYPAL_CLIENT_ID", "client_id_x")
+    monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "client_secret_x")
+    monkeypatch.setenv("PAYPAL_ENVIRONMENT", "sandbox")
+    monkeypatch.setenv("PAYPAL_WEBHOOK_ID", "wh_id_x")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_MONTH", "P-PROMO")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_YEAR", "P-PROYR")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_MONTH", "P-ENTMO")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_YEAR", "P-ENTYR")
+
+    with pytest.raises(ValueError, match="PAYPAL_ENVIRONMENT=live"):
+        Settings()
+
+
+def test_paypal_environment_rejects_unknown_value(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("BILLING_PROVIDER", "fake")
+    monkeypatch.setenv("PAYPAL_ENVIRONMENT", "staging-not-allowed")
+    with pytest.raises(Exception):
+        Settings()
+
+
+def test_providers_smoke_endpoint_reports_active_supported_and_default_providers(client):
+    response = client.get("/v1/billing/providers")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["activeProvider"] == "fake"
+    assert body["defaultPublicProvider"] == "stripe"
+    assert body["supportedProviders"] == ["stripe", "paypal"]
+    assert "environment" in body
+    assert body["database"]["sqlite"] is True
+    for name in ("stripe", "paypal"):
+        assert name in body["providers"]
+        entry = body["providers"][name]
+        assert entry["provider"] == name
+        assert "configured" in entry
+        assert "webhookConfigured" in entry
+        assert set(entry["plans"]) == {"pro-month", "pro-year", "enterprise-month", "enterprise-year"}
+        for plan_id in entry["plans"].values():
+            if plan_id is not None:
+                assert "secret" not in plan_id.lower()
+
+
+def test_providers_smoke_endpoint_reflects_stripe_env_when_configured(client, monkeypatch):
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_x")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_MONTH", "price_pro_month")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_YEAR", "price_pro_year")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_MONTH", "price_ent_month")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
+    get_settings.cache_clear()
+    try:
+        body = client.get("/v1/billing/providers").json()
+        stripe = body["providers"]["stripe"]
+        assert stripe["configured"] is True
+        assert stripe["credentialsConfigured"] is True
+        assert stripe["webhookConfigured"] is True
+        assert stripe["plans"]["pro-month"] == "price_pro_month"
+        assert stripe["missingRequiredEnv"] == []
+    finally:
+        get_settings.cache_clear()
+
+
+def test_provider_config_status_rejects_unknown_provider():
+    settings = get_settings()
+    result = settings.provider_config_status("bitcoin")
+    assert result["provider"] == "bitcoin"
+    assert result["configured"] is False
+    assert result["plans"] == {}
+
+
 def test_stripe_webhook_rejects_invalid_signature_when_secret_configured(client, monkeypatch):
     monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test")
     get_settings.cache_clear()

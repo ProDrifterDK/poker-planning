@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, db_session
+from app.core.settings import get_settings
 from app.schemas.billing import (
     AuthenticatedUser,
     BillingMeResponse,
@@ -19,6 +20,32 @@ router = APIRouter(prefix="/v1/billing", tags=["billing"])
 @router.get("/plans")
 def list_plans(db: Session = Depends(db_session)) -> dict[str, list[dict]]:
     return {"plans": BillingService(db).list_plans()}
+
+
+@router.get("/providers")
+def provider_status() -> dict[str, object]:
+    """Return non-secret billing provider configuration status for ops smoke checks."""
+    settings = get_settings()
+    providers = {
+        provider: settings.provider_config_status(provider)
+        for provider in settings.supported_providers
+    }
+    default_public_provider = (
+        settings.billing_provider
+        if settings.billing_provider in settings.supported_providers
+        else "stripe"
+    )
+    return {
+        "activeProvider": settings.billing_provider,
+        "defaultPublicProvider": default_public_provider,
+        "supportedProviders": settings.supported_providers,
+        "providers": providers,
+        "environment": settings.app_env,
+        "database": {
+            "postgresConfigured": settings.normalized_database_url.startswith("postgresql+psycopg://"),
+            "sqlite": settings.normalized_database_url.startswith("sqlite"),
+        },
+    }
 
 
 @router.get("/me", response_model=BillingMeResponse)
