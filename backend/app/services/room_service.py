@@ -224,12 +224,22 @@ class RoomEntitlementService:
                 )
             )
             if existing:
+                active_participants = self._active_participant_count(room.id)
+                if not existing.active:
+                    if active_participants >= entitlement.max_participants:
+                        raise self._limit_error(
+                            code="PARTICIPANT_LIMIT_REACHED",
+                            message="Room participant limit reached",
+                            entitlement=entitlement,
+                            limit=entitlement.max_participants,
+                            current_usage=active_participants,
+                        )
+                    active_participants += 1
                 existing.display_name = payload.displayName
                 existing.photo_url = payload.photoURL
                 existing.active = True
                 existing.last_seen_at = utcnow()
                 self.db.flush()
-                active_participants = self._active_participant_count(room.id)
                 self.db.commit()
                 return self._serialize(
                     room=room,

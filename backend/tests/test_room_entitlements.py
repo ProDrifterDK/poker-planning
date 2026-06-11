@@ -162,6 +162,52 @@ def test_join_room_is_idempotent_for_existing_participant_at_limit(client):
     assert rows[0].display_name == "Member 1 Updated"
 
 
+def test_inactive_existing_participant_cannot_rejoin_over_owner_limit(client):
+    room_id = "room-inactive-rejoin-full"
+    _seed_room(room_id, owner_uid="alice")
+    _seed_participants(room_id, 4)
+    with SessionLocal() as db:
+        db.add(
+            RoomMembership(
+                room_id=room_id,
+                firebase_uid="returning",
+                display_name="Returning",
+                role="participant",
+                active=False,
+            )
+        )
+        db.commit()
+
+    response = client.post(
+        f"/v1/rooms/{room_id}/join",
+        json={"displayName": "Returning Updated"},
+        headers=_auth_headers("returning"),
+    )
+
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert detail["code"] == "PARTICIPANT_LIMIT_REACHED"
+    assert detail["limit"] == 5
+    assert detail["currentUsage"] == 5
+    with SessionLocal() as db:
+        returning = db.scalar(
+            select(RoomMembership).where(
+                RoomMembership.room_id == room_id,
+                RoomMembership.firebase_uid == "returning",
+            )
+        )
+        active_count = sum(
+            1
+            for membership in db.scalars(
+                select(RoomMembership).where(RoomMembership.room_id == room_id)
+            )
+            if membership.active
+        )
+    assert returning is not None
+    assert returning.active is False
+    assert active_count == 5
+
+
 def test_room_lock_query_uses_for_update_for_concurrent_join_serialization():
     sql = str(room_for_update_statement("room-1").compile(dialect=postgresql.dialect()))
 
