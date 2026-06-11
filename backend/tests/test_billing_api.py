@@ -5,11 +5,13 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from app.core.settings import Settings, get_settings
 from app.db.models import BillingCheckoutSession, BillingCustomer, BillingEvent, BillingPayment, BillingSubscription
 from app.db.session import SessionLocal
+from app.main import create_app
 from app.schemas.billing import AuthenticatedUser
 from app.services.billing_service import BillingService
 
@@ -817,6 +819,164 @@ def test_legacy_cancelled_status_with_future_period_keeps_grace_entitlement(clie
     assert subscription["features"]["maxActiveRooms"] == 5
 
 
+def configure_staging_paypal_env(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+    monkeypatch.setenv("BILLING_PROVIDER", "paypal")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("PAYPAL_CLIENT_ID", "paypal-client")
+    monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "paypal-secret")
+    monkeypatch.setenv("PAYPAL_ENVIRONMENT", "sandbox")
+    monkeypatch.setenv("PAYPAL_WEBHOOK_ID", "WH-PAYPAL-CONFIGURED")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_MONTH", "P-PRO-MONTH")
+    monkeypatch.setenv("PAYPAL_PLAN_PRO_YEAR", "P-PRO-YEAR")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_MONTH", "P-ENT-MONTH")
+    monkeypatch.setenv("PAYPAL_PLAN_ENTERPRISE_YEAR", "P-ENT-YEAR")
+    get_settings.cache_clear()
+
+
+def paypal_signature_headers() -> dict[str, str]:
+    return {
+        "PayPal-Auth-Algo": "SHA256withRSA",
+        "PayPal-Cert-Url": "https://api-m.sandbox.paypal.com/certs/CERT-1",
+        "PayPal-Transmission-Id": "transmission-1",
+        "PayPal-Transmission-Sig": "signature-1",
+        "PayPal-Transmission-Time": "2026-01-01T00:00:00Z",
+    }
+
+
+def paypal_subscription_activated_event(event_id: str = "WH-PAYPAL-SIGNED-ACTIVE") -> dict:
+    return {
+        "id": event_id,
+        "event_type": "BILLING.SUBSCRIPTION.ACTIVATED",
+        "create_time": "2026-01-01T00:00:00Z",
+        "resource": {
+            "id": "I-PAYPAL-SIGNED-SUB",
+            "status": "ACTIVE",
+            "custom_id": json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"}),
+            "subscriber": {"payer_id": "PAYER-SIGNED"},
+            "billing_info": {"next_billing_time": "2030-01-01T00:00:00Z"},
+        },
+    }
+
+
+def test_non_local_paypal_webhook_requires_signature_headers(monkeypatch):
+    configure_staging_paypal_env(monkeypatch)
+    with TestClient(create_app()) as client:
+        response = client.post("/v1/webhooks/paypal", json=paypal_subscription_activated_event())
+
+    assert response.status_code == 400
+    assert "Missing PayPal webhook headers" in response.json()["detail"]
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(BillingEvent)) == 0
+        assert db.scalar(select(func.count()).select_from(BillingSubscription)) == 0
+
+
+def test_non_local_paypal_webhook_rejects_failed_signature_verification(monkeypatch):
+    configure_staging_paypal_env(monkeypatch)
+    verification_calls = []
+
+    def fake_paypal_api_request(self, method, path, body=None):
+        verification_calls.append({"method": method, "path": path, "body": body})
+        return {"verification_status": "FAILURE"}
+
+    monkeypatch.setattr(BillingService, "_paypal_api_request", fake_paypal_api_request)
+    with TestClient(create_app()) as client:
+        response = client.post(
+            "/v1/webhooks/paypal",
+            json=paypal_subscription_activated_event(),
+            headers=paypal_signature_headers(),
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid PayPal webhook signature"
+    assert verification_calls[0]["method"] == "POST"
+    assert verification_calls[0]["path"] == "/v1/notifications/verify-webhook-signature"
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(BillingEvent)) == 0
+        assert db.scalar(select(func.count()).select_from(BillingSubscription)) == 0
+
+
+def test_non_local_paypal_webhook_verifies_signature_before_processing(monkeypatch):
+    configure_staging_paypal_env(monkeypatch)
+    verification_calls = []
+    event = paypal_subscription_activated_event()
+
+    def fake_paypal_api_request(self, method, path, body=None):
+        verification_calls.append({"method": method, "path": path, "body": body})
+        return {"verification_status": "SUCCESS"}
+
+    monkeypatch.setattr(BillingService, "_paypal_api_request", fake_paypal_api_request)
+    with TestClient(create_app()) as client:
+        response = client.post(
+            "/v1/webhooks/paypal",
+            json=event,
+            headers=paypal_signature_headers(),
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"received": True, "ignored": False}
+    assert len(verification_calls) == 1
+    verification = verification_calls[0]
+    assert verification["method"] == "POST"
+    assert verification["path"] == "/v1/notifications/verify-webhook-signature"
+    assert verification["body"] == {
+        "auth_algo": "SHA256withRSA",
+        "cert_url": "https://api-m.sandbox.paypal.com/certs/CERT-1",
+        "transmission_id": "transmission-1",
+        "transmission_sig": "signature-1",
+        "transmission_time": "2026-01-01T00:00:00Z",
+        "webhook_id": "WH-PAYPAL-CONFIGURED",
+        "webhook_event": event,
+    }
+    with SessionLocal() as db:
+        subscription = db.scalar(
+            select(BillingSubscription).where(
+                BillingSubscription.provider == "paypal",
+                BillingSubscription.provider_subscription_id == "I-PAYPAL-SIGNED-SUB",
+            )
+        )
+    assert subscription is not None
+    assert subscription.firebase_uid == "alice"
+    assert subscription.plan_key == "pro-month"
+    assert subscription.status == "active"
+
+
+def test_paypal_signature_verification_accepts_plain_mapping_header_casing(monkeypatch):
+    verification_calls = []
+    event = paypal_subscription_activated_event("WH-PAYPAL-PLAIN-MAPPING")
+    settings = paypal_checkout_settings(paypal_webhook_id="WH-PAYPAL-PLAIN")
+
+    def fake_paypal_api_request(self, method, path, body=None):
+        verification_calls.append({"method": method, "path": path, "body": body})
+        return {"verification_status": "SUCCESS"}
+
+    monkeypatch.setattr(BillingService, "_paypal_api_request", fake_paypal_api_request)
+    with SessionLocal() as db:
+        BillingService(db, settings=settings).verify_paypal_webhook_signature(
+            event,
+            paypal_signature_headers(),
+        )
+
+    assert verification_calls == [
+        {
+            "method": "POST",
+            "path": "/v1/notifications/verify-webhook-signature",
+            "body": {
+                "auth_algo": "SHA256withRSA",
+                "cert_url": "https://api-m.sandbox.paypal.com/certs/CERT-1",
+                "transmission_id": "transmission-1",
+                "transmission_sig": "signature-1",
+                "transmission_time": "2026-01-01T00:00:00Z",
+                "webhook_id": "WH-PAYPAL-PLAIN",
+                "webhook_event": event,
+            },
+        }
+    ]
+
+
 def test_paypal_initial_failed_payment_records_payment_without_paid_entitlement(client, auth_headers):
     metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
 
@@ -934,6 +1094,328 @@ def test_paypal_subscription_and_payment_events_update_history_idempotently(clie
     with SessionLocal() as db:
         payment_count = db.scalar(select(func.count()).select_from(BillingPayment))
     assert payment_count == 1
+
+
+def test_paypal_payment_completed_then_denied_updates_history_and_lifecycle(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    completed = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-PAYMENT-COMPLETED",
+            "event_type": "PAYMENT.SALE.COMPLETED",
+            "create_time": "2026-01-01T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-COMPLETED-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-PAYMENT-LIFECYCLE",
+                "invoice_id": "PAYPAL-COMPLETED-INVOICE",
+                "custom_id": metadata,
+                "amount": {"total": "29.99", "currency": "USD"},
+                "time": "2026-01-01T00:00:00Z",
+                "status": "COMPLETED",
+            },
+        },
+    )
+    assert completed.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "pro"
+    assert body["subscription"]["status"] == "active"
+    assert body["payments"][0]["status"] == "paid"
+
+    denied = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-PAYMENT-DENIED",
+            "event_type": "PAYMENT.SALE.DENIED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-DENIED-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-PAYMENT-LIFECYCLE",
+                "invoice_id": "PAYPAL-DENIED-INVOICE",
+                "custom_id": metadata,
+                "amount": {"total": "29.99", "currency": "USD"},
+                "time": "2026-01-02T00:00:00Z",
+                "status": "DENIED",
+            },
+        },
+    )
+    assert denied.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "pro"
+    assert body["subscription"]["status"] == "past_due"
+    assert [payment["status"] for payment in body["payments"]] == ["failed", "paid"]
+    assert [payment["providerInvoiceId"] for payment in body["payments"]] == [
+        "PAYPAL-DENIED-INVOICE",
+        "PAYPAL-COMPLETED-INVOICE",
+    ]
+
+
+def test_paypal_subscription_event_without_metadata_or_existing_subscription_is_ignored(client):
+    response = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-MISSING-METADATA",
+            "event_type": "BILLING.SUBSCRIPTION.ACTIVATED",
+            "create_time": "2026-01-01T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-MISSING-METADATA",
+                "status": "ACTIVE",
+                "subscriber": {"payer_id": "PAYER-MISSING"},
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"received": True, "ignored": True}
+    with SessionLocal() as db:
+        event = db.scalar(
+            select(BillingEvent).where(
+                BillingEvent.provider == "paypal",
+                BillingEvent.event_id == "WH-PAYPAL-MISSING-METADATA",
+            )
+        )
+        assert event is not None
+        assert event.processing_status == "ignored"
+        assert db.scalar(select(func.count()).select_from(BillingSubscription)) == 0
+
+
+def test_paypal_cancel_event_expires_existing_entitlement(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    activated = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-CANCEL-ACTIVE",
+            "event_type": "BILLING.SUBSCRIPTION.ACTIVATED",
+            "create_time": "2026-01-01T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-CANCEL",
+                "status": "ACTIVE",
+                "custom_id": metadata,
+                "billing_info": {"next_billing_time": "2030-01-01T00:00:00Z"},
+            },
+        },
+    )
+    assert activated.status_code == 200
+
+    canceled = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-CANCELLED",
+            "event_type": "BILLING.SUBSCRIPTION.CANCELLED",
+            "create_time": "2026-01-03T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-CANCEL",
+                "status": "CANCELLED",
+            },
+        },
+    )
+
+    assert canceled.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "free"
+    with SessionLocal() as db:
+        subscription = db.scalar(
+            select(BillingSubscription).where(
+                BillingSubscription.provider == "paypal",
+                BillingSubscription.provider_subscription_id == "I-PAYPAL-CANCEL",
+            )
+        )
+    assert subscription is not None
+    assert subscription.status == "canceled"
+    assert subscription.is_current is False
+
+
+def test_paypal_suspended_event_removes_paid_entitlement(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "enterprise-month"})
+    activated = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-SUSPEND-ACTIVE",
+            "event_type": "BILLING.SUBSCRIPTION.ACTIVATED",
+            "create_time": "2026-01-01T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-SUSPEND",
+                "status": "ACTIVE",
+                "custom_id": metadata,
+                "billing_info": {"next_billing_time": "2030-01-01T00:00:00Z"},
+            },
+        },
+    )
+    assert activated.status_code == 200
+    assert client.get("/v1/billing/me", headers=auth_headers).json()["subscription"]["plan"] == "enterprise"
+
+    suspended = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-SUSPENDED",
+            "event_type": "BILLING.SUBSCRIPTION.SUSPENDED",
+            "create_time": "2026-01-03T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-SUSPEND",
+                "status": "SUSPENDED",
+            },
+        },
+    )
+
+    assert suspended.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "free"
+    with SessionLocal() as db:
+        subscription = db.scalar(
+            select(BillingSubscription).where(
+                BillingSubscription.provider == "paypal",
+                BillingSubscription.provider_subscription_id == "I-PAYPAL-SUSPEND",
+            )
+        )
+    assert subscription is not None
+    assert subscription.status == "suspended"
+    assert subscription.is_current is False
+
+
+def test_out_of_order_paypal_cancel_does_not_downgrade_newer_active_subscription(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    active = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-ORDERED-ACTIVE",
+            "event_type": "BILLING.SUBSCRIPTION.ACTIVATED",
+            "create_time": "2026-01-03T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-SUBSCRIPTION-ORDERED",
+                "status": "ACTIVE",
+                "custom_id": metadata,
+                "billing_info": {"next_billing_time": "2030-01-01T00:00:00Z"},
+            },
+        },
+    )
+    assert active.status_code == 200
+
+    stale_cancel = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-STALE-CANCEL",
+            "event_type": "BILLING.SUBSCRIPTION.CANCELLED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "I-PAYPAL-SUBSCRIPTION-ORDERED",
+                "status": "CANCELLED",
+            },
+        },
+    )
+
+    assert stale_cancel.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["status"] == "active"
+    assert body["subscription"]["plan"] == "pro"
+    with SessionLocal() as db:
+        subscription = db.scalar(
+            select(BillingSubscription).where(
+                BillingSubscription.provider == "paypal",
+                BillingSubscription.provider_subscription_id == "I-PAYPAL-SUBSCRIPTION-ORDERED",
+            )
+        )
+    assert subscription is not None
+    assert subscription.status == "active"
+    assert subscription.is_current is True
+
+
+def test_paypal_payment_recovery_restores_past_due_subscription(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    with SessionLocal() as db:
+        BillingService(db)._activate_subscription(
+            uid="alice",
+            plan_key="pro-month",
+            provider="paypal",
+            provider_checkout_session_id=None,
+            provider_subscription_id="I-PAYPAL-RECOVERY",
+            provider_customer_id="PAYER-RECOVERY",
+            raw_provider_object={"provider": "paypal"},
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=30),
+        )
+        db.commit()
+
+    failed = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-RECOVERY-FAILED",
+            "event_type": "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-RECOVERY-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-RECOVERY",
+                "invoice_id": "PAYPAL-RECOVERY-INVOICE",
+                "custom_id": metadata,
+                "amount": {"value": "29.99", "currency_code": "USD"},
+                "time": "2026-01-02T00:00:00Z",
+            },
+        },
+    )
+    assert failed.status_code == 200
+    assert client.get("/v1/billing/me", headers=auth_headers).json()["subscription"]["status"] == "past_due"
+
+    recovered = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-RECOVERY-PAID",
+            "event_type": "BILLING.SUBSCRIPTION.PAYMENT.SUCCEEDED",
+            "create_time": "2026-01-03T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-RECOVERY-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-RECOVERY",
+                "invoice_id": "PAYPAL-RECOVERY-INVOICE",
+                "custom_id": metadata,
+                "amount": {"value": "29.99", "currency_code": "USD"},
+                "time": "2026-01-03T00:00:00Z",
+            },
+        },
+    )
+
+    assert recovered.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["status"] == "active"
+    assert body["subscription"]["plan"] == "pro"
+    assert body["payments"][0]["status"] == "paid"
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(BillingPayment)) == 1
+
+
+def test_out_of_order_paypal_payment_failure_does_not_downgrade_recovered_status(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    with SessionLocal() as db:
+        BillingService(db)._activate_subscription(
+            uid="alice",
+            plan_key="pro-month",
+            provider="paypal",
+            provider_checkout_session_id=None,
+            provider_subscription_id="I-PAYPAL-ORDERED",
+            provider_customer_id="PAYER-ORDERED",
+            raw_provider_object={"provider": "paypal"},
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=30),
+            event_created_at=datetime(2026, 1, 3, tzinfo=timezone.utc),
+            event_id="seed-active",
+        )
+        db.commit()
+
+    stale_failed = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-STALE-FAILED",
+            "event_type": "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-STALE-FAILED-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-ORDERED",
+                "invoice_id": "PAYPAL-STALE-FAILED-INVOICE",
+                "custom_id": metadata,
+                "amount": {"value": "29.99", "currency_code": "USD"},
+                "time": "2026-01-02T00:00:00Z",
+            },
+        },
+    )
+
+    assert stale_failed.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["status"] == "active"
+    assert body["subscription"]["plan"] == "pro"
 
 
 def test_checkout_request_can_choose_paypal_without_client_side_activation(client, auth_headers):

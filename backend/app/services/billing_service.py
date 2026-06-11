@@ -7,7 +7,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Mapping
 
 from fastapi import HTTPException, status
 from sqlalchemy import or_, select
@@ -32,6 +32,13 @@ NORMALIZED_SUBSCRIPTION_STATUSES = CURRENT_STATUSES | INACTIVE_STATUSES
 ACTIVE_STATUSES = CURRENT_STATUSES
 LEGACY_SCHEDULED_CANCEL_STATUSES = {"canceled", "cancelled"}
 PUBLIC_BILLING_PROVIDERS = {"stripe", "paypal"}
+PAYPAL_WEBHOOK_SIGNATURE_HEADERS = {
+    "auth_algo": "PAYPAL-AUTH-ALGO",
+    "cert_url": "PAYPAL-CERT-URL",
+    "transmission_id": "PAYPAL-TRANSMISSION-ID",
+    "transmission_sig": "PAYPAL-TRANSMISSION-SIG",
+    "transmission_time": "PAYPAL-TRANSMISSION-TIME",
+}
 
 STRIPE_STATUS_ALIASES = {
     "active": "active",
@@ -187,6 +194,17 @@ def _provider_value(value: Any, key: str, default: Any = None) -> Any:
 def _provider_metadata(value: Any) -> dict[str, Any]:
     metadata = _provider_value(value, "metadata", {}) or {}
     return dict(metadata)
+
+
+def _header_value(headers: Mapping[str, str], header_name: str) -> str | None:
+    value = headers.get(header_name) or headers.get(header_name.lower())
+    if value:
+        return value
+    expected = header_name.lower()
+    for key, candidate in headers.items():
+        if str(key).lower() == expected:
+            return candidate
+    return None
 
 
 class BillingService:
@@ -538,6 +556,50 @@ class BillingService:
                 detail="PayPal API returned an unexpected response",
             )
         return data
+
+    def verify_paypal_webhook_signature(
+        self, event: dict[str, Any], headers: Mapping[str, str]
+    ) -> None:
+        if not self.settings.paypal_webhook_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="PayPal webhook ID is required outside local/test",
+            )
+
+        values = {
+            field: _header_value(headers, header_name)
+            for field, header_name in PAYPAL_WEBHOOK_SIGNATURE_HEADERS.items()
+        }
+        missing = [
+            header_name
+            for field, header_name in PAYPAL_WEBHOOK_SIGNATURE_HEADERS.items()
+            if not values[field]
+        ]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Missing PayPal webhook headers: {', '.join(missing)}",
+            )
+
+        verification = self._paypal_api_request(
+            "POST",
+            "/v1/notifications/verify-webhook-signature",
+            {
+                "auth_algo": values["auth_algo"],
+                "cert_url": values["cert_url"],
+                "transmission_id": values["transmission_id"],
+                "transmission_sig": values["transmission_sig"],
+                "transmission_time": values["transmission_time"],
+                "webhook_id": self.settings.paypal_webhook_id,
+                "webhook_event": event,
+            },
+        )
+        verification_status = str(verification.get("verification_status") or "").upper()
+        if verification_status != "SUCCESS":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid PayPal webhook signature",
+            )
 
     def _paypal_approval_url(self, paypal_subscription: dict[str, Any]) -> str | None:
         links = paypal_subscription.get("links") or []

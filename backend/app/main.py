@@ -18,7 +18,16 @@ def create_app() -> FastAPI:
         allow_origins=settings.frontend_origin_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "Stripe-Signature"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Stripe-Signature",
+            "PayPal-Auth-Algo",
+            "PayPal-Cert-Url",
+            "PayPal-Transmission-Id",
+            "PayPal-Transmission-Sig",
+            "PayPal-Transmission-Time",
+        ],
     )
 
     @app.on_event("startup")

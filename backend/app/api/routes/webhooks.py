@@ -45,12 +45,10 @@ async def paypal_webhook(
 ) -> dict:
     settings = get_settings()
     payload = await request.body()
+    event = event_from_raw_payload(payload)
+    service = BillingService(db, settings)
 
     if not settings.is_local_test:
-        raise HTTPException(
-            status_code=501,
-            detail="PayPal webhook signature verification is not implemented yet",
-        )
+        service.verify_paypal_webhook_signature(event, request.headers)
 
-    event = event_from_raw_payload(payload)
-    return BillingService(db, settings).process_paypal_event(event, payload)
+    return service.process_paypal_event(event, payload)
