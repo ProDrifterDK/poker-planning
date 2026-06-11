@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -72,6 +76,15 @@ def get_price_id(settings: Settings, plan_key: str) -> str | None:
         "pro-year": settings.stripe_price_pro_year,
         "enterprise-month": settings.stripe_price_enterprise_month,
         "enterprise-year": settings.stripe_price_enterprise_year,
+    }.get(plan_key)
+
+
+def get_paypal_plan_id(settings: Settings, plan_key: str) -> str | None:
+    return {
+        "pro-month": settings.paypal_plan_pro_month,
+        "pro-year": settings.paypal_plan_pro_year,
+        "enterprise-month": settings.paypal_plan_enterprise_month,
+        "enterprise-year": settings.paypal_plan_enterprise_year,
     }.get(plan_key)
 
 
@@ -362,10 +375,7 @@ class BillingService:
         if provider == "stripe" and not self.settings.e2e_test_mode:
             checkout_url, provider_session_id = self._create_stripe_session(user, plan_key, locale)
         elif provider == "paypal" and not self.settings.e2e_test_mode:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail="PayPal checkout adapter is not implemented yet",
-            )
+            checkout_url, provider_session_id = self._create_paypal_subscription(user, plan_key, locale)
 
         session = BillingCheckoutSession(
             firebase_uid=user.uid,
@@ -413,6 +423,168 @@ class BillingService:
             subscription_data={"metadata": {"firebase_uid": user.uid, "plan_key": plan_key}},
         )
         return session.url, session.id
+
+    def _paypal_base_url(self) -> str:
+        if self.settings.paypal_environment == "live":
+            return "https://api-m.paypal.com"
+        return "https://api-m.sandbox.paypal.com"
+
+    def _ensure_paypal_credentials(self) -> None:
+        if not (
+            self.settings.paypal_client_id
+            and self.settings.paypal_client_secret
+            and self.settings.paypal_environment
+        ):
+            raise HTTPException(status_code=500, detail="PayPal is not configured")
+
+    def _paypal_access_token(self) -> str:
+        self._ensure_paypal_credentials()
+        credentials = f"{self.settings.paypal_client_id}:{self.settings.paypal_client_secret}"
+        encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("ascii")
+        payload = urllib.parse.urlencode({"grant_type": "client_credentials"}).encode("utf-8")
+        request = urllib.request.Request(
+            f"{self._paypal_base_url()}/v1/oauth2/token",
+            data=payload,
+            headers={
+                "Accept": "application/json",
+                "Accept-Language": "en_US",
+                "Authorization": f"Basic {encoded_credentials}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                data = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal authentication failed",
+            ) from exc
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal authentication failed",
+            ) from exc
+
+        access_token = data.get("access_token")
+        if not access_token:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal authentication failed",
+            )
+        return str(access_token)
+
+    def _paypal_api_error_detail(self, payload: str) -> str:
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            return "PayPal API request failed"
+        if isinstance(data, dict):
+            details = data.get("details")
+            if isinstance(details, list) and details:
+                issue = details[0].get("issue") if isinstance(details[0], dict) else None
+                description = details[0].get("description") if isinstance(details[0], dict) else None
+                if issue and description:
+                    return f"PayPal API request failed: {issue} - {description}"
+                if description:
+                    return f"PayPal API request failed: {description}"
+            message = data.get("message") or data.get("name")
+            if message:
+                return f"PayPal API request failed: {message}"
+        return "PayPal API request failed"
+
+    def _paypal_api_request(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        token = self._paypal_access_token()
+        payload = json.dumps(body).encode("utf-8") if body is not None else None
+        request = urllib.request.Request(
+            f"{self._paypal_base_url()}{path}",
+            data=payload,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            method=method,
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                raw = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            payload_text = exc.read().decode("utf-8", errors="replace")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=self._paypal_api_error_detail(payload_text),
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal API request failed",
+            ) from exc
+        if not raw:
+            return {}
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal API returned invalid JSON",
+            ) from exc
+        if not isinstance(data, dict):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal API returned an unexpected response",
+            )
+        return data
+
+    def _paypal_approval_url(self, paypal_subscription: dict[str, Any]) -> str | None:
+        links = paypal_subscription.get("links") or []
+        for link in links:
+            if not isinstance(link, dict):
+                continue
+            if str(link.get("rel") or "").lower() in {"approve", "approval_url"}:
+                href = link.get("href")
+                return str(href) if href else None
+        return None
+
+    def _create_paypal_subscription(
+        self, user: AuthenticatedUser, plan_key: str, locale: str
+    ) -> tuple[str, str]:
+        plan_id = get_paypal_plan_id(self.settings, plan_key)
+        if not plan_id:
+            raise HTTPException(status_code=500, detail=f"PayPal is not configured for plan {plan_key}")
+        self._ensure_paypal_credentials()
+        safe_locale = locale if locale in {"es", "en"} else "es"
+        frontend_base = self.settings.frontend_base_url.rstrip("/")
+        custom_id = json.dumps(
+            {"firebase_uid": user.uid, "plan_key": plan_key},
+            separators=(",", ":"),
+        )
+        body: dict[str, Any] = {
+            "plan_id": plan_id,
+            "custom_id": custom_id,
+            "application_context": {
+                "brand_name": "Poker Planning",
+                "shipping_preference": "NO_SHIPPING",
+                "user_action": "SUBSCRIBE_NOW",
+                "return_url": f"{frontend_base}/{safe_locale}/settings/subscription/success?provider=paypal",
+                "cancel_url": f"{frontend_base}/{safe_locale}/settings/subscription/cancel?provider=paypal",
+            },
+        }
+        if user.email:
+            body["subscriber"] = {"email_address": user.email}
+
+        paypal_subscription = self._paypal_api_request("POST", "/v1/billing/subscriptions", body)
+        provider_session_id = paypal_subscription.get("id")
+        checkout_url = self._paypal_approval_url(paypal_subscription)
+        if not provider_session_id or not checkout_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="PayPal checkout creation returned an unexpected response",
+            )
+        return checkout_url, str(provider_session_id)
 
     def subscription_management_url(self, locale: str = "es") -> str:
         safe_locale = locale if locale in {"es", "en"} else "es"
@@ -484,10 +656,7 @@ class BillingService:
         if session.provider == "stripe" and not self.settings.e2e_test_mode:
             return self._confirm_stripe_checkout(user, session)
         if session.provider == "paypal" and not self.settings.e2e_test_mode:
-            raise HTTPException(
-                status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                detail="PayPal checkout adapter is not implemented yet",
-            )
+            return self._confirm_paypal_checkout(user, session)
 
         subscription = self._activate_subscription(
             uid=user.uid,
@@ -515,6 +684,56 @@ class BillingService:
         if stripe_session.status != "complete" or not stripe_session.subscription:
             return {"status": "pending", "subscription": self.serialize_subscription(None)}
         subscription = self._upsert_subscription_from_stripe(stripe_session.subscription, stripe_session)
+        session.status = "completed"
+        session.completed_at = utcnow()
+        self.db.commit()
+        return {"status": subscription.status, "subscription": self.serialize_subscription(subscription)}
+
+    def _confirm_paypal_checkout(
+        self, user: AuthenticatedUser, session: BillingCheckoutSession
+    ) -> dict[str, Any]:
+        paypal_subscription = self._paypal_api_request(
+            "GET",
+            f"/v1/billing/subscriptions/{session.provider_session_id}",
+        )
+        provider_subscription_id = self._paypal_subscription_id(paypal_subscription)
+        if provider_subscription_id and provider_subscription_id != session.provider_session_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="PayPal subscription ID does not match checkout session",
+            )
+        provider_subscription_id = provider_subscription_id or session.provider_session_id
+
+        metadata = self._paypal_metadata(paypal_subscription)
+        metadata_uid = metadata.get("firebase_uid")
+        if metadata_uid and metadata_uid != user.uid:
+            raise HTTPException(status_code=403, detail="Provider session belongs to another user")
+        metadata_plan_key = self._paypal_plan_key(paypal_subscription, metadata)
+        if metadata_plan_key and metadata_plan_key != session.plan_key:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="PayPal subscription plan does not match checkout session",
+            )
+
+        paypal_status = _normalize_status("paypal", paypal_subscription.get("status"), "pending")
+        if paypal_status != "active":
+            session.status = paypal_status
+            self.db.commit()
+            return {"status": "pending", "subscription": self.serialize_subscription(None)}
+
+        subscription = self._activate_subscription(
+            uid=user.uid,
+            plan_key=session.plan_key,
+            provider="paypal",
+            provider_checkout_session_id=session.provider_session_id,
+            provider_subscription_id=provider_subscription_id,
+            provider_customer_id=self._paypal_payer_id(paypal_subscription),
+            raw_provider_object=paypal_subscription,
+            current_period_start=_from_iso(paypal_subscription.get("start_time")),
+            current_period_end=self._paypal_period_end(paypal_subscription),
+            status_value=paypal_status,
+            force_current=True,
+        )
         session.status = "completed"
         session.completed_at = utcnow()
         self.db.commit()

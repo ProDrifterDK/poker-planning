@@ -15,6 +15,7 @@ import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { auth } from '@/lib/firebaseConfig';
 import { getCheckoutTranslations } from '@/types/checkoutTranslations';
+import { getCheckoutSessionIdFromSearchParams } from '@/lib/checkoutReturn';
 
 const supportedLocales = ['es', 'en'];
 
@@ -50,9 +51,7 @@ export default function SubscriptionSuccessPage() {
   useEffect(() => {
     const processSubscription = async () => {
       try {
-        const sessionId =
-          searchParams.get('session_id') ||
-          searchParams.get('checkout_session_id');
+        const sessionId = getCheckoutSessionIdFromSearchParams(searchParams);
 
         // The success URL includes `provider` (set by the backend when
         // creating the checkout session). Forward it to the confirm endpoint

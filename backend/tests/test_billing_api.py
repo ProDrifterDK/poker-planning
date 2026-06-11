@@ -965,38 +965,145 @@ def test_checkout_request_can_choose_paypal_without_client_side_activation(clien
     assert subscription["manageableActions"]["canCancel"] is True
 
 
-def test_non_e2e_paypal_checkout_confirmation_is_not_fake_activated():
+def paypal_checkout_settings(**overrides) -> Settings:
+    values = {
+        "app_env": "test",
+        "database_url": "sqlite:///:memory:",
+        "billing_provider": "paypal",
+        "e2e_test_mode": False,
+        "e2e_test_secret": "test-secret",
+        "frontend_base_url": "https://poker-planning.example",
+        "paypal_client_id": "paypal-client",
+        "paypal_client_secret": "paypal-secret",
+        "paypal_environment": "sandbox",
+        "paypal_plan_pro_month": "P-PRO-MONTH",
+        "paypal_plan_pro_year": "P-PRO-YEAR",
+        "paypal_plan_enterprise_month": "P-ENT-MONTH",
+        "paypal_plan_enterprise_year": "P-ENT-YEAR",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def test_non_e2e_paypal_checkout_creates_paypal_subscription(monkeypatch):
+    with SessionLocal() as db:
+        service = BillingService(db, settings=paypal_checkout_settings())
+        calls = []
+
+        def fake_paypal_request(method, path, body=None):
+            calls.append({"method": method, "path": path, "body": body})
+            assert method == "POST"
+            assert path == "/v1/billing/subscriptions"
+            assert body["plan_id"] == "P-PRO-MONTH"
+            assert json.loads(body["custom_id"]) == {
+                "firebase_uid": "alice",
+                "plan_key": "pro-month",
+            }
+            assert body["application_context"]["return_url"] == (
+                "https://poker-planning.example/en/settings/subscription/success?provider=paypal"
+            )
+            assert body["application_context"]["cancel_url"] == (
+                "https://poker-planning.example/en/settings/subscription/cancel?provider=paypal"
+            )
+            assert body["application_context"]["user_action"] == "SUBSCRIBE_NOW"
+            return {
+                "id": "I-PAYPAL-CREATED",
+                "status": "APPROVAL_PENDING",
+                "links": [
+                    {"rel": "self", "href": "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-PAYPAL-CREATED"},
+                    {"rel": "approve", "href": "https://paypal.example/checkoutnow?token=BA-123"},
+                ],
+            }
+
+        monkeypatch.setattr(service, "_paypal_api_request", fake_paypal_request)
+
+        result = service.create_checkout_session(
+            AuthenticatedUser(uid="alice", email="alice@example.com"),
+            "pro-month",
+            "en",
+            "paypal",
+        )
+
+        assert result == {
+            "checkoutSessionId": "I-PAYPAL-CREATED",
+            "provider": "paypal",
+            "status": "created",
+            "checkoutUrl": "https://paypal.example/checkoutnow?token=BA-123",
+        }
+        assert len(calls) == 1
+        session = db.scalar(
+            select(BillingCheckoutSession).where(
+                BillingCheckoutSession.provider_session_id == "I-PAYPAL-CREATED"
+            )
+        )
+        assert session is not None
+        assert session.firebase_uid == "alice"
+        assert session.plan_key == "pro-month"
+        assert session.provider == "paypal"
+        assert session.status == "created"
+        assert db.scalar(select(func.count()).select_from(BillingSubscription)) == 0
+
+
+def test_paypal_checkout_returns_clear_plan_configuration_error(monkeypatch):
+    with SessionLocal() as db:
+        service = BillingService(
+            db,
+            settings=paypal_checkout_settings(paypal_plan_enterprise_year=None),
+        )
+
+        def fail_paypal_request(*_args, **_kwargs):
+            raise AssertionError("PayPal should not be called when the plan ID is missing")
+
+        monkeypatch.setattr(service, "_paypal_api_request", fail_paypal_request)
+
+        with pytest.raises(HTTPException) as exc_info:
+            service.create_checkout_session(
+                AuthenticatedUser(uid="alice", email="alice@example.com"),
+                "enterprise-year",
+                "en",
+                "paypal",
+            )
+
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.detail == "PayPal is not configured for plan enterprise-year"
+
+
+def test_non_e2e_paypal_checkout_confirmation_keeps_non_active_subscription_pending(monkeypatch):
     with SessionLocal() as db:
         db.add(
             BillingCheckoutSession(
                 firebase_uid="alice",
                 plan_key="enterprise-month",
                 provider="paypal",
-                provider_session_id="paypal_existing_session",
+                provider_session_id="I-PAYPAL-PENDING",
                 checkout_url="https://paypal.example/approve",
             )
         )
         db.commit()
 
-        service = BillingService(
-            db,
-            settings=Settings(
-                app_env="test",
-                database_url="sqlite:///:memory:",
-                billing_provider="fake",
-                e2e_test_mode=False,
-                e2e_test_secret="test-secret",
-            ),
-        )
-        with pytest.raises(HTTPException) as exc_info:
-            service.confirm_checkout_session(
-                AuthenticatedUser(uid="alice", email="alice@example.com"),
-                "paypal_existing_session",
-                "paypal",
-            )
+        service = BillingService(db, settings=paypal_checkout_settings())
 
-        assert exc_info.value.status_code == 501
-        assert "PayPal checkout adapter" in exc_info.value.detail
+        def fake_paypal_request(method, path, body=None):
+            assert body is None
+            assert method == "GET"
+            assert path == "/v1/billing/subscriptions/I-PAYPAL-PENDING"
+            return {
+                "id": "I-PAYPAL-PENDING",
+                "status": "APPROVAL_PENDING",
+                "plan_id": "P-ENT-MONTH",
+                "custom_id": json.dumps({"firebase_uid": "alice", "plan_key": "enterprise-month"}),
+            }
+
+        monkeypatch.setattr(service, "_paypal_api_request", fake_paypal_request)
+
+        result = service.confirm_checkout_session(
+            AuthenticatedUser(uid="alice", email="alice@example.com"),
+            "I-PAYPAL-PENDING",
+            "paypal",
+        )
+
+        assert result["status"] == "pending"
+        assert result["subscription"]["plan"] == "free"
         assert (
             db.scalar(
                 select(func.count())
@@ -1007,10 +1114,67 @@ def test_non_e2e_paypal_checkout_confirmation_is_not_fake_activated():
         )
         session = db.scalar(
             select(BillingCheckoutSession).where(
-                BillingCheckoutSession.provider_session_id == "paypal_existing_session"
+                BillingCheckoutSession.provider_session_id == "I-PAYPAL-PENDING"
             )
         )
-        assert session.status == "created"
+        assert session.status == "pending"
+        assert session.completed_at is None
+
+
+def test_non_e2e_paypal_checkout_confirmation_activates_verified_subscription(monkeypatch):
+    with SessionLocal() as db:
+        db.add(
+            BillingCheckoutSession(
+                firebase_uid="alice",
+                plan_key="enterprise-year",
+                provider="paypal",
+                provider_session_id="I-PAYPAL-ACTIVE",
+                checkout_url="https://paypal.example/approve",
+            )
+        )
+        db.commit()
+
+        service = BillingService(db, settings=paypal_checkout_settings())
+
+        def fake_paypal_request(method, path, body=None):
+            assert body is None
+            assert method == "GET"
+            assert path == "/v1/billing/subscriptions/I-PAYPAL-ACTIVE"
+            return {
+                "id": "I-PAYPAL-ACTIVE",
+                "status": "ACTIVE",
+                "plan_id": "P-ENT-YEAR",
+                "custom_id": json.dumps({"firebase_uid": "alice", "plan_key": "enterprise-year"}),
+                "subscriber": {"payer_id": "PAYER-123", "email_address": "alice@example.com"},
+                "start_time": "2026-06-01T00:00:00Z",
+                "billing_info": {"next_billing_time": "2027-06-01T00:00:00Z"},
+            }
+
+        monkeypatch.setattr(service, "_paypal_api_request", fake_paypal_request)
+
+        result = service.confirm_checkout_session(
+            AuthenticatedUser(uid="alice", email="alice@example.com"),
+            "I-PAYPAL-ACTIVE",
+            "paypal",
+        )
+
+        assert result["status"] == "active"
+        subscription = result["subscription"]
+        assert subscription["userId"] == "alice"
+        assert subscription["plan"] == "enterprise"
+        assert subscription["billingInterval"] == "year"
+        assert subscription["provider"] == "paypal"
+        assert subscription["providerSubscriptionId"] == "I-PAYPAL-ACTIVE"
+        assert subscription["providerCheckoutSessionId"] == "I-PAYPAL-ACTIVE"
+        assert subscription["providerCustomerId"] == "PAYER-123"
+        assert subscription["manageableActions"]["canCancel"] is True
+        session = db.scalar(
+            select(BillingCheckoutSession).where(
+                BillingCheckoutSession.provider_session_id == "I-PAYPAL-ACTIVE"
+            )
+        )
+        assert session.status == "completed"
+        assert session.completed_at is not None
 
 
 def test_provider_scoped_subscription_and_checkout_ids_can_overlap():

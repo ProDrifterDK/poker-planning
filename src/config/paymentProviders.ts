@@ -2,14 +2,13 @@
  * Payment provider feature flags.
  *
  * Centralises which checkout providers the frontend exposes to users.
- * A provider should only be enabled when BOTH:
- *   1. The backend has a real adapter for it (billing.paypal-checkout-on-railway, etc.)
- *   2. The required environment variables are configured.
+ * A provider should only be enabled when the Railway backend is configured
+ * for that provider. PayPal checkout is a backend-created approval redirect,
+ * so the browser does not need a PayPal client ID.
  *
- * PayPal is DISABLED by default until the backend PayPal adapter task
- * (billing.paypal-checkout-on-railway) ships a real integration.
- * The fallback checkout path MUST NOT activate paid subscriptions without
- * provider-side approval.
+ * PayPal remains DISABLED by default until NEXT_PUBLIC_PAYPAL_ENABLED=true is
+ * set after backend/Railway configuration. The fallback checkout path MUST NOT
+ * activate paid subscriptions without provider-side approval.
  */
 
 import { PaymentProvider } from '@/types/subscription';
@@ -23,22 +22,16 @@ export interface ProviderAvailability {
 function isPayPalEnabled(): ProviderAvailability {
   const explicitFlag = process.env.NEXT_PUBLIC_PAYPAL_ENABLED;
   // Honour an explicit "true" — anything else (unset / "false" / "") = disabled.
+  // PayPal checkout is now a backend-created approval redirect, so the browser
+  // no longer needs a PayPal client ID to expose the provider choice.
   if (explicitFlag === 'true') {
-    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-    if (!clientId) {
-      return {
-        enabled: false,
-        disabledReason:
-          'NEXT_PUBLIC_PAYPAL_ENABLED=true but NEXT_PUBLIC_PAYPAL_CLIENT_ID is missing.',
-      };
-    }
     return { enabled: true };
   }
 
   return {
     enabled: false,
     disabledReason:
-      'PayPal checkout is disabled. Set NEXT_PUBLIC_PAYPAL_ENABLED=true once the backend PayPal adapter (billing.paypal-checkout-on-railway) is deployed.',
+      'PayPal checkout is disabled. Set NEXT_PUBLIC_PAYPAL_ENABLED=true after the Railway PayPal adapter is configured.',
   };
 }
 
