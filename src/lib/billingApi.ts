@@ -236,9 +236,14 @@ export const billingApi = {
     );
   },
 
-  async createPortalSession(): Promise<ApiPortalSessionResponse> {
+  async createPortalSession(locale?: string): Promise<ApiPortalSessionResponse> {
+    const params = new URLSearchParams();
+    if (locale) {
+      params.set('locale', locale === 'en' ? 'en' : 'es');
+    }
+    const qs = params.toString();
     return billingRequest<ApiPortalSessionResponse>(
-      '/v1/billing/portal-sessions',
+      `/v1/billing/portal-sessions${qs ? `?${qs}` : ''}`,
       { method: 'POST' }
     );
   },

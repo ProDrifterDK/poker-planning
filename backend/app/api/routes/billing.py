@@ -79,10 +79,11 @@ def confirm_checkout_session(
 
 @router.post("/portal-sessions")
 def create_portal_session(
-    user: AuthenticatedUser = Depends(current_user), db: Session = Depends(db_session)
+    locale: str = Query(default="es"),
+    user: AuthenticatedUser = Depends(current_user),
+    db: Session = Depends(db_session),
 ) -> dict:
-    # A real Stripe Customer Portal URL is created in production in a follow-up slice.
-    return {"url": BillingService(db).settings.frontend_base_url.rstrip("/") + "/es/settings/subscription"}
+    return BillingService(db).create_portal_session(user, locale)
 
 
 @router.post("/subscription/me/cancel")

@@ -171,7 +171,7 @@ export default function ManageSubscription({
   const handleOpenPortal = async () => {
     setPortalLoading(true);
     try {
-      const result = await billingApi.createPortalSession();
+      const result = await billingApi.createPortalSession(lang);
       if (result.url) {
         window.open(result.url, '_blank');
       }
