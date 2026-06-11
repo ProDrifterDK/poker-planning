@@ -287,6 +287,71 @@ describe('Feature entitlement gates', () => {
       expect(store.getMaxParticipants()).toBe(5);
       expect(store.getMaxActiveRooms()).toBe(1);
     });
+
+    it('returns free limits for expired cancelled subscription even with stale backend features', () => {
+      // Regression test: an expired cancelled Pro subscription with cached
+      // backend features.maxParticipants=15/maxActiveRooms=5 must not leak
+      // paid quotas — must fall back to Free limits (5/1).
+      const sub: UserSubscription = {
+        id: 'sub-expired-cancelled',
+        userId: 'test-user',
+        plan: SubscriptionPlan.PRO,
+        planKey: 'pro-month',
+        billingInterval: 'month' as any,
+        status: SubscriptionStatus.CANCELLED,
+        startDate: new Date(Date.now() - 60 * 86400000).toISOString(),
+        endDate: new Date(Date.now() - 86400000).toISOString(), // expired yesterday
+        autoRenew: false,
+        paymentMethod: PaymentMethod.STRIPE,
+        features: {
+          maxParticipants: 15,
+          maxActiveRooms: 5,
+          exportData: true,
+          advancedStats: true,
+          timer: true,
+          fullHistory: true,
+          integrations: false,
+          branding: false,
+          advancedRoles: false,
+          prioritySupport: false,
+          api: false,
+          adFree: true,
+        } as any,
+      };
+      useSubscriptionStore.setState({ currentSubscription: sub });
+      const store = useSubscriptionStore.getState();
+
+      // Must NOT return stale paid limits
+      expect(store.getMaxParticipants()).toBe(5);
+      expect(store.getMaxActiveRooms()).toBe(1);
+    });
+
+    it('returns free limits when subscription is cancelled with no endDate', () => {
+      const sub: UserSubscription = {
+        id: 'sub-cancelled-no-end',
+        userId: 'test-user',
+        plan: SubscriptionPlan.ENTERPRISE,
+        planKey: 'enterprise-month',
+        billingInterval: 'month' as any,
+        status: SubscriptionStatus.CANCELLED,
+        startDate: new Date(Date.now() - 60 * 86400000).toISOString(),
+        // No endDate — isSubscriptionStillEffective returns false
+        autoRenew: false,
+        paymentMethod: PaymentMethod.STRIPE,
+        features: {
+          maxParticipants: 100,
+          maxActiveRooms: 20,
+          exportData: true,
+          integrations: true,
+          timer: true,
+        } as any,
+      };
+      useSubscriptionStore.setState({ currentSubscription: sub });
+      const store = useSubscriptionStore.getState();
+
+      expect(store.getMaxParticipants()).toBe(5);
+      expect(store.getMaxActiveRooms()).toBe(1);
+    });
   });
 
   describe('normalizeSubscription preserves backend features', () => {

@@ -260,12 +260,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       getMaxParticipants: () => {
         const { currentSubscription } = get();
-        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+        const stillEffective = currentSubscription && isSubscriptionStillEffective(currentSubscription);
+        const plan = stillEffective
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
-        // Prefer backend-authoritative limit
-        if (currentSubscription?.features?.maxParticipants != null) {
+        // Only apply backend-authoritative limits when subscription is still effective;
+        // otherwise stale backend features from an expired/cancelled sub would leak paid quotas
+        if (stillEffective && currentSubscription.features?.maxParticipants != null) {
           return currentSubscription.features.maxParticipants;
         }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxParticipants;
@@ -273,12 +275,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       getMaxActiveRooms: () => {
         const { currentSubscription } = get();
-        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+        const stillEffective = currentSubscription && isSubscriptionStillEffective(currentSubscription);
+        const plan = stillEffective
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
-        // Prefer backend-authoritative limit
-        if (currentSubscription?.features?.maxActiveRooms != null) {
+        // Only apply backend-authoritative limits when subscription is still effective;
+        // otherwise stale backend features from an expired/cancelled sub would leak paid quotas
+        if (stillEffective && currentSubscription.features?.maxActiveRooms != null) {
           return currentSubscription.features.maxActiveRooms;
         }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxActiveRooms;
