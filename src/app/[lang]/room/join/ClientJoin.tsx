@@ -77,7 +77,16 @@ export default function ClientJoin() {
                 return false;
               }
               
-              // Si la sala sigue activa, redirigir automáticamente
+              // Si la sala sigue activa, route through backend idempotent join
+              // to verify membership is still active before navigating
+              try {
+                await joinRoomWithName(roomCode!, currentUser?.displayName || 'Participant', currentUser?.photoURL || undefined);
+              } catch (joinError) {
+                console.error("Error on persisted-session backend rejoin:", joinError);
+                // If backend denies (e.g., room full or membership expired), clear session
+                localStorage.removeItem('poker-planning-storage');
+                return false;
+              }
               router.push(getLocalizedRoute(`/room/${roomCode}`));
               return true;
             } catch (fbError) {

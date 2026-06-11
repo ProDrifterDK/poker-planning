@@ -386,4 +386,114 @@ describe('Room Store Integration', () => {
       expect(updateMock).toHaveBeenCalled();
     });
   });
+
+  describe('Room limit entitlement enforcement (AC4)', () => {
+    it('shows ROOM_LIMIT_REACHED upgrade messaging when Free user hits active-room cap', async () => {
+      const { BillingApiError } = jest.requireMock('@/lib/billingApi');
+      billingApiMock.createRoom.mockRejectedValueOnce(
+        new BillingApiError('Room limit reached', 409, {
+          detail: {
+            code: 'ROOM_LIMIT_REACHED',
+            message: 'Active room limit reached',
+            planKey: 'free',
+            plan: 'Free',
+            limit: 1,
+            currentUsage: 1,
+            upgradeAvailable: true,
+            upgradePath: '/billing?plan=pro',
+          },
+        })
+      );
+
+      const { createRoom } = useRoomStore.getState();
+      await expect(createRoom('fibonacci', 'Test Room')).rejects.toThrow();
+
+      const state = useRoomStore.getState();
+      expect(state.error).toContain('límite');
+    });
+
+    it('shows PARTICIPANT_LIMIT_REACHED messaging when joining a full room', async () => {
+      const { BillingApiError } = jest.requireMock('@/lib/billingApi');
+      billingApiMock.joinRoom.mockRejectedValueOnce(
+        new BillingApiError('Participant limit reached', 409, {
+          detail: {
+            code: 'PARTICIPANT_LIMIT_REACHED',
+            message: 'Room is full',
+            planKey: 'free',
+            plan: 'Free',
+            limit: 5,
+            currentUsage: 5,
+            upgradeAvailable: true,
+            upgradePath: '/billing?plan=pro',
+          },
+        })
+      );
+
+      const { joinRoomWithName } = useRoomStore.getState();
+      await expect(joinRoomWithName('testroom', 'New User')).rejects.toThrow();
+    });
+
+    it('handles idempotent rejoin — backend returns rejoined: true for existing member', async () => {
+      billingApiMock.joinRoom.mockResolvedValueOnce({
+        roomId: 'testroom',
+        participantId: 'participant1',
+        sessionId: 'session1',
+        ownerUid: 'owner-uid',
+        status: 'active',
+        role: 'participant',
+        rejoined: true,
+        limits: { maxActiveRooms: 5, maxParticipants: 10 },
+        usage: { activeRooms: 1, activeParticipants: 3 },
+      });
+
+      const { joinRoomWithName } = useRoomStore.getState();
+      await joinRoomWithName('testroom', 'Returning User');
+
+      const state = useRoomStore.getState();
+      expect(state.roomId).toBe('testroom');
+      expect(state.currentParticipantId).toBe('participant1');
+      expect(localStorage.getItem('participant_id_testroom')).toBe('participant1');
+    });
+
+    it('backend denial blocks room creation — no Firebase write occurs', async () => {
+      const { BillingApiError } = jest.requireMock('@/lib/billingApi');
+      billingApiMock.createRoom.mockRejectedValueOnce(
+        new BillingApiError('Entitlement unavailable', 503, {
+          detail: {
+            code: 'ENTITLEMENT_UNAVAILABLE',
+            message: 'Cannot verify entitlements',
+          },
+        })
+      );
+
+      const { createRoom } = useRoomStore.getState();
+      await expect(createRoom('fibonacci')).rejects.toThrow();
+
+      // State should not have a room assigned
+      const state = useRoomStore.getState();
+      expect(state.roomId).toBeNull();
+      expect(state.error).toBeTruthy();
+    });
+
+    it('leaveRoom calls backend leave endpoint to release participant slot', async () => {
+      // First join
+      billingApiMock.joinRoom.mockResolvedValueOnce({
+        roomId: 'testroom',
+        participantId: 'participant1',
+        sessionId: 'session1',
+        ownerUid: 'owner-uid',
+        status: 'active',
+        role: 'participant',
+        rejoined: false,
+        limits: { maxActiveRooms: 5, maxParticipants: 10 },
+        usage: { activeRooms: 1, activeParticipants: 3 },
+      });
+
+      const { joinRoomWithName, leaveRoom } = useRoomStore.getState();
+      await joinRoomWithName('testroom', 'User');
+      await leaveRoom();
+
+      expect(billingApiMock.leaveRoom).toHaveBeenCalledWith('testroom');
+    });
+  });
 });

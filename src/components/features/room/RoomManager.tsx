@@ -6,8 +6,6 @@ import { Box, Typography, Divider, Container } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
-import { getPlanLookupKey } from "@/utils/planUtils";
-import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/types/subscription";
 import { useTranslation } from "react-i18next";
 import SessionPersistence from "./SessionPersistence";
 import SubscriptionLimits from "../../subscription/SubscriptionLimits";
@@ -38,27 +36,8 @@ export default function RoomManager() {
       return;
     }
 
-    if (!canCreateRoom) {
-      const planLookupKey = getPlanLookupKey(currentPlan);
-      const maxRooms = SUBSCRIPTION_PLANS[planLookupKey].features.maxActiveRooms;
-      
-      if (currentPlan === SubscriptionPlan.FREE) {
-        errorStore.setError(createError(
-          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
-          t('activeRooms.freePlanLimit', 'Los usuarios del plan Free solo pueden tener una sala activa a la vez. Por favor, abandona tu sala actual antes de crear una nueva.')
-        ));
-      } else {
-        errorStore.setError(createError(
-          ErrorType.SUBSCRIPTION_LIMIT_REACHED,
-          t('activeRooms.planLimit', 'Has alcanzado el límite de {{maxRooms}} {{roomText}} de tu plan. Actualiza tu suscripción para crear más salas.', {
-            maxRooms,
-            roomText: maxRooms === 1 ? t('activeRooms.singleRoom', 'sala activa') : t('activeRooms.multipleRooms', 'salas activas')
-          })
-        ));
-      }
-      return;
-    }
-
+    // Backend 409 ROOM_LIMIT_REACHED is the sole admission authority;
+    // local subscription state is a non-authoritative hint only.
     try {
       const roomId = await createRoom(selectedSeries, roomTitle.trim() || undefined);
       const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;

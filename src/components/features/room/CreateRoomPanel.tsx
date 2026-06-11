@@ -79,7 +79,7 @@ const CreateRoomPanel: React.FC<CreateRoomPanelProps> = ({
     }
   };
 
-  const isButtonDisabled = !name.trim() || isLoading || !canCreateRoom;
+  const isButtonDisabled = !name.trim() || isLoading;
 
   return (
     <StyledPaper elevation={3} theme={theme} role="region" aria-labelledby="create-room-title">
