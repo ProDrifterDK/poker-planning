@@ -4,6 +4,7 @@ import {
   PaymentHistory,
   PaymentMethod,
   PaymentProvider,
+  PlanFeatures,
   SubscriptionPlan,
   SubscriptionStatus,
   UserSubscription
@@ -39,6 +40,7 @@ interface ApiBillingSubscription {
   subscriptionId?: string | null;
   providerSubscriptionId?: string | null;
   cancelAtPeriodEnd?: boolean;
+  features?: Partial<PlanFeatures> | null;
 }
 
 interface ApiCheckoutSessionResponse {
@@ -181,6 +183,7 @@ function normalizeSubscription(subscription: ApiBillingSubscription): UserSubscr
     subscriptionId: subscription.subscriptionId || subscription.providerSubscriptionId || undefined,
     providerSubscriptionId: subscription.providerSubscriptionId || subscription.subscriptionId || undefined,
     cancelAtPeriodEnd: Boolean(subscription.cancelAtPeriodEnd),
+    features: subscription.features || undefined,
   };
 }
 

@@ -196,6 +196,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           return SUBSCRIPTION_PLANS[SubscriptionPlan.FREE].features[feature] === true;
         }
 
+        // Prefer backend-authoritative features when available
+        if (currentSubscription.features && feature in currentSubscription.features) {
+          const backendValue = currentSubscription.features[feature];
+          if (typeof backendValue === 'boolean') return backendValue;
+          if (typeof backendValue === 'number') return backendValue > 0;
+        }
+
+        // Fall back to local plan matrix
         const planLookupKey = getPlanLookupKey(
           currentSubscription.plan,
           currentSubscription.billingInterval
@@ -252,19 +260,31 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       getMaxParticipants: () => {
         const { currentSubscription } = get();
-        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+        const stillEffective = currentSubscription && isSubscriptionStillEffective(currentSubscription);
+        const plan = stillEffective
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
+        // Only apply backend-authoritative limits when subscription is still effective;
+        // otherwise stale backend features from an expired/cancelled sub would leak paid quotas
+        if (stillEffective && currentSubscription.features?.maxParticipants != null) {
+          return currentSubscription.features.maxParticipants;
+        }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxParticipants;
       },
 
       getMaxActiveRooms: () => {
         const { currentSubscription } = get();
-        const plan = currentSubscription && isSubscriptionStillEffective(currentSubscription)
+        const stillEffective = currentSubscription && isSubscriptionStillEffective(currentSubscription);
+        const plan = stillEffective
           ? currentSubscription.plan
           : SubscriptionPlan.FREE;
         const billingInterval = currentSubscription?.billingInterval;
+        // Only apply backend-authoritative limits when subscription is still effective;
+        // otherwise stale backend features from an expired/cancelled sub would leak paid quotas
+        if (stillEffective && currentSubscription.features?.maxActiveRooms != null) {
+          return currentSubscription.features.maxActiveRooms;
+        }
         return SUBSCRIPTION_PLANS[getPlanLookupKey(plan, billingInterval)].features.maxActiveRooms;
       },
     }),
