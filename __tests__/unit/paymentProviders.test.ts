@@ -3,7 +3,6 @@ import { PaymentProvider } from '@/types/subscription';
 function loadPaymentProviders(env: Record<string, string | undefined> = {}) {
   jest.resetModules();
   delete process.env.NEXT_PUBLIC_PAYPAL_ENABLED;
-  delete process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
   Object.entries(env).forEach(([key, value]) => {
     if (value === undefined) {
       delete process.env[key];

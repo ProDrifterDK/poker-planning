@@ -65,7 +65,7 @@ Poker Planning Pro es desarrollado y mantenido por Resyst Softwares; un equipo d
 - Exportación de datos para planes Pro y Enterprise
 - Integraciones con Jira, Trello y GitHub para plan Enterprise
 - Límites de participantes según el plan de suscripción
-- Procesamiento de pagos con PayPal
+- Procesamiento de pagos con Stripe y PayPal vía backend FastAPI/Railway
 - Gestión de suscripciones desde el panel de usuario
 - Documentación completa actualizada
 
@@ -77,7 +77,7 @@ Estamos constantemente trabajando para mejorar Poker Planning Pro. Algunas de la
 - Plantillas personalizables para diferentes tipos de equipos
 - Modo de observador para stakeholders
 - Análisis predictivo de estimaciones basado en datos históricos
-- Integración con más servicios de pago además de PayPal
+- Ampliación de proveedores de pago adicionales sobre la arquitectura backend multi-proveedor
 
 ## Contacto
 

@@ -45,9 +45,9 @@ export const subscriptionTranslations = {
     enterpriseAds: "Enterprise users don't see ads",
     
     // Other comments
-    paymentIdComment: "Payment ID in PayPal",
-    subscriptionIdComment: "Subscription ID in PayPal",
-    transactionIdComment: "Transaction ID in PayPal"
+    paymentIdComment: "Provider payment ID",
+    subscriptionIdComment: "Provider subscription ID",
+    transactionIdComment: "Provider transaction ID"
   },
   es: {
     // Comments
@@ -91,9 +91,9 @@ export const subscriptionTranslations = {
     enterpriseAds: "Los usuarios Enterprise no ven anuncios",
     
     // Other comments
-    paymentIdComment: "ID de la transacción en PayPal",
-    subscriptionIdComment: "ID de la suscripción en PayPal",
-    transactionIdComment: "ID de la transacción en PayPal"
+    paymentIdComment: "ID de pago del proveedor",
+    subscriptionIdComment: "ID de suscripción del proveedor",
+    transactionIdComment: "ID de transacción del proveedor"
   }
 };
 

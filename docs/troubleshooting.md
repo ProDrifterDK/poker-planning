@@ -70,7 +70,7 @@ Sin embargo, estos cambios no se sincronizarán con otros usuarios en la sala, l
 Si tienes problemas al actualizar tu plan de suscripción:
 
 1. Verifica que tu método de pago sea válido y tenga fondos suficientes
-2. Asegúrate de que no hay restricciones en tu cuenta de PayPal
+2. Asegúrate de que no hay restricciones en tu tarjeta/Stripe o cuenta PayPal, según el proveedor elegido
 3. Intenta usar otro navegador o dispositivo
 4. Limpia la caché y las cookies de tu navegador
 
@@ -80,7 +80,7 @@ Si realizaste un pago pero tu plan no se actualizó:
 
 1. Espera unos minutos, a veces hay un retraso en la actualización
 2. Verifica tu correo electrónico para confirmar que el pago fue procesado
-3. Revisa la página de suscripción para ver el estado actual
+3. Revisa la página de suscripción para ver el estado actual; la app refresca el estado desde el backend de billing en Railway
 4. Si después de 30 minutos no se actualiza, contacta a soporte con el ID de transacción
 
 ### No puedo cancelar mi suscripción

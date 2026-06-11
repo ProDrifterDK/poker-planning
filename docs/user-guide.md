@@ -74,8 +74,8 @@ Para suscribirte a un plan de pago:
 2. Ve a "Configuración" > "Suscripción"
 3. Selecciona el plan que deseas
 4. Haz clic en "Suscribirse"
-5. Completa el proceso de pago a través de PayPal
-6. ¡Listo! Tu plan se actualizará inmediatamente
+5. Completa el proceso de pago con el proveedor disponible (Stripe o PayPal)
+6. ¡Listo! Tu plan se actualizará cuando el backend confirme el pago con el proveedor
 
 ### Gestión de Suscripciones
 
@@ -312,7 +312,7 @@ Puedes reportar problemas o sugerir mejoras a través de nuestro [repositorio de
 Sí, puedes actualizar o degradar tu plan en cualquier momento desde la página de suscripción.
 
 #### ¿Qué métodos de pago aceptan?
-Actualmente aceptamos pagos a través de PayPal, que permite pagar con tarjeta de crédito/débito o con saldo de PayPal.
+Actualmente el checkout se procesa desde el backend de billing en Railway. La UI puede ofrecer Stripe (tarjeta) y PayPal cuando el backend PayPal está habilitado; ambos flujos confirman la suscripción en servidor antes de actualizar tu plan.
 
 #### ¿Ofrecen facturación?
 Sí, generamos automáticamente facturas para todas las transacciones. Puedes acceder a ellas desde la sección "Historial de Pagos" en la página de suscripción.

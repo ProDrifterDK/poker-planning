@@ -120,7 +120,7 @@ export interface PaymentHistory {
   date: string; // ISO date string
   status: 'completed' | 'pending' | 'failed';
   paymentMethod: PaymentMethod;
-  transactionId: string; // Transaction ID in PayPal
+  transactionId: string; // Provider transaction ID
 }
 
 // Definition of available plans

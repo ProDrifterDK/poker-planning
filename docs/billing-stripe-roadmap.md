@@ -3,12 +3,13 @@
 ## Current state verified
 
 - Frontend is a Next.js 16 application deployed on Vercel.
-- Existing billing implementation was PayPal-oriented and browser/client-authoritative in critical places.
+- The former billing implementation was PayPal-oriented and browser/client-authoritative in critical places.
 - Legacy PayPal API routes now return HTTP 410 and are no longer used by the subscription UI.
-- A new FastAPI billing backend owns checkout, subscription state, webhook processing, and entitlement reads.
+- Static PayPal checkout/status pages and frontend PayPal SDK components have been removed; old static URLs redirect to the localized subscription UI.
+- A FastAPI billing backend on Railway owns Stripe + PayPal checkout, subscription state, webhook processing, and entitlement reads.
 - Frontend reads subscription state from the backend through `NEXT_PUBLIC_BILLING_API_BASE_URL`.
 
-## Implemented Stripe architecture
+## Implemented multi-provider architecture
 
 ### Backend authority
 
@@ -26,7 +27,8 @@ The backend is the source of truth for billing:
   - Authenticated.
   - Accepts a server-known `planKey` only.
   - Derives `firebase_uid` from the bearer token, not from client-supplied user IDs.
-  - Creates Stripe Checkout Sessions when `BILLING_PROVIDER=stripe`.
+  - Creates Stripe Checkout Sessions or PayPal approval flows through provider adapters.
+  - Accepts explicit provider selection from the frontend when both Stripe and PayPal are enabled.
   - Uses fake provider only for local/test mode.
 
 - `POST /v1/billing/checkout-sessions/{session_id}/confirm`
@@ -41,10 +43,10 @@ The backend is the source of truth for billing:
   - Enforces active-room limits from the effective billing entitlement before projecting room metadata/session/participant state into Firebase.
   - Firebase Realtime Database and Firestore rules deny direct client room metadata/session/participant/document creation so quota enforcement cannot be bypassed with client writes.
 
-- `POST /v1/webhooks/stripe`
-  - Verifies Stripe signature when `STRIPE_WEBHOOK_SECRET` is configured.
-  - Stores webhook event IDs for idempotency.
-  - Updates subscription records server-side only.
+- `POST /v1/webhooks/stripe` and `POST /v1/webhooks/paypal`
+  - Verify provider signatures in non-local environments (`STRIPE_WEBHOOK_SECRET`, `PAYPAL_WEBHOOK_ID` + PayPal transmission headers).
+  - Store webhook event IDs for idempotency.
+  - Update subscription and payment records server-side only.
 
 ### Persistence model
 
@@ -66,6 +68,8 @@ For production, use Postgres on Railway. SQLite is only for local/test.
 - Reworked subscription success page to confirm backend sessions and refresh subscription state.
 - Updated `UserSubscription` type with `planKey`, `billingInterval`, provider IDs, and nullable `endDate`.
 - Disabled legacy PayPal API routes with explicit HTTP 410 responses.
+- Removed obsolete `src/lib/paypalSdk.ts`, `src/lib/paypalConfig.ts`, PayPal button/test components, PayPal browser type declarations, and static `public/paypal-*.html` / `public/subscription-status.html` pages.
+- Updated middleware so old static PayPal/status URLs redirect to the localized subscription settings page instead of serving browser-authoritative checkout/status pages.
 - Added `.env.example` for frontend billing/Firebase envs.
 - Updated lint script away from removed `next lint` command.
 
@@ -83,6 +87,7 @@ Preferred public subdomain: `planning.resyst.cl`.
 3. Wait for Vercel certificate provisioning.
 4. Set frontend env:
    - `NEXT_PUBLIC_BILLING_API_BASE_URL=https://<billing-backend-domain>`
+   - `NEXT_PUBLIC_PAYPAL_ENABLED=true` only after Railway PayPal checkout + webhook config is deployed; no `NEXT_PUBLIC_PAYPAL_CLIENT_ID` is required by the active flow.
 
 ### Billing backend
 
@@ -91,7 +96,7 @@ Recommended backend host: Railway service under the same repository or a separat
 Required backend env:
 
 - `APP_ENV=production`
-- `BILLING_PROVIDER=stripe`
+- `BILLING_PROVIDER=stripe` or `paypal` as the default provider; the frontend can pass an explicit provider when both are exposed.
 - `DATABASE_URL=<postgres-url>`
 - `FRONTEND_BASE_URL=https://planning.resyst.cl`
 - `FRONTEND_ORIGINS=https://planning.resyst.cl,https://<vercel-preview-domain-if-needed>`
@@ -109,6 +114,17 @@ Stripe provider env when `BILLING_PROVIDER=stripe`:
 - `STRIPE_PRICE_ENTERPRISE_MONTH=price_...`
 - `STRIPE_PRICE_ENTERPRISE_YEAR=price_...`
 
+PayPal provider env when PayPal is available:
+
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_ENVIRONMENT=sandbox|live` (`live` required in production)
+- `PAYPAL_WEBHOOK_ID`
+- `PAYPAL_PLAN_PRO_MONTH`
+- `PAYPAL_PLAN_PRO_YEAR`
+- `PAYPAL_PLAN_ENTERPRISE_MONTH`
+- `PAYPAL_PLAN_ENTERPRISE_YEAR`
+
 ### Stripe dashboard
 
 1. Create Products/Prices for:
@@ -122,6 +138,14 @@ Stripe provider env when `BILLING_PROVIDER=stripe`:
 3. Copy webhook signing secret to Railway.
 
 Future payment-history enhancement: add `invoice.payment_succeeded` / `invoice.payment_failed` handlers and tests before subscribing those events in Stripe.
+
+### PayPal dashboard
+
+1. Create subscription plans matching the backend plan keys (`pro-month`, `pro-year`, `enterprise-month`, `enterprise-year`).
+2. Configure webhook endpoint:
+   - URL: `https://<billing-backend-domain>/v1/webhooks/paypal`
+   - Events: subscription activation/cancellation/suspension and subscription/payment completion/failure/denial.
+3. Copy the PayPal webhook ID and plan IDs into Railway; redeploy before setting `NEXT_PUBLIC_PAYPAL_ENABLED=true` on Vercel.
 
 ## Testing roadmap
 
@@ -157,6 +181,7 @@ Future payment-history enhancement: add `invoice.payment_succeeded` / `invoice.p
 - Removed deprecated `@paypal/checkout-server-sdk` and its type package from Node dependencies.
 - Removed frontend reliance on client-side subscription document creation.
 - Removed public PayPal return/cancel URL usage from active subscription flow.
+- Removed remaining frontend PayPal SDK/static HTML artifacts and redirected legacy static URLs to the subscription UI.
 - Added backend webhook idempotency and signature verification path.
 
 ### Still open
@@ -177,9 +202,8 @@ Recommended next cleanup branch:
 
 1. Upgrade Cypress to latest major and run Cypress smoke tests.
 2. Upgrade firebase-admin to 14 in frontend/server-side legacy code or remove unused `src/lib/firebaseAdmin.ts` if no longer needed.
-3. Remove remaining unused PayPal files/components and static HTML after confirming no historical rollback path is needed.
-4. Decide whether account-deletion subscription cancellation should call the FastAPI backend or simply mark account deletion while billing remains cancellable through Stripe portal/admin.
-5. Fix pre-existing Jest suite drift (OnboardingTooltip, Card, RoomStore) separately from billing.
+3. Decide whether account-deletion subscription cancellation should call only the FastAPI backend or keep the current best-effort legacy Firestore cleanup while historical migration finishes.
+4. Fix pre-existing Jest suite drift (OnboardingTooltip, Card, RoomStore) separately from billing.
 
 ## Operational risks
 

@@ -15,7 +15,6 @@ import {
   SubscriptionStatus,
   UserSubscription
 } from '@/types/subscription';
-import { canAddParticipant } from '@/lib/subscriptionService';
 import { billingApi, type ConfirmCheckoutResult } from '@/lib/billingApi';
 
 const getPlanLookupKey = (
@@ -241,13 +240,12 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         return maxRooms > 0;
       },
 
-      canRoomAddParticipant: async (roomId: string) => {
-        try {
-          return await canAddParticipant(roomId);
-        } catch (error) {
-          console.error('Error al verificar si puede añadir participante:', error);
-          return true;
-        }
+      canRoomAddParticipant: async () => {
+        // Deprecated compatibility shim. The old implementation read Firebase
+        // room/subscription documents and made a frontend admission decision.
+        // Joining is now backend-authoritative admission via billingApi.joinRoom;
+        // callers should rely on the backend 409/structured denial instead.
+        return true;
       },
 
       getCurrentPlan: () => {

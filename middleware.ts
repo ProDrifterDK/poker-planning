@@ -8,7 +8,7 @@ const locales = ['es', 'en'];
 // No definimos un defaultLocale fijo para permitir la detección automática
 
 // Lista de rutas que no necesitan internacionalización
-const publicPaths = ['/_next/', '/api/', '/favicon.ico', '/images/', '/locales/', '/subscription-status.html'];
+const publicPaths = ['/_next/', '/api/', '/favicon.ico', '/images/', '/locales/'];
 
 // Lista de rutas que deben ser redirigidas a la versión localizada
 const localizedRoutes = ['/terms', '/privacy-policy', '/room', '/settings', '/auth'];
@@ -39,18 +39,25 @@ function getLocale(request: NextRequest): string {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Compatibility-only legacy billing entry points. The static PayPal checkout
+  // and subscription-status pages were browser-authoritative and could diverge
+  // from the Railway FastAPI billing backend. Keep old bookmarks/links usable
+  // by redirecting them to the localized subscription UI, where Stripe + PayPal
+  // both go through backend-created checkout sessions.
+  if (
+    (pathname.includes('paypal-') && pathname.endsWith('.html')) ||
+    pathname === '/subscription-status.html'
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${getLocale(request)}/settings/subscription`;
+    return NextResponse.redirect(url);
+  }
   
   // Verificar si la ruta es pública
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
   if (isPublicPath) {
     return NextResponse.next();
-  }
-  
-  // Manejar archivos HTML legacy de PayPal: ya no son parte del flujo de billing.
-  if (pathname.includes('paypal-') && pathname.endsWith('.html')) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${getLocale(request)}/settings/subscription`;
-    return NextResponse.redirect(url);
   }
   
   // Verificar si ya hay un idioma en la URL

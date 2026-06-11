@@ -78,8 +78,8 @@ export default function PaymentProviderSelector({
   ];
 
   // Only render providers whose backend adapter is deployed and enabled.
-  // See src/config/paymentProviders.ts — PayPal is gated until
-  // billing.paypal-checkout-on-railway ships a real adapter.
+  // See src/config/paymentProviders.ts — PayPal is gated until the Railway
+  // PayPal checkout/webhook configuration is live for this environment.
   const providers = allProviders.filter((p) =>
     ENABLED_PAYMENT_PROVIDERS.includes(p.id)
   );
