@@ -92,6 +92,7 @@ Required backend env common to both providers:
 - `FRONTEND_ORIGINS=https://planning.resyst.cl,https://<vercel-preview-domain-if-needed>`
 - `FIREBASE_PROJECT_ID=<project-id>`
 - `FIREBASE_SERVICE_ACCOUNT_JSON_B64=<base64-service-account-json>` or `FIREBASE_SERVICE_ACCOUNT_JSON=<service-account-json>`
+- `FIREBASE_DATABASE_URL=<realtime-database-url>` (required for backend room creation to project authorized rooms into Realtime Database)
 - `E2E_TEST_MODE=false`
 
 Stripe provider env when `BILLING_PROVIDER=stripe`:

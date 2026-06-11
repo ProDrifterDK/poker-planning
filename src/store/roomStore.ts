@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ref, onValue, update, push, get as firebaseGet } from "firebase/database";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { realtimeDb, firestore } from "@/lib/firebaseConfig";
 import { Participant } from "@/types/room";
 import { useErrorStore, ErrorType, createError } from "@/store/errorStore";
-import { useSubscriptionStore } from "@/store/subscriptionStore";
+import { billingApi, BillingApiError, RoomLimitDetails } from "@/lib/billingApi";
 import { UserRole } from "@/types/roles";
 import i18next from "i18next";
 
@@ -126,103 +126,50 @@ export const useRoomStore = create<RoomState & RoomActions>()(
       // Crear una nueva sala
       createRoom: async (seriesKey: string, title?: string) => {
         const errorStore = useErrorStore.getState();
-        const subscriptionStore = useSubscriptionStore.getState();
         set({ isLoading: true, error: null });
 
         try {
-          const roomId = Math.random().toString(36).substring(7);
-          const sessionId = Math.random().toString(36).substring(7);
-          const timestamp = Date.now();
-
-          // Obtener el plan de suscripción del creador
-          const creatorPlan = subscriptionStore.getCurrentPlan();
-          
-          // Obtener el ID del usuario actual
-          let creatorId = 'anonymous';
-          try {
-            const authData = localStorage.getItem('poker-planning-auth');
-            if (authData) {
-              const { currentUser } = JSON.parse(authData);
-              if (currentUser && currentUser.uid) {
-                creatorId = currentUser.uid;
-              }
-            }
-          } catch (error) {
-            console.error('Error getting current user ID:', error);
-          }
-
-          // Generar un ID de participante para el creador de la sala
-          const participantId = Math.random().toString(36).substring(7);
-          localStorage.setItem(`participant_id_${roomId}`, participantId);
-
-          // Crear metadatos de la sala en Realtime Database
-          const roomMetadata = {
-            createdAt: timestamp,
+          const created = await billingApi.createRoom({
             seriesKey,
-            seriesValues: seriesList[seriesKey],
-            creatorId: creatorId,
-            creatorPlan: creatorPlan, // Guardar el plan del creador
-            title: title || i18next.t('room.defaultRoomTitle', { roomId }) // Usar el título proporcionado o uno por defecto
-          };
-          
-          await update(ref(realtimeDb, `rooms/${roomId}/metadata`), roomMetadata);
-          
-          // También guardar en Firestore para asegurar consistencia
-          try {
-            const firestoreRoomData = {
-              createdAt: timestamp,
-              createdBy: creatorId,
-              creatorId: creatorId, // Añadir también como creatorId para consistencia
-              creatorPlan: creatorPlan, // Guardar el plan del creador
-              title: title || i18next.t('room.defaultRoomTitle', { roomId }), // Usar el título proporcionado o uno por defecto
-              active: true
-            };
-            
-            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
-            await setDoc(firestoreRoomRef, firestoreRoomData);
-          } catch (firestoreError) {
-            console.error('Error storing room metadata in Firestore:', firestoreError);
-            // No propagamos el error para no interrumpir la creación de la sala
-          }
-
-          // Crear sesión inicial
-          await update(ref(realtimeDb, `rooms/${roomId}/sessions/${sessionId}`), {
-            active: true,
-            reveal: false,
-            currentIssueId: null,
-            startedAt: timestamp,
+            title,
+            displayName: "Moderador",
           });
 
-          // Añadir al creador como primer participante
-          const participantRef = ref(realtimeDb, `rooms/${roomId}/participants/${participantId}`);
-          await update(participantRef, {
-            name: "Moderador", // Nombre por defecto para el creador
-            joinedAt: timestamp,
-            active: true,
-            role: UserRole.MODERATOR, // El creador es moderador por defecto
-            participantId
-          });
+          localStorage.setItem(`participant_id_${created.roomId}`, created.participant.participantId);
 
-          // Limpiar el estado anterior y establecer el nuevo estado
+          // Limpiar el estado anterior y establecer el nuevo estado. La sala y
+          // la membresía ya fueron autorizadas y proyectadas por el backend;
+          // el cliente solo inicia la escucha realtime con los IDs devueltos.
           set({
             ...initialState,
-            roomId,
-            sessionId,
-            currentParticipantId: participantId,
-            seriesKey,
-            estimationOptions: seriesList[seriesKey],
+            roomId: created.roomId,
+            roomTitle: created.title,
+            sessionId: created.sessionId,
+            currentParticipantId: created.participant.participantId,
+            seriesKey: created.seriesKey,
+            estimationOptions: seriesList[created.seriesKey] || seriesList.fibonacci,
             reveal: false,
             currentIssueId: null,
           });
 
-          return roomId;
+          return created.roomId;
         } catch (error) {
-          // Usar el sistema centralizado de errores
+          let message = "No se pudo crear la sala. Intenta nuevamente.";
+          const details = error instanceof BillingApiError
+            ? (error.details as { detail?: RoomLimitDetails } | undefined)?.detail
+            : undefined;
+
+          if (details?.code === "ROOM_LIMIT_REACHED") {
+            message = `Alcanzaste el límite de salas activas de tu plan (${details.currentUsage}/${details.limit}). Actualiza tu plan o cierra una sala activa para crear otra.`;
+          } else if (details?.code === "ENTITLEMENT_UNAVAILABLE") {
+            message = "No pudimos verificar tu plan en este momento. Intenta nuevamente.";
+          }
+
           const appError = createError(
             ErrorType.ROOM_CREATION_FAILED,
-            "No se pudo crear la sala. Intenta nuevamente.",
-            { originalError: error },
-            () => get().createRoom(seriesKey) // Acción de recuperación: reintentar
+            message,
+            { originalError: error, entitlement: details },
+            () => get().createRoom(seriesKey, title)
           );
 
           errorStore.setError(appError);
@@ -539,22 +486,37 @@ export const useRoomStore = create<RoomState & RoomActions>()(
 
                 // Si no quedan participantes activos, marcar la sala como inactiva
                 if (activeParticipants.length === 0) {
-                    const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
-                    await update(roomRef, {
-                        active: false,
-                        lastActive: Date.now(),
-                        markedForDeletion: true
-                    });
-                    
-                    // Ahora, y solo ahora, intentar la escritura en Firestore
+                    let legacyRoom = false;
                     try {
-                        const firestoreRoomRef = doc(firestore, 'rooms', roomId);
-                        await updateDoc(firestoreRoomRef, {
-                          active: false,
-                          lastActive: Date.now()
+                        await billingApi.closeRoom(roomId);
+                    } catch (closeError) {
+                        // Legacy rooms created before the backend ledger may not exist there;
+                        // keep the old Firebase close path for those only.
+                        if (closeError instanceof BillingApiError && closeError.status === 404) {
+                            legacyRoom = true;
+                        } else {
+                            throw closeError;
+                        }
+                    }
+
+                    if (legacyRoom) {
+                        const roomRef = ref(realtimeDb, `rooms/${roomId}/metadata`);
+                        await update(roomRef, {
+                            active: false,
+                            lastActive: Date.now(),
+                            markedForDeletion: true
                         });
-                    } catch (firestoreError) {
-                        console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
+
+                        // Ahora, y solo ahora, intentar la escritura en Firestore
+                        try {
+                            const firestoreRoomRef = doc(firestore, 'rooms', roomId);
+                            await updateDoc(firestoreRoomRef, {
+                              active: false,
+                              lastActive: Date.now()
+                            });
+                        } catch (firestoreError) {
+                            console.log(`Note: Room ${roomId} could not be marked as inactive in Firestore due to permissions. This is expected behavior.`);
+                        }
                     }
                 }
             }

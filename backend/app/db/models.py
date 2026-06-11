@@ -115,3 +115,38 @@ class BillingEvent(Base):
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (UniqueConstraint("provider", "event_id", name="uq_provider_event"),)
+
+
+class PlanningRoom(Base):
+    __tablename__ = "planning_rooms"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    owner_uid: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    series_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="active", index=True, nullable=False)
+    firebase_path: Mapped[str] = mapped_column(Text, nullable=False)
+    locked_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RoomMembership(Base):
+    __tablename__ = "room_memberships"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    room_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    participant_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    firebase_uid: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), default="participant", nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("room_id", "participant_id", name="uq_room_participant_id"),
+        UniqueConstraint("room_id", "firebase_uid", name="uq_room_firebase_uid"),
+    )

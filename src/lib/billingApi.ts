@@ -44,6 +44,39 @@ interface BillingMeResponse {
   payments?: PaymentHistory[];
 }
 
+export interface RoomLimitDetails {
+  code: string;
+  message: string;
+  planKey?: string;
+  plan?: string;
+  limit?: number;
+  currentUsage?: number;
+  upgradeAvailable?: boolean;
+  upgradePath?: string;
+}
+
+export interface CreateRoomResponse {
+  roomId: string;
+  sessionId: string;
+  firebasePath: string;
+  title: string;
+  seriesKey: string;
+  participant: {
+    participantId: string;
+    role: 'moderator' | 'participant';
+    displayName: string;
+  };
+  limits: {
+    planKey: string;
+    plan: string;
+    limit: number;
+    currentUsage: number;
+    upgradeAvailable: boolean;
+    upgradePath: string;
+  };
+  metadata: Record<string, unknown>;
+}
+
 function normalizeApiBaseUrl(): string {
   return API_BASE_URL.replace(/\/$/, '');
 }
@@ -78,11 +111,12 @@ async function billingRequest<T>(path: string, init: RequestInit = {}, retry = t
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new BillingApiError(
-      data?.detail || data?.error || 'Error de billing',
-      response.status,
-      data
-    );
+    const detail = data?.detail;
+    const message =
+      typeof detail === 'string'
+        ? detail
+        : detail?.message || data?.error || 'Error de billing';
+    throw new BillingApiError(message, response.status, data);
   }
 
   return data as T;
@@ -119,6 +153,31 @@ export const billingApi = {
   async getPaymentHistory(): Promise<PaymentHistory[]> {
     const data = await billingRequest<BillingMeResponse>('/v1/billing/me');
     return data.payments || [];
+  },
+
+  async createRoom(input: {
+    seriesKey: string;
+    title?: string;
+    displayName?: string;
+  }): Promise<CreateRoomResponse> {
+    return billingRequest<CreateRoomResponse>(
+      '/v1/rooms',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          seriesKey: input.seriesKey,
+          title: input.title,
+          displayName: input.displayName,
+        }),
+      }
+    );
+  },
+
+  async closeRoom(roomId: string): Promise<{ roomId: string; status: string }> {
+    return billingRequest<{ roomId: string; status: string }>(
+      `/v1/rooms/${encodeURIComponent(roomId)}/close`,
+      { method: 'POST' }
+    );
   },
 
   async createCheckoutSession(input: {

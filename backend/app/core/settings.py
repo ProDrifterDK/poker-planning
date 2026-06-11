@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     firebase_project_id: str | None = None
     firebase_service_account_json_b64: str | None = None
     firebase_service_account_json: str | None = None
+    firebase_database_url: str | None = None
 
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None

@@ -25,6 +25,7 @@ import { firestore, realtimeDb } from '@/lib/firebaseConfig';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { billingApi, BillingApiError } from '@/lib/billingApi';
 
 interface Room {
   id: string;
@@ -292,10 +293,25 @@ export default function ActiveRoomsList() {
     const firestoreRoomRef = doc(firestore, 'rooms', roomId);
 
     try {
-      await Promise.all([
-        update(rtdbRoomRef, { active: false }),
-        updateDoc(firestoreRoomRef, { active: false }),
-      ]);
+      let legacyRoom = false;
+      try {
+        await billingApi.closeRoom(roomId);
+      } catch (closeError) {
+        // Legacy rooms created before the backend room ledger may not exist there;
+        // keep the old Firebase close path for those only.
+        if (closeError instanceof BillingApiError && closeError.status === 404) {
+          legacyRoom = true;
+        } else {
+          throw closeError;
+        }
+      }
+
+      if (legacyRoom) {
+        await Promise.all([
+          update(rtdbRoomRef, { active: false }),
+          updateDoc(firestoreRoomRef, { active: false }),
+        ]);
+      }
 
       setActiveRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
     } catch (error) {

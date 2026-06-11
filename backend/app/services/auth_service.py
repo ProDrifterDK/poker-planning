@@ -26,12 +26,16 @@ def _firebase_app():
     if not service_account_raw and settings.firebase_service_account_json_b64:
         service_account_raw = base64.b64decode(settings.firebase_service_account_json_b64).decode("utf-8")
 
+    options = {"projectId": settings.firebase_project_id}
+    if settings.firebase_database_url:
+        options["databaseURL"] = settings.firebase_database_url
+
     if service_account_raw:
         cred = credentials.Certificate(json.loads(service_account_raw))
-        return firebase_admin.initialize_app(cred, {"projectId": settings.firebase_project_id})
+        return firebase_admin.initialize_app(cred, options)
 
     if settings.firebase_project_id:
-        return firebase_admin.initialize_app(options={"projectId": settings.firebase_project_id})
+        return firebase_admin.initialize_app(options=options)
 
     raise RuntimeError("Firebase Admin credentials are not configured")
 
