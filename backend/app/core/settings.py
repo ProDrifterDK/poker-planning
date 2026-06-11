@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./billing.db"
     frontend_base_url: str = "http://localhost:3000"
     frontend_origins: str = "http://localhost:3000,https://poker-planning-pro.vercel.app,https://planning.resyst.cl"
-    billing_provider: Literal["fake", "stripe"] = "fake"
+    billing_provider: Literal["fake", "stripe", "paypal"] = "fake"
     e2e_test_mode: bool = False
     e2e_test_secret: str | None = None
 

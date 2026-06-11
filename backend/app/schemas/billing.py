@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+BillingProvider = Literal["stripe", "paypal"]
+
 
 class AuthenticatedUser(BaseModel):
     uid: str
@@ -14,6 +16,7 @@ class AuthenticatedUser(BaseModel):
 class CheckoutSessionCreate(BaseModel):
     planKey: str = Field(..., min_length=1)
     locale: Literal["es", "en"] = "es"
+    provider: BillingProvider | None = None
 
 
 class CheckoutSessionResponse(BaseModel):

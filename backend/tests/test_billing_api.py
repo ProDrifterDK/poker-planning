@@ -6,8 +6,10 @@ import pytest
 from sqlalchemy import func, select
 
 from app.core.settings import Settings, get_settings
-from app.db.models import BillingEvent, BillingSubscription
+from app.db.models import BillingCheckoutSession, BillingCustomer, BillingEvent, BillingPayment, BillingSubscription
 from app.db.session import SessionLocal
+from app.schemas.billing import AuthenticatedUser
+from app.services.billing_service import BillingService
 
 
 def test_health_and_plan_catalog_are_public(client):
@@ -55,6 +57,7 @@ def test_checkout_ignores_user_id_and_only_activates_after_server_confirm(client
     assert response.status_code == 200
     checkout = response.json()
     assert checkout["checkoutSessionId"].startswith("fake_cs_")
+    assert checkout["provider"] == "stripe"
     assert "/es/settings/subscription/success" in checkout["checkoutUrl"]
 
     before_confirm = client.get("/v1/billing/me", headers=auth_headers).json()
@@ -67,6 +70,13 @@ def test_checkout_ignores_user_id_and_only_activates_after_server_confirm(client
     assert confirmed.status_code == 200
     assert confirmed.json()["subscription"]["plan"] == "pro"
     assert confirmed.json()["subscription"]["billingInterval"] == "month"
+    assert confirmed.json()["subscription"]["provider"] == "stripe"
+    assert confirmed.json()["subscription"]["manageableActions"] == {
+        "canCancel": True,
+        "canChangePlan": True,
+        "canManageBilling": False,
+        "canUpdatePaymentMethod": False,
+    }
 
     after_confirm = client.get("/v1/billing/me", headers=auth_headers).json()
     assert after_confirm["subscription"]["plan"] == "pro"
@@ -281,3 +291,201 @@ def test_failed_stripe_event_can_be_retried(client, auth_headers):
     assert response.status_code == 200
     assert response.json().get("duplicate") is not True
     assert client.get("/v1/billing/me", headers=auth_headers).json()["subscription"]["plan"] == "pro"
+
+
+def test_checkout_request_can_choose_paypal_without_client_side_activation(client, auth_headers):
+    checkout_response = client.post(
+        "/v1/billing/checkout-sessions",
+        json={"planKey": "enterprise-month", "locale": "en", "provider": "paypal"},
+        headers=auth_headers,
+    )
+
+    assert checkout_response.status_code == 200
+    checkout = checkout_response.json()
+    assert checkout["provider"] == "paypal"
+    assert checkout["checkoutSessionId"].startswith("fake_cs_")
+
+    before_confirm = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert before_confirm["subscription"]["plan"] == "free"
+
+    confirmed = client.post(
+        f"/v1/billing/checkout-sessions/{checkout['checkoutSessionId']}/confirm",
+        headers=auth_headers,
+    )
+
+    assert confirmed.status_code == 200
+    subscription = confirmed.json()["subscription"]
+    assert subscription["plan"] == "enterprise"
+    assert subscription["provider"] == "paypal"
+    assert subscription["providerSubscriptionId"].startswith("fake_sub_")
+    assert subscription["manageableActions"]["canCancel"] is True
+
+
+def test_provider_scoped_subscription_and_checkout_ids_can_overlap():
+    with SessionLocal() as db:
+        service = BillingService(db)
+        service._activate_subscription(
+            uid="alice",
+            plan_key="pro-month",
+            provider="stripe",
+            provider_checkout_session_id="shared_session",
+            provider_subscription_id="shared_subscription",
+            provider_customer_id="shared_customer",
+            raw_provider_object={"provider": "stripe"},
+        )
+        service._activate_subscription(
+            uid="bob",
+            plan_key="enterprise-year",
+            provider="paypal",
+            provider_checkout_session_id="shared_session",
+            provider_subscription_id="shared_subscription",
+            provider_customer_id="shared_customer",
+            raw_provider_object={"provider": "paypal"},
+        )
+        db.commit()
+
+        rows = db.scalars(
+            select(BillingSubscription).where(
+                BillingSubscription.provider_subscription_id == "shared_subscription"
+            )
+        ).all()
+
+    assert {(row.provider, row.firebase_uid) for row in rows} == {("stripe", "alice"), ("paypal", "bob")}
+
+
+def test_provider_scoped_checkout_session_ids_can_overlap():
+    with SessionLocal() as db:
+        db.add_all(
+            [
+                BillingCheckoutSession(
+                    firebase_uid="alice",
+                    plan_key="pro-month",
+                    provider="stripe",
+                    provider_session_id="shared_checkout",
+                    checkout_url="https://stripe.example/checkout",
+                ),
+                BillingCheckoutSession(
+                    firebase_uid="bob",
+                    plan_key="pro-month",
+                    provider="paypal",
+                    provider_session_id="shared_checkout",
+                    checkout_url="https://paypal.example/checkout",
+                ),
+            ]
+        )
+        db.commit()
+
+        rows = db.scalars(
+            select(BillingCheckoutSession).where(
+                BillingCheckoutSession.provider_session_id == "shared_checkout"
+            )
+        ).all()
+
+    assert {row.provider for row in rows} == {"stripe", "paypal"}
+
+
+def test_checkout_confirmation_uses_owned_provider_scoped_session(client, other_auth_headers):
+    with SessionLocal() as db:
+        db.add_all(
+            [
+                BillingCheckoutSession(
+                    firebase_uid="alice",
+                    plan_key="pro-month",
+                    provider="stripe",
+                    provider_session_id="shared_checkout",
+                    checkout_url="https://stripe.example/checkout",
+                ),
+                BillingCheckoutSession(
+                    firebase_uid="bob",
+                    plan_key="enterprise-month",
+                    provider="paypal",
+                    provider_session_id="shared_checkout",
+                    checkout_url="https://paypal.example/checkout",
+                ),
+            ]
+        )
+        db.commit()
+
+    response = client.post("/v1/billing/checkout-sessions/shared_checkout/confirm", headers=other_auth_headers)
+
+    assert response.status_code == 200
+    subscription = response.json()["subscription"]
+    assert subscription["userId"] == "bob"
+    assert subscription["plan"] == "enterprise"
+    assert subscription["provider"] == "paypal"
+
+
+def test_customer_provider_id_map_backfills_legacy_stripe_customer_id():
+    with SessionLocal() as db:
+        customer = BillingCustomer(
+            firebase_uid="alice",
+            email="old@example.com",
+            stripe_customer_id="cus_legacy",
+            provider_customer_ids={},
+        )
+        db.add(customer)
+        db.commit()
+
+        refreshed = BillingService(db).ensure_customer(AuthenticatedUser(uid="alice", email="alice@example.com"))
+        db.flush()
+
+        assert refreshed.email == "alice@example.com"
+        assert refreshed.provider_customer_ids == {"stripe": "cus_legacy"}
+
+
+def test_customer_and_payment_history_store_normalized_provider_ids(client, auth_headers):
+    with SessionLocal() as db:
+        customer = BillingCustomer(
+            firebase_uid="alice",
+            email="alice@example.com",
+            provider_customer_ids={"stripe": "cus_shared", "paypal": "payer_shared"},
+        )
+        db.add(customer)
+        db.flush()
+        subscription = BillingSubscription(
+            firebase_uid="alice",
+            plan_key="pro-month",
+            plan="pro",
+            billing_interval="month",
+            status="active",
+            payment_method="paypal",
+            provider="paypal",
+            provider_customer_id="payer_shared",
+            provider_subscription_id="sub_paypal",
+        )
+        db.add(subscription)
+        db.flush()
+        db.add(
+            BillingPayment(
+                firebase_uid="alice",
+                subscription_id=subscription.id,
+                provider="paypal",
+                provider_invoice_id="invoice_shared",
+                provider_payment_id="capture_shared",
+                amount_paid_cents=2999,
+                currency="USD",
+                status="paid",
+            )
+        )
+        db.commit()
+
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+
+    assert body["subscription"]["provider"] == "paypal"
+    assert body["subscription"]["features"]["maxActiveRooms"] == 5
+    assert body["payments"] == [
+        {
+            "id": body["payments"][0]["id"],
+            "userId": "alice",
+            "subscriptionId": body["subscription"]["id"],
+            "amount": 29.99,
+            "currency": "USD",
+            "date": body["payments"][0]["date"],
+            "status": "paid",
+            "paymentMethod": "paypal",
+            "provider": "paypal",
+            "providerInvoiceId": "invoice_shared",
+            "providerPaymentId": "capture_shared",
+            "transactionId": "capture_shared",
+        }
+    ]

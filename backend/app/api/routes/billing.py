@@ -36,7 +36,7 @@ def create_checkout_session(
     user: AuthenticatedUser = Depends(current_user),
     db: Session = Depends(db_session),
 ) -> dict:
-    return BillingService(db).create_checkout_session(user, payload.planKey, payload.locale)
+    return BillingService(db).create_checkout_session(user, payload.planKey, payload.locale, payload.provider)
 
 
 @router.post("/checkout-sessions/{session_id}/confirm", response_model=CheckoutConfirmResponse)

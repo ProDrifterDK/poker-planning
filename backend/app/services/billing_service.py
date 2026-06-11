@@ -23,6 +23,7 @@ from app.domain.plans import PLAN_CATALOG, get_plan, serialize_plan
 from app.schemas.billing import AuthenticatedUser
 
 ACTIVE_STATUSES = {"active", "trialing", "past_due", "cancelled"}
+PUBLIC_BILLING_PROVIDERS = {"stripe", "paypal"}
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -75,11 +76,54 @@ class BillingService:
     def list_plans(self) -> list[dict[str, Any]]:
         return [serialize_plan(plan) for plan in PLAN_CATALOG.values()]
 
+    def default_provider(self) -> str:
+        # "fake" is an internal local/e2e mode; the public API still exposes a
+        # real provider namespace so the frontend contract stays provider-ready.
+        if self.settings.billing_provider in PUBLIC_BILLING_PROVIDERS:
+            return self.settings.billing_provider
+        return "stripe"
+
+    def resolve_provider(self, requested_provider: str | None = None) -> str:
+        provider = requested_provider or self.default_provider()
+        if provider not in PUBLIC_BILLING_PROVIDERS:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported billing provider")
+        return provider
+
+    def get_customer_provider_id(self, customer: BillingCustomer, provider: str) -> str | None:
+        if provider == "stripe" and customer.stripe_customer_id:
+            return customer.stripe_customer_id
+        return (customer.provider_customer_ids or {}).get(provider)
+
+    def set_customer_provider_id(self, customer: BillingCustomer, provider: str, provider_customer_id: str) -> None:
+        provider_ids = dict(customer.provider_customer_ids or {})
+        provider_ids[provider] = provider_customer_id
+        customer.provider_customer_ids = provider_ids
+        if provider == "stripe":
+            customer.stripe_customer_id = provider_customer_id
+
+    def manageable_actions(self, subscription: BillingSubscription | None) -> dict[str, bool]:
+        if not subscription:
+            return {
+                "canCancel": False,
+                "canChangePlan": True,
+                "canManageBilling": False,
+                "canUpdatePaymentMethod": False,
+            }
+        is_active = subscription.status in ACTIVE_STATUSES and not subscription.cancel_at_period_end
+        return {
+            "canCancel": is_active,
+            "canChangePlan": True,
+            "canManageBilling": subscription.provider == "stripe" and bool(subscription.provider_customer_id),
+            "canUpdatePaymentMethod": subscription.provider == "stripe" and bool(subscription.provider_customer_id),
+        }
+
     def ensure_customer(self, user: AuthenticatedUser) -> BillingCustomer:
         customer = self.db.scalar(select(BillingCustomer).where(BillingCustomer.firebase_uid == user.uid))
         if customer:
             if user.email and customer.email != user.email:
                 customer.email = user.email
+            if customer.stripe_customer_id and "stripe" not in (customer.provider_customer_ids or {}):
+                self.set_customer_provider_id(customer, "stripe", customer.stripe_customer_id)
             return customer
 
         customer = BillingCustomer(firebase_uid=user.uid, email=user.email)
@@ -115,7 +159,9 @@ class BillingService:
                 "endDate": None,
                 "autoRenew": False,
                 "paymentMethod": None,
+                "provider": None,
                 "features": plan.features,
+                "manageableActions": self.manageable_actions(None),
                 "cancelAtPeriodEnd": False,
             }
 
@@ -131,10 +177,14 @@ class BillingService:
             "endDate": _iso(subscription.current_period_end),
             "autoRenew": not subscription.cancel_at_period_end,
             "paymentMethod": subscription.payment_method,
+            "provider": subscription.provider,
             "paymentId": subscription.provider_subscription_id,
             "subscriptionId": subscription.provider_subscription_id,
             "providerSubscriptionId": subscription.provider_subscription_id,
+            "providerCustomerId": subscription.provider_customer_id,
+            "providerCheckoutSessionId": subscription.provider_checkout_session_id,
             "features": plan.features,
+            "manageableActions": self.manageable_actions(subscription),
             "cancelAtPeriodEnd": subscription.cancel_at_period_end,
         }
 
@@ -152,7 +202,10 @@ class BillingService:
                 "date": _iso(row.paid_at) or _iso(row.created_at),
                 "status": row.status,
                 "paymentMethod": row.provider,
-                "transactionId": row.provider_invoice_id or row.id,
+                "provider": row.provider,
+                "providerInvoiceId": row.provider_invoice_id,
+                "providerPaymentId": row.provider_payment_id,
+                "transactionId": row.provider_payment_id or row.provider_invoice_id or row.id,
             }
             for row in rows
         ]
@@ -166,7 +219,9 @@ class BillingService:
             "payments": self.serialize_payments(user.uid),
         }
 
-    def create_checkout_session(self, user: AuthenticatedUser, plan_key: str, locale: str) -> dict[str, Any]:
+    def create_checkout_session(
+        self, user: AuthenticatedUser, plan_key: str, locale: str, requested_provider: str | None = None
+    ) -> dict[str, Any]:
         try:
             plan = get_plan(plan_key)
         except ValueError as exc:
@@ -175,13 +230,18 @@ class BillingService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Free plan does not use checkout")
 
         self.ensure_customer(user)
-        provider_session_id = f"fake_cs_{hashlib.sha1(f'{user.uid}:{plan_key}:{utcnow().timestamp()}'.encode()).hexdigest()[:24]}"
+        provider = self.resolve_provider(requested_provider)
+        provider_session_id = f"fake_cs_{hashlib.sha1(f'{provider}:{user.uid}:{plan_key}:{utcnow().timestamp()}'.encode()).hexdigest()[:24]}"
         success_url = f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success?session_id={provider_session_id}"
         checkout_url = success_url
-        provider = self.settings.billing_provider
 
         if provider == "stripe" and not self.settings.e2e_test_mode:
             checkout_url, provider_session_id = self._create_stripe_session(user, plan_key, locale)
+        elif provider == "paypal" and not self.settings.e2e_test_mode:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="PayPal checkout adapter is not implemented yet",
+            )
 
         session = BillingCheckoutSession(
             firebase_uid=user.uid,
@@ -209,14 +269,16 @@ class BillingService:
 
         stripe.api_key = self.settings.stripe_secret_key
         customer = self.ensure_customer(user)
-        if not customer.stripe_customer_id:
+        stripe_customer_id = self.get_customer_provider_id(customer, "stripe")
+        if not stripe_customer_id:
             stripe_customer = stripe.Customer.create(email=user.email, metadata={"firebase_uid": user.uid})
-            customer.stripe_customer_id = stripe_customer.id
+            stripe_customer_id = stripe_customer.id
+            self.set_customer_provider_id(customer, "stripe", stripe_customer_id)
             self.db.flush()
 
         session = stripe.checkout.Session.create(
             mode="subscription",
-            customer=customer.stripe_customer_id,
+            customer=stripe_customer_id,
             line_items=[{"price": price_id, "quantity": 1}],
             success_url=f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{self.settings.frontend_base_url.rstrip('/')}/{locale}/settings/subscription/cancel",
@@ -226,15 +288,17 @@ class BillingService:
         return session.url, session.id
 
     def confirm_checkout_session(self, user: AuthenticatedUser, provider_session_id: str) -> dict[str, Any]:
-        session = self.db.scalar(
-            select(BillingCheckoutSession).where(
-                BillingCheckoutSession.provider_session_id == provider_session_id
-            )
-        )
-        if not session:
+        sessions = self.db.scalars(
+            select(BillingCheckoutSession)
+            .where(BillingCheckoutSession.provider_session_id == provider_session_id)
+            .order_by(BillingCheckoutSession.created_at.desc())
+        ).all()
+        if not sessions:
             raise HTTPException(status_code=404, detail="Checkout session not found")
-        if session.firebase_uid != user.uid:
+        owned_sessions = [session for session in sessions if session.firebase_uid == user.uid]
+        if not owned_sessions:
             raise HTTPException(status_code=403, detail="Checkout session belongs to another user")
+        session = owned_sessions[0]
 
         if session.provider == "stripe" and not self.settings.e2e_test_mode:
             return self._confirm_stripe_checkout(user, session)
