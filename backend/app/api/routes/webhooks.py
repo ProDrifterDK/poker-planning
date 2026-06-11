@@ -36,3 +36,21 @@ async def stripe_webhook(
         event = event_from_raw_payload(payload)
 
     return BillingService(db, settings).process_stripe_event(event, payload)
+
+
+@router.post("/paypal")
+async def paypal_webhook(
+    request: Request,
+    db: Session = Depends(db_session),
+) -> dict:
+    settings = get_settings()
+    payload = await request.body()
+
+    if not settings.is_local_test:
+        raise HTTPException(
+            status_code=501,
+            detail="PayPal webhook signature verification is not implemented yet",
+        )
+
+    event = event_from_raw_payload(payload)
+    return BillingService(db, settings).process_paypal_event(event, payload)
