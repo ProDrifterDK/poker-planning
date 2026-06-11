@@ -293,6 +293,47 @@ class BillingService:
         )
         return session.url, session.id
 
+    def subscription_management_url(self, locale: str = "es") -> str:
+        safe_locale = locale if locale in {"es", "en"} else "es"
+        return f"{self.settings.frontend_base_url.rstrip('/')}/{safe_locale}/settings/subscription"
+
+    def create_portal_session(self, user: AuthenticatedUser, locale: str = "es") -> dict[str, str]:
+        fallback_url = self.subscription_management_url(locale)
+        subscription = self.current_subscription(user.uid)
+        if not subscription or subscription.provider != "stripe":
+            return {"url": fallback_url}
+
+        customer = self.db.scalar(select(BillingCustomer).where(BillingCustomer.firebase_uid == user.uid))
+        provider_customer_id = subscription.provider_customer_id
+        if not provider_customer_id and customer:
+            provider_customer_id = self.get_customer_provider_id(customer, "stripe")
+        if not provider_customer_id or self.settings.e2e_test_mode:
+            return {"url": fallback_url}
+        if not self.settings.stripe_secret_key:
+            raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+        import stripe
+
+        stripe.api_key = self.settings.stripe_secret_key
+        try:
+            portal_session = stripe.billing_portal.Session.create(
+                customer=provider_customer_id,
+                return_url=fallback_url,
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Stripe Customer Portal session failed",
+            ) from exc
+
+        portal_url = _provider_value(portal_session, "url")
+        if not portal_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Stripe Customer Portal session failed",
+            )
+        return {"url": portal_url}
+
     def confirm_checkout_session(
         self, user: AuthenticatedUser, provider_session_id: str, requested_provider: str | None = None
     ) -> dict[str, Any]:

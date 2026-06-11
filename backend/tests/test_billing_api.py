@@ -120,6 +120,114 @@ def test_cancel_current_subscription_is_server_authoritative(client, auth_header
     assert cancel.json()["subscription"]["cancelAtPeriodEnd"] is True
 
 
+def stripe_portal_settings() -> Settings:
+    return Settings(
+        app_env="test",
+        database_url="sqlite:///:memory:",
+        billing_provider="stripe",
+        e2e_test_mode=False,
+        e2e_test_secret="test-secret",
+        stripe_secret_key="sk_test_portal",
+    )
+
+
+def test_portal_session_creates_real_stripe_customer_portal(monkeypatch):
+    with SessionLocal() as db:
+        customer = BillingCustomer(
+            firebase_uid="alice",
+            email="alice@example.com",
+            stripe_customer_id="cus_portal",
+            provider_customer_ids={"stripe": "cus_portal"},
+        )
+        db.add(customer)
+        db.add(
+            BillingSubscription(
+                firebase_uid="alice",
+                plan_key="pro-month",
+                plan="pro",
+                billing_interval="month",
+                status="active",
+                payment_method="stripe",
+                provider="stripe",
+                provider_customer_id="cus_portal",
+                provider_subscription_id="sub_portal",
+            )
+        )
+        db.commit()
+
+        import stripe
+
+        calls = []
+
+        def fake_create(**kwargs):
+            calls.append(kwargs)
+            return {"id": "bps_test", "url": "https://billing.stripe.test/session"}
+
+        monkeypatch.setattr(stripe.billing_portal.Session, "create", fake_create)
+
+        response = BillingService(db, settings=stripe_portal_settings()).create_portal_session(
+            AuthenticatedUser(uid="alice", email="alice@example.com"), "en"
+        )
+
+    assert response == {"url": "https://billing.stripe.test/session"}
+    assert calls == [
+        {
+            "customer": "cus_portal",
+            "return_url": "http://localhost:3000/en/settings/subscription",
+        }
+    ]
+    assert stripe.api_key == "sk_test_portal"
+
+
+def test_portal_session_falls_back_when_user_has_no_stripe_subscription(monkeypatch):
+    import stripe
+
+    def fail_create(**_kwargs):
+        raise AssertionError("Stripe portal should not be called without an active Stripe subscription")
+
+    monkeypatch.setattr(stripe.billing_portal.Session, "create", fail_create)
+
+    with SessionLocal() as db:
+        response = BillingService(db, settings=stripe_portal_settings()).create_portal_session(
+            AuthenticatedUser(uid="alice", email="alice@example.com")
+        )
+
+    assert response == {"url": "http://localhost:3000/es/settings/subscription"}
+
+
+def test_portal_session_reports_stripe_provider_errors(monkeypatch):
+    with SessionLocal() as db:
+        db.add(
+            BillingSubscription(
+                firebase_uid="alice",
+                plan_key="pro-month",
+                plan="pro",
+                billing_interval="month",
+                status="active",
+                payment_method="stripe",
+                provider="stripe",
+                provider_customer_id="cus_portal",
+                provider_subscription_id="sub_portal",
+            )
+        )
+        db.commit()
+
+        import stripe
+
+        def fail_create(**_kwargs):
+            raise RuntimeError("stripe unavailable")
+
+        monkeypatch.setattr(stripe.billing_portal.Session, "create", fail_create)
+
+        with pytest.raises(HTTPException) as exc_info:
+            BillingService(db, settings=stripe_portal_settings()).create_portal_session(
+                AuthenticatedUser(uid="alice", email="alice@example.com")
+            )
+
+    assert exc_info.value.status_code == 502
+    assert exc_info.value.detail == "Stripe Customer Portal session failed"
+
+
 def test_production_configuration_rejects_fake_billing_and_e2e(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
