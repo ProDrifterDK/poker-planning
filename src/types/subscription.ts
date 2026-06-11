@@ -65,6 +65,25 @@ export enum PaymentMethod {
   CREDIT_CARD = 'credit_card'
 }
 
+// Payment provider for checkout
+export enum PaymentProvider {
+  STRIPE = 'stripe',
+  PAYPAL = 'paypal'
+}
+
+// Extended subscription status (aligned with backend lifecycle)
+export enum ExtendedSubscriptionStatus {
+  ACTIVE = 'active',
+  PAST_DUE = 'past_due',
+  CANCELLED = 'cancelled',
+  CANCEL_AT_PERIOD_END = 'cancel_at_period_end',
+  INCOMPLETE = 'incomplete',
+  EXPIRED = 'expired',
+  PENDING = 'pending',
+  FAILED = 'failed',
+  TRIALING = 'trialing'
+}
+
 // User subscription information
 export interface UserSubscription {
   id: string;

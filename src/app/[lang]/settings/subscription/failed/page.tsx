@@ -4,11 +4,17 @@ import React from 'react';
 import {
   Container,
   Typography,
+  Box,
   Paper,
   Button,
-  Box,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import CancelIcon from '@mui/icons-material/Cancel';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import EmailIcon from '@mui/icons-material/Email';
 import { useRouter, useParams } from 'next/navigation';
 import { getCheckoutTranslations } from '@/types/checkoutTranslations';
 
@@ -28,28 +34,61 @@ const getLocalizedRoute = (route: string): string => {
   return `/${lang}${route}`;
 };
 
-export default function SubscriptionCancelPage() {
+export default function SubscriptionFailedPage() {
   const router = useRouter();
   const params = useParams();
   const { lang } = params as { lang: string };
   const t = getCheckoutTranslations(lang);
 
+  const failureReasons = [
+    t.failed.insufficientFunds,
+    t.failed.cardDeclined,
+    t.failed.networkError,
+  ];
+
   return (
     <Container maxWidth="md" sx={{ py: 8 }}>
       <Paper sx={{ p: 4, textAlign: 'center' }}>
-        <CancelIcon sx={{ fontSize: 80, mb: 2, color: 'text.secondary' }} />
+        <ErrorOutlineIcon color="error" sx={{ fontSize: 80, mb: 2 }} />
 
         <Typography variant="h4" gutterBottom>
-          {t.canceled.title}
+          {t.failed.title}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" paragraph>
-          {t.canceled.message}
+          {t.failed.message}
         </Typography>
 
-        <Typography variant="body2" paragraph>
-          {t.canceled.noCharge}
-        </Typography>
+        {/* Common reasons */}
+        <Box
+          sx={{
+            textAlign: 'left',
+            maxWidth: 400,
+            mx: 'auto',
+            mt: 3,
+            mb: 3,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'action.hover',
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            {t.failed.commonReasons}
+          </Typography>
+          <List dense disablePadding>
+            {failureReasons.map((reason, i) => (
+              <ListItem key={i} disablePadding sx={{ py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <ArrowForwardIcon fontSize="small" color="action" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={reason}
+                  primaryTypographyProps={{ variant: 'body2' }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
 
         <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Button
@@ -57,21 +96,24 @@ export default function SubscriptionCancelPage() {
             onClick={() => router.push(getLocalizedRoute('/settings/subscription'))}
             sx={{ textTransform: 'none' }}
           >
-            {t.canceled.tryAgain}
+            {t.failed.retry}
           </Button>
+
           <Button
             variant="outlined"
             onClick={() => router.push(getLocalizedRoute('/settings/subscription'))}
             sx={{ textTransform: 'none' }}
           >
-            {t.canceled.backToSubscription}
+            {t.failed.tryDifferentMethod}
           </Button>
+
           <Button
             variant="text"
-            onClick={() => router.push(getLocalizedRoute(''))}
+            startIcon={<EmailIcon />}
+            href={`mailto:${t.general.supportEmail}`}
             sx={{ textTransform: 'none' }}
           >
-            {t.canceled.goToHome}
+            {t.failed.contactSupport}
           </Button>
         </Box>
       </Paper>
