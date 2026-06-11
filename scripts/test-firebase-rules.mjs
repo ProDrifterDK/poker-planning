@@ -62,8 +62,8 @@ try {
       creatorId: 'alice',
       title: 'Backend-created room',
     });
-    await set(ref(adminDb, 'rooms/backend-room/memberUids/alice'), true);
-    await set(ref(adminDb, 'rooms/backend-room/memberUids/bob'), true);
+    await set(ref(adminDb, 'rooms/backend-room/memberUids/alice'), 'participant-alice');
+    await set(ref(adminDb, 'rooms/backend-room/memberUids/bob'), 'participant-bob');
     await set(ref(adminDb, 'rooms/backend-room/sessions/session-backend'), {
       active: true,
       reveal: false,
@@ -149,6 +149,13 @@ try {
   );
 
   await assertSucceeds(
+    set(ref(bobDb, 'votes/backend-room/session-backend/issue-1/participant-bob'), {
+      value: 8,
+      timestamp: 123450,
+    })
+  );
+
+  await assertSucceeds(
     update(ref(aliceDb, 'rooms/backend-room/participants/participant-alice'), {
       estimation: 5,
       firebaseUid: 'alice',
@@ -206,11 +213,15 @@ try {
   );
 
   await testEnv.withSecurityRulesDisabled(async (admin) => {
-    await update(ref(admin.database(), 'rooms/backend-room/participants/participant-bob'), {
+    const adminDb = admin.database();
+    await update(ref(adminDb, 'rooms/backend-room/participants/participant-bob'), {
       active: false,
       removed: true,
       lastActive: 123459,
     });
+    // Simulate stale pre-fix projection: memberUids/bob still truthy even though
+    // Bob's participant projection is inactive/removed. Rules must still deny.
+    await set(ref(adminDb, 'rooms/backend-room/memberUids/bob'), true);
   });
 
   await assertFails(
@@ -221,6 +232,45 @@ try {
       participantId: 'participant-bob',
       role: 'participant',
       lastActive: 123460,
+    })
+  );
+
+  await assertFails(
+    update(ref(bobDb, 'rooms/backend-room/sessions/session-backend'), {
+      reveal: true,
+      timerStartedAt: 123461,
+    })
+  );
+
+  await assertFails(
+    update(ref(bobDb, 'rooms/backend-room'), {
+      reveal: true,
+      currentIssueId: 'issue-2',
+    })
+  );
+
+  await assertFails(
+    set(ref(bobDb, 'rooms/backend-room/issues/issue-removed'), {
+      key: 'REMOVED-1',
+      summary: 'Removed participant issue',
+      status: 'pending',
+    })
+  );
+
+  await assertFails(
+    set(ref(bobDb, 'votes/backend-room/session-backend/issue-1/participant-bob'), {
+      value: 13,
+      timestamp: 123462,
+    })
+  );
+
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await set(ref(admin.database(), 'rooms/backend-room/memberUids/bob'), false);
+  });
+
+  await assertFails(
+    update(ref(bobDb, 'rooms/backend-room/sessions/session-backend'), {
+      reveal: false,
     })
   );
 
@@ -241,7 +291,7 @@ try {
 
   await assertFails(updateDoc(doc(aliceFirestore, 'rooms', 'backend-room'), { active: false }));
 
-  console.log('Firebase room rules passed: direct room writes denied and participant lifecycle flags are backend-owned.');
+  console.log('Firebase room rules passed: direct room writes denied and inactive memberships cannot mutate shared state.');
 } finally {
   await testEnv.cleanup();
 }

@@ -571,7 +571,7 @@ class RoomEntitlementService:
         if membership.photo_url:
             payload["photoURL"] = membership.photo_url
         realtime_db.reference(f"rooms/{room.id}/participants/{membership.id}").update(payload)
-        realtime_db.reference(f"rooms/{room.id}/memberUids/{membership.firebase_uid}").set(True)
+        realtime_db.reference(f"rooms/{room.id}/memberUids/{membership.firebase_uid}").set(membership.id)
 
     def _write_session_projection(self, room_id: str, session_id: str, timestamp_ms: int) -> None:
         from firebase_admin import db as realtime_db
@@ -617,6 +617,7 @@ class RoomEntitlementService:
         if removed:
             payload["removed"] = True
         realtime_db.reference(f"rooms/{room_id}/participants/{membership.id}").update(payload)
+        realtime_db.reference(f"rooms/{room_id}/memberUids/{membership.firebase_uid}").set(False)
 
     def _write_closed_projection(self, room: PlanningRoom) -> None:
         if self.settings.e2e_test_mode:

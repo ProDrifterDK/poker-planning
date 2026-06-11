@@ -15,33 +15,33 @@
         },
         "sessions": {
           "$sessionId": {
-            ".write": "auth != null && data.exists() && newData.exists() && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+            ".write": "auth != null && data.exists() && newData.exists() && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
           }
         },
         "participants": {
           "$participantId": {
-            ".write": "auth != null && data.exists() && newData.exists() && data.child('firebaseUid').val() === auth.uid && newData.child('firebaseUid').val() === data.child('firebaseUid').val() && newData.child('participantId').val() === data.child('participantId').val() && newData.child('role').val() === data.child('role').val() && newData.child('active').val() === data.child('active').val() && newData.child('removed').val() === data.child('removed').val() && newData.child('joinedAt').val() === data.child('joinedAt').val()"
+            ".write": "auth != null && data.exists() && newData.exists() && data.child('firebaseUid').val() === auth.uid && newData.child('firebaseUid').val() === data.child('firebaseUid').val() && newData.child('participantId').val() === data.child('participantId').val() && newData.child('role').val() === data.child('role').val() && newData.child('active').val() === data.child('active').val() && newData.child('removed').val() === data.child('removed').val() && newData.child('joinedAt').val() === data.child('joinedAt').val() && data.child('active').val() === true && data.child('removed').val() !== true"
           }
         },
         "issues": {
           "$issueId": {
-            ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+            ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
           }
         },
         "reveal": {
-          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
         },
         "currentIssueId": {
-          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
         },
         "timerEnabled": {
-          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
         },
         "timerDuration": {
-          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
         },
         "timerStartedAt": {
-          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child(root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val()).child('removed').val() !== true"
         }
       }
     },
@@ -50,7 +50,7 @@
         "$sessionId": {
           "$issueId": {
             "$participantId": {
-              ".write": "auth != null && root.child('rooms').child($roomId).child('participants').child($participantId).child('firebaseUid').val() === auth.uid"
+              ".write": "auth != null && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === $participantId && root.child('rooms').child($roomId).child('participants').child($participantId).child('firebaseUid').val() === auth.uid && root.child('rooms').child($roomId).child('participants').child($participantId).child('active').val() === true && root.child('rooms').child($roomId).child('participants').child($participantId).child('removed').val() !== true"
             }
           }
         }
