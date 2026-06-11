@@ -9,13 +9,14 @@ import {
   BillingInterval,
   PlanFeatures,
   PaymentHistory,
+  PaymentProvider,
   SUBSCRIPTION_PLANS,
   SubscriptionPlan,
   SubscriptionStatus,
   UserSubscription
 } from '@/types/subscription';
 import { canAddParticipant } from '@/lib/subscriptionService';
-import { billingApi } from '@/lib/billingApi';
+import { billingApi, type ConfirmCheckoutResult } from '@/lib/billingApi';
 
 const getPlanLookupKey = (
   plan: SubscriptionPlan,
@@ -54,11 +55,12 @@ interface SubscriptionState {
   subscribeToPlan: (
     userId: string,
     plan: SubscriptionPlan,
-    billingInterval?: BillingInterval
+    billingInterval?: BillingInterval,
+    provider?: PaymentProvider
   ) => Promise<string>;
   cancelCurrentSubscription: (reason?: string) => Promise<boolean>;
   executeSubscription: (token: string, userId?: string, plan?: SubscriptionPlan) => Promise<void>;
-  confirmCheckoutSession: (sessionId: string) => Promise<UserSubscription | null>;
+  confirmCheckoutSession: (sessionId: string, provider?: string) => Promise<ConfirmCheckoutResult | null>;
   clearSubscription: () => void;
   clearError: () => void;
 
@@ -109,7 +111,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }
       },
 
-      subscribeToPlan: async (_userId, plan, billingInterval = BillingInterval.MONTH) => {
+      subscribeToPlan: async (_userId, plan, billingInterval = BillingInterval.MONTH, provider = PaymentProvider.STRIPE) => {
         try {
           set({ loading: true, error: null, paymentUrl: null });
 
@@ -122,6 +124,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           const checkout = await billingApi.createCheckoutSession({
             plan,
             billingInterval,
+            provider,
             locale: typeof window !== 'undefined'
               ? window.location.pathname.split('/')[1] || 'es'
               : 'es',
@@ -158,12 +161,22 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         await get().confirmCheckoutSession(token);
       },
 
-      confirmCheckoutSession: async (sessionId: string) => {
+      confirmCheckoutSession: async (sessionId: string, provider?: string) => {
         try {
           set({ loading: true, error: null });
-          const subscription = await billingApi.confirmCheckoutSession(sessionId);
-          set({ currentSubscription: subscription, loading: false, paymentUrl: null });
-          return subscription;
+          const result = await billingApi.confirmCheckoutSession(sessionId, provider);
+
+          // Only update the cached subscription when the backend says the
+          // payment was actually confirmed (active/completed). A "pending"
+          // status means the provider hasn't yet approved the subscription —
+          // we must not overwrite the local subscription with the free-plan
+          // placeholder the backend returns in that case.
+          if (result.status && result.status !== 'pending' && result.subscription) {
+            set({ currentSubscription: result.subscription, loading: false, paymentUrl: null });
+          } else {
+            set({ loading: false });
+          }
+          return result;
         } catch (error) {
           console.error('Error al confirmar checkout:', error);
           set({

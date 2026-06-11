@@ -3,10 +3,12 @@ import {
   BillingInterval,
   PaymentHistory,
   PaymentMethod,
+  PaymentProvider,
   SubscriptionPlan,
   SubscriptionStatus,
   UserSubscription
 } from '@/types/subscription';
+import { assertProviderEnabled } from '@/config/paymentProviders';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BILLING_API_BASE_URL ||
@@ -37,6 +39,35 @@ interface ApiBillingSubscription {
   subscriptionId?: string | null;
   providerSubscriptionId?: string | null;
   cancelAtPeriodEnd?: boolean;
+}
+
+interface ApiCheckoutSessionResponse {
+  checkoutSessionId: string;
+  checkoutUrl: string;
+  provider: string;
+  status: string;
+}
+
+interface ApiConfirmCheckoutResponse {
+  status: string;
+  subscription: ApiBillingSubscription;
+}
+
+export interface ConfirmCheckoutResult {
+  /** Backend confirm status: 'active', 'completed', 'pending', etc. */
+  status: string;
+  /**
+   * Normalized subscription. Undefined when status is 'pending' — in that
+   * case the backend returns a synthetic free-plan placeholder from
+   * serialize_subscription(None) which must not be treated as a real
+   * subscription. Callers should only read this field after confirming
+   * status !== 'pending'.
+   */
+  subscription: UserSubscription | undefined;
+}
+
+interface ApiPortalSessionResponse {
+  url: string;
 }
 
 interface BillingMeResponse {
@@ -124,24 +155,74 @@ export const billingApi = {
   async createCheckoutSession(input: {
     plan: SubscriptionPlan.PRO | SubscriptionPlan.ENTERPRISE;
     billingInterval: BillingInterval;
+    provider: PaymentProvider;
     locale: string;
-  }): Promise<{ checkoutUrl: string; checkoutSessionId: string }> {
+  }): Promise<ApiCheckoutSessionResponse> {
+    // Defense-in-depth: reject requests for providers that are not yet
+    // backed by a real backend adapter. Prevents the fallback/fake
+    // checkout path from activating paid subscriptions.
+    assertProviderEnabled(input.provider);
+
     const planKey = `${input.plan}-${input.billingInterval}`;
-    return billingRequest<{ checkoutUrl: string; checkoutSessionId: string }>(
+    return billingRequest<ApiCheckoutSessionResponse>(
       '/v1/billing/checkout-sessions',
       {
         method: 'POST',
-        body: JSON.stringify({ planKey, locale: input.locale === 'en' ? 'en' : 'es' }),
+        body: JSON.stringify({
+          planKey,
+          provider: input.provider,
+          locale: input.locale === 'en' ? 'en' : 'es',
+        }),
       }
     );
   },
 
-  async confirmCheckoutSession(sessionId: string): Promise<UserSubscription> {
-    const data = await billingRequest<{ subscription: ApiBillingSubscription }>(
-      `/v1/billing/checkout-sessions/${encodeURIComponent(sessionId)}/confirm`,
+  async createPortalSession(): Promise<ApiPortalSessionResponse> {
+    return billingRequest<ApiPortalSessionResponse>(
+      '/v1/billing/portal-sessions',
       { method: 'POST' }
     );
-    return normalizeSubscription(data.subscription);
+  },
+
+  /**
+   * Confirm a checkout session with the backend.
+   * Returns both the confirm status AND the normalized subscription.
+   *
+   * The backend's top-level `status` field is critical:
+   * - "active"/"completed" = payment confirmed, subscription activated
+   * - "pending" = payment in progress (e.g. Stripe session not yet complete)
+   * The previous implementation dropped this field, causing the success page
+   * to render even when the payment was still pending.
+   *
+   * `provider` is forwarded as a query param so the backend can disambiguate
+   * checkout sessions when the same `provider_session_id` might match multiple
+   * providers. The success URL includes the provider from the create-checkout
+   * step, so the frontend must read and forward it.
+   */
+  async confirmCheckoutSession(
+    sessionId: string,
+    provider?: string
+  ): Promise<ConfirmCheckoutResult> {
+    const params = new URLSearchParams();
+    if (provider) {
+      params.set('provider', provider);
+    }
+    const qs = params.toString();
+    const path = `/v1/billing/checkout-sessions/${encodeURIComponent(sessionId)}/confirm${qs ? `?${qs}` : ''}`;
+    const data = await billingRequest<ApiConfirmCheckoutResponse>(
+      path,
+      { method: 'POST' }
+    );
+    return {
+      status: data.status,
+      // On 'pending', the backend returns a synthetic free-plan placeholder
+      // from serialize_subscription(None). We must not normalize or expose
+      // this as a real subscription — downstream code should never see it.
+      subscription:
+        data.status === 'pending'
+          ? undefined
+          : normalizeSubscription(data.subscription),
+    };
   },
 
   async cancelCurrentSubscription(reason?: string): Promise<UserSubscription> {
