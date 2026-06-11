@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+
+from sqlalchemy import func, select
 
 from app.db.models import BillingSubscription, PlanningRoom, utcnow
 from app.db.session import SessionLocal
+from app.schemas.billing import AuthenticatedUser
+from app.schemas.rooms import RoomCreateRequest
 from app.services.billing_service import BillingService
+from app.services.entitlements import EntitlementService
+from app.services.room_service import RoomLimitReachedError, RoomService
 
 
 def _create_subscription(uid: str, plan_key: str, plan: str, *, status: str = "active", days: int = 30) -> None:
@@ -90,6 +99,50 @@ def test_create_room_limit_reached_for_free_user(client, auth_headers):
     assert detail["limit"] == 1
     assert detail["currentUsage"] == 1
     assert detail["upgradeAvailable"] is True
+
+
+def test_concurrent_room_creates_are_serialized_at_free_limit(monkeypatch):
+    original_active_room_count = EntitlementService.active_room_count
+    counter_lock = threading.Lock()
+    in_flight_counts = 0
+    max_in_flight_counts = 0
+
+    def slow_active_room_count(self: EntitlementService, uid: str) -> int:
+        nonlocal in_flight_counts, max_in_flight_counts
+        with counter_lock:
+            in_flight_counts += 1
+            max_in_flight_counts = max(max_in_flight_counts, in_flight_counts)
+        try:
+            time.sleep(0.03)
+            return original_active_room_count(self, uid)
+        finally:
+            with counter_lock:
+                in_flight_counts -= 1
+
+    monkeypatch.setattr(EntitlementService, "active_room_count", slow_active_room_count)
+    user = AuthenticatedUser(uid="alice", email="alice@example.com", name="Alice")
+
+    def create(title: str) -> str:
+        with SessionLocal() as db:
+            try:
+                RoomService(db).create_room(user, RoomCreateRequest(title=title))
+                return "created"
+            except RoomLimitReachedError:
+                db.rollback()
+                return "limit"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(create, ["Concurrent A", "Concurrent B"]))
+
+    assert sorted(results) == ["created", "limit"]
+    assert max_in_flight_counts == 1
+    with SessionLocal() as db:
+        active_room_count = db.scalar(
+            select(func.count())
+            .select_from(PlanningRoom)
+            .where(PlanningRoom.owner_uid == "alice", PlanningRoom.status == "active")
+        )
+        assert active_room_count == 1
 
 
 def test_closing_backend_room_frees_active_room_slot(client, auth_headers):

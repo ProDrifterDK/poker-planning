@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage",
+    "test:firebase-rules": "npx firebase-tools@15.20.0 emulators:exec --only database,firestore --project demo-poker-planning-rules \"node scripts/test-firebase-rules.mjs\"",
     "cypress": "cypress open",
     "cypress:headless": "cypress run",
     "cypress:ci": "start-server-and-test dev http://localhost:3000 cypress:headless"
@@ -52,6 +53,8 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",

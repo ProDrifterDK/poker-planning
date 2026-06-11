@@ -36,6 +36,11 @@ The backend is the source of truth for billing:
 - `POST /v1/billing/subscription/me/cancel`
   - Authenticated, server-authoritative cancellation path.
 
+- `POST /v1/rooms`
+  - Authenticated, backend-authoritative room creation path.
+  - Enforces active-room limits from the effective billing entitlement before projecting room metadata/session/participant state into Firebase.
+  - Firebase Realtime Database and Firestore rules deny direct client room metadata/session/participant/document creation so quota enforcement cannot be bypassed with client writes.
+
 - `POST /v1/webhooks/stripe`
   - Verifies Stripe signature when `STRIPE_WEBHOOK_SECRET` is configured.
   - Stores webhook event IDs for idempotency.
@@ -83,11 +88,11 @@ Preferred public subdomain: `planning.resyst.cl`.
 
 Recommended backend host: Railway service under the same repository or a separate `poker-planning-billing` service.
 
-Required backend env common to both providers:
+Required backend env:
 
 - `APP_ENV=production`
-- `BILLING_PROVIDER=stripe` or `BILLING_PROVIDER=paypal`
-- `DATABASE_URL=<postgres-url>` (Railway's `postgresql://...` URL is normalized to `postgresql+psycopg://...` at runtime)
+- `BILLING_PROVIDER=stripe`
+- `DATABASE_URL=<postgres-url>`
 - `FRONTEND_BASE_URL=https://planning.resyst.cl`
 - `FRONTEND_ORIGINS=https://planning.resyst.cl,https://<vercel-preview-domain-if-needed>`
 - `FIREBASE_PROJECT_ID=<project-id>`
@@ -104,19 +109,6 @@ Stripe provider env when `BILLING_PROVIDER=stripe`:
 - `STRIPE_PRICE_ENTERPRISE_MONTH=price_...`
 - `STRIPE_PRICE_ENTERPRISE_YEAR=price_...`
 
-PayPal provider env when `BILLING_PROVIDER=paypal`:
-
-- `PAYPAL_CLIENT_ID=<paypal-client-id>`
-- `PAYPAL_CLIENT_SECRET=<paypal-client-secret>`
-- `PAYPAL_ENVIRONMENT=live` for production (`sandbox` is allowed only outside production)
-- `PAYPAL_WEBHOOK_ID=<paypal-webhook-id>`
-- `PAYPAL_PLAN_PRO_MONTH=P-...`
-- `PAYPAL_PLAN_PRO_YEAR=P-...`
-- `PAYPAL_PLAN_ENTERPRISE_MONTH=P-...`
-- `PAYPAL_PLAN_ENTERPRISE_YEAR=P-...`
-
-Provider configuration can be smoke-checked without exposing secret values through `GET /v1/billing/providers`. The endpoint reports the active provider, public providers supported by the API contract, Postgres/SQLite mode, provider credential/webhook presence, missing required env names, and configured plan IDs.
-
 ### Stripe dashboard
 
 1. Create Products/Prices for:
@@ -130,19 +122,6 @@ Provider configuration can be smoke-checked without exposing secret values throu
 3. Copy webhook signing secret to Railway.
 
 Future payment-history enhancement: add `invoice.payment_succeeded` / `invoice.payment_failed` handlers and tests before subscribing those events in Stripe.
-
-### PayPal dashboard
-
-1. Create subscription plans for:
-   - Pro monthly
-   - Pro yearly
-   - Enterprise monthly
-   - Enterprise yearly
-2. Copy the generated `P-...` plan IDs into the matching Railway `PAYPAL_PLAN_*` variables.
-3. Configure webhook endpoint:
-   - URL: `https://<billing-backend-domain>/v1/webhooks/paypal`
-   - Events: subscription lifecycle/payment events required by the PayPal adapter slice.
-4. Copy the PayPal webhook ID into `PAYPAL_WEBHOOK_ID` and redeploy before using `BILLING_PROVIDER=paypal` in production.
 
 ## Testing roadmap
 
