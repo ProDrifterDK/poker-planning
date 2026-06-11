@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from app.core.settings import Settings, get_settings
@@ -321,6 +322,54 @@ def test_checkout_request_can_choose_paypal_without_client_side_activation(clien
     assert subscription["provider"] == "paypal"
     assert subscription["providerSubscriptionId"].startswith("fake_sub_")
     assert subscription["manageableActions"]["canCancel"] is True
+
+
+def test_non_e2e_paypal_checkout_confirmation_is_not_fake_activated():
+    with SessionLocal() as db:
+        db.add(
+            BillingCheckoutSession(
+                firebase_uid="alice",
+                plan_key="enterprise-month",
+                provider="paypal",
+                provider_session_id="paypal_existing_session",
+                checkout_url="https://paypal.example/approve",
+            )
+        )
+        db.commit()
+
+        service = BillingService(
+            db,
+            settings=Settings(
+                app_env="test",
+                database_url="sqlite:///:memory:",
+                billing_provider="fake",
+                e2e_test_mode=False,
+                e2e_test_secret="test-secret",
+            ),
+        )
+        with pytest.raises(HTTPException) as exc_info:
+            service.confirm_checkout_session(
+                AuthenticatedUser(uid="alice", email="alice@example.com"),
+                "paypal_existing_session",
+                "paypal",
+            )
+
+        assert exc_info.value.status_code == 501
+        assert "PayPal checkout adapter" in exc_info.value.detail
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(BillingSubscription)
+                .where(BillingSubscription.provider == "paypal")
+            )
+            == 0
+        )
+        session = db.scalar(
+            select(BillingCheckoutSession).where(
+                BillingCheckoutSession.provider_session_id == "paypal_existing_session"
+            )
+        )
+        assert session.status == "created"
 
 
 def test_provider_scoped_subscription_and_checkout_ids_can_overlap():

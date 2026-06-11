@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -26,7 +27,9 @@ class BillingCustomer(Base):
     # Legacy Stripe column retained for existing deployments; new providers use
     # provider_customer_ids so the customer aggregate stays provider-neutral.
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
-    provider_customer_ids: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    provider_customer_ids: Mapped[dict] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), default=dict, nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 

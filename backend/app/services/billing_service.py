@@ -321,6 +321,11 @@ class BillingService:
 
         if session.provider == "stripe" and not self.settings.e2e_test_mode:
             return self._confirm_stripe_checkout(user, session)
+        if session.provider == "paypal" and not self.settings.e2e_test_mode:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="PayPal checkout adapter is not implemented yet",
+            )
 
         subscription = self._activate_subscription(
             uid=user.uid,

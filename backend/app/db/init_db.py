@@ -274,6 +274,17 @@ def _migrate_postgresql(conn: Connection) -> None:
         conn.execute(
             text(
                 """
+                ALTER TABLE billing_customers
+                ALTER COLUMN provider_customer_ids TYPE JSONB
+                    USING COALESCE(provider_customer_ids::jsonb, '{}'::jsonb),
+                ALTER COLUMN provider_customer_ids SET DEFAULT '{}'::jsonb,
+                ALTER COLUMN provider_customer_ids SET NOT NULL
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
                 UPDATE billing_customers
                 SET provider_customer_ids = COALESCE(provider_customer_ids, '{}'::jsonb)
                     || jsonb_build_object('stripe', stripe_customer_id)

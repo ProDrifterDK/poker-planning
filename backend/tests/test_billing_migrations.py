@@ -3,10 +3,14 @@ from __future__ import annotations
 import json
 
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import CreateTable
 from fastapi.testclient import TestClient
 
+import app.db.init_db as init_db_module
 from app.db.init_db import migrate_existing_schema
+from app.db.models import BillingCustomer
 from app.main import create_app
 
 
@@ -101,6 +105,44 @@ def _seed_legacy_billing_schema(engine) -> None:
                 """
             )
         )
+
+
+def test_provider_customer_ids_uses_jsonb_for_postgresql_metadata():
+    create_sql = str(CreateTable(BillingCustomer.__table__).compile(dialect=postgresql.dialect()))
+
+    assert "provider_customer_ids JSONB" in create_sql
+
+
+def test_postgresql_migration_casts_provider_customer_ids_to_jsonb_before_backfill(monkeypatch):
+    executed: list[str] = []
+
+    class FakeDialect:
+        name = "postgresql"
+
+    class FakeConnection:
+        dialect = FakeDialect()
+
+        def execute(self, statement, *args, **kwargs):
+            executed.append(str(statement))
+
+    monkeypatch.setattr(
+        init_db_module,
+        "_has_table",
+        lambda _conn, table_name: table_name == "billing_customers",
+    )
+
+    init_db_module._migrate_postgresql(FakeConnection())
+
+    cast_index = next(
+        index
+        for index, statement in enumerate(executed)
+        if "ALTER COLUMN provider_customer_ids TYPE JSONB" in statement
+    )
+    backfill_index = next(
+        index for index, statement in enumerate(executed) if "jsonb_build_object" in statement
+    )
+
+    assert cast_index < backfill_index
 
 
 def test_existing_legacy_schema_is_migrated_and_backfilled(tmp_path):
