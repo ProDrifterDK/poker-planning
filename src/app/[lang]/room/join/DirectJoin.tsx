@@ -12,7 +12,6 @@ import {
   Button
 } from "@mui/material";
 import { useRoomStore } from "@/store/roomStore";
-import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useAuth } from "@/context/authContext";
 import { getLocalizedRoute } from "@/utils/routeUtils";
 import Link from "next/link";
@@ -34,7 +33,6 @@ export default function DirectJoin() {
   
   // Usar los stores de Zustand
   const { joinRoomWithName, error, setError } = useRoomStore();
-  const subscriptionStore = useSubscriptionStore();
 
   // Verificar si ya hay una sesión persistente para esta sala
   useEffect(() => {
@@ -131,14 +129,10 @@ export default function DirectJoin() {
       return;
     }
 
-    // Verificar si la sala puede aceptar más participantes
+    // Backend is the admission authority — no local/Firebase participant-cap
+    // precheck. joinRoomWithName calls POST /v1/rooms/{roomId}/join which
+    // returns structured 409 on PARTICIPANT_LIMIT_REACHED.
     try {
-      const canJoin = await subscriptionStore.canRoomAddParticipant(roomCode);
-      if (!canJoin) {
-        setJoinError(t('directJoin.roomLimitReached'));
-        return;
-      }
-
       setIsJoining(true);
       const photoURL = currentUser?.photoURL && currentUser.photoURL !== 'guest_user' ? currentUser.photoURL : undefined;
       await joinRoomWithName(roomCode, userName, photoURL);

@@ -431,6 +431,17 @@ describe('Room Store Integration', () => {
 
       const { joinRoomWithName } = useRoomStore.getState();
       await expect(joinRoomWithName('testroom', 'New User')).rejects.toThrow();
+
+      // Verify structured 409 details surface as user-facing error message
+      const state = useRoomStore.getState();
+      expect(state.error).toContain('límite de participantes');
+      expect(state.error).toContain('5/5');
+      expect(state.error).toContain('Actualiza tu plan');
+
+      const errorState = useErrorStore.getState();
+      expect(errorState.currentError).not.toBeNull();
+      expect(errorState.currentError?.type).toBe(ErrorType.JOIN_ROOM_FAILED);
+      expect(errorState.currentError?.details).toBeDefined();
     });
 
     it('handles idempotent rejoin — backend returns rejoined: true for existing member', async () => {
@@ -494,6 +505,62 @@ describe('Room Store Integration', () => {
       await leaveRoom();
 
       expect(billingApiMock.leaveRoom).toHaveBeenCalledWith('testroom');
+    });
+
+    it('DirectJoin.tsx does not import subscriptionStore (no local admission precheck)', async () => {
+      // Regression test: AC3 requires that the frontend does not rely on
+      // Firebase/local subscription state as the admission authority. The
+      // DirectJoin component must not call canRoomAddParticipant before the
+      // backend join call.
+      const fs = require('fs');
+      const source = fs.readFileSync(
+        require('path').join(__dirname, '../../src/app/[lang]/room/join/DirectJoin.tsx'),
+        'utf8'
+      );
+      expect(source).not.toContain('canRoomAddParticipant');
+      expect(source).not.toContain('useSubscriptionStore');
+    });
+
+    it('non-409 BillingApiError shows generic message for join failures', async () => {
+      const { BillingApiError } = jest.requireMock('@/lib/billingApi');
+      billingApiMock.joinRoom.mockRejectedValueOnce(
+        new BillingApiError('Internal server error', 500, {})
+      );
+
+      const { joinRoomWithName } = useRoomStore.getState();
+      await expect(joinRoomWithName('testroom', 'New User')).rejects.toThrow();
+
+      const state = useRoomStore.getState();
+      // Should get the generic fallback message
+      expect(state.error).toContain('No se pudo unir a la sala');
+      // Should NOT contain structured 409 messaging
+      expect(state.error).not.toContain('límite de participantes');
+    });
+
+    it('PARTICIPANT_LIMIT_REACHED without upgradePath omits upgrade hint', async () => {
+      const { BillingApiError } = jest.requireMock('@/lib/billingApi');
+      billingApiMock.joinRoom.mockRejectedValueOnce(
+        new BillingApiError('Participant limit reached', 409, {
+          detail: {
+            code: 'PARTICIPANT_LIMIT_REACHED',
+            message: 'Room is full',
+            planKey: 'free',
+            plan: 'Free',
+            limit: 5,
+            currentUsage: 5,
+            upgradeAvailable: false,
+          },
+        })
+      );
+
+      const { joinRoomWithName } = useRoomStore.getState();
+      await expect(joinRoomWithName('testroom', 'New User')).rejects.toThrow();
+
+      const state = useRoomStore.getState();
+      expect(state.error).toContain('límite de participantes');
+      expect(state.error).toContain('5/5');
+      // No upgrade prompt when upgradeAvailable=false
+      expect(state.error).not.toContain('Actualiza tu plan');
     });
   });
 });

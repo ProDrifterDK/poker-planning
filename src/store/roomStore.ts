@@ -455,10 +455,35 @@ export const useRoomStore = create<RoomState & RoomActions>()(
         } catch (error) {
           // Si no es un error que ya hemos manejado (como sala no encontrada)
           if (!(error instanceof Error && error.message.includes("La sala no existe"))) {
+            // Surface structured 409 join-denial details (PARTICIPANT_LIMIT_REACHED)
+            // so the UI can show plan limit, current usage, and upgrade path.
+            let message = "No se pudo unir a la sala. Verifica el código e intenta nuevamente.";
+            const details = error instanceof BillingApiError
+              ? (error.details as { detail?: RoomLimitDetails } | undefined)?.detail
+              : undefined;
+
+            if (error instanceof BillingApiError && error.status === 409 && details) {
+              if (details.code === "PARTICIPANT_LIMIT_REACHED") {
+                message = `Esta sala alcanzó el límite de participantes de tu plan (${details.currentUsage}/${details.limit}).`;
+                if (details.upgradeAvailable && details.upgradePath) {
+                  message += ` Actualiza tu plan para aumentar el límite.`;
+                }
+              } else if (details.code === "ROOM_LIMIT_REACHED") {
+                message = `El propietario de la sala alcanzó el límite de salas activas de su plan (${details.currentUsage}/${details.limit}).`;
+                if (details.upgradeAvailable && details.upgradePath) {
+                  message += ` Se requiere una actualización de plan.`;
+                }
+              } else if (details.message) {
+                message = details.message;
+              }
+            } else if (details?.code === "ENTITLEMENT_UNAVAILABLE") {
+              message = "No se pudieron verificar los permisos en este momento. Intenta nuevamente.";
+            }
+
             const appError = createError(
               ErrorType.JOIN_ROOM_FAILED,
-              "No se pudo unir a la sala. Verifica el código e intenta nuevamente.",
-              { originalError: error, roomId },
+              message,
+              { originalError: error, roomId, entitlement: details },
               () => get().joinRoomWithName(roomId, name, undefined) // Acción de recuperación: reintentar
             );
             errorStore.setError(appError);
