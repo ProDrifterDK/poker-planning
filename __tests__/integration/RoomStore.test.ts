@@ -2,14 +2,63 @@
 import '../mocks/firebaseConfigMock';
 import '../mocks/firebaseMocks';
 
+jest.mock('@/lib/billingApi', () => {
+  class BillingApiError extends Error {
+    constructor(message: string, public status?: number, public details?: unknown) {
+      super(message);
+      this.name = 'BillingApiError';
+    }
+  }
+
+  return {
+    BillingApiError,
+    billingApi: {
+      createRoom: jest.fn(),
+      closeRoom: jest.fn(() => Promise.resolve({ roomId: 'testroom', status: 'closed' })),
+    },
+  };
+});
+
 // Ahora importamos los módulos que usan Firebase
 import { useRoomStore } from '@/store/roomStore';
 import { useErrorStore, ErrorType } from '@/store/errorStore';
 import { resetFirebaseMocks } from '../mocks/firebaseMocks';
 
+const billingApiMock = jest.requireMock('@/lib/billingApi').billingApi as {
+  createRoom: jest.Mock;
+  closeRoom: jest.Mock;
+};
+
 describe('Room Store Integration', () => {
   // Resetear el estado de los stores y mocks antes de cada test
   beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('participant_id_testroom', 'participant1');
+
+    billingApiMock.createRoom.mockResolvedValue({
+      roomId: 'backend-room',
+      participantId: 'participant-backend',
+      sessionId: 'session-backend',
+      firebasePath: 'rooms/backend-room',
+      title: 'Sala backend-room',
+      seriesKey: 'fibonacci',
+      participant: {
+        participantId: 'participant-backend',
+        role: 'moderator',
+        displayName: 'Moderador',
+      },
+      limits: {
+        planKey: 'free',
+        plan: 'free',
+        limit: 1,
+        currentUsage: 1,
+        upgradeAvailable: true,
+        upgradePath: '/es/settings/subscription',
+      },
+      metadata: {},
+    });
+    billingApiMock.closeRoom.mockResolvedValue({ roomId: 'testroom', status: 'closed' });
+
     // Resetear el store de salas
     useRoomStore.setState({
       roomId: null,
@@ -63,10 +112,7 @@ describe('Room Store Integration', () => {
     it('should set error state when creation fails', async () => {
       // Arrange
       const { createRoom } = useRoomStore.getState();
-      
-      // Mock update to fail
-      const updateMock = jest.requireMock('firebase/database').update;
-      updateMock.mockImplementationOnce(() => Promise.reject(new Error('Firebase error')));
+      billingApiMock.createRoom.mockRejectedValueOnce(new Error('Backend error'));
       
       // Act & Assert
       await expect(createRoom('fibonacci')).rejects.toThrow();

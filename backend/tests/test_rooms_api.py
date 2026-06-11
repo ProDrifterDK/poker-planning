@@ -65,10 +65,12 @@ def test_create_room_allowed_for_free_user(client, auth_headers):
     assert response.status_code == 200
     body = response.json()
     assert body["roomId"].startswith("room_")
+    assert body["participantId"].startswith("participant_")
     assert body["sessionId"].startswith("session_")
     assert body["firebasePath"] == f"rooms/{body['roomId']}"
     assert body["title"] == "Sprint 1"
     assert body["participant"]["role"] == "moderator"
+    assert body["participant"]["participantId"] == body["participantId"]
     assert body["participant"]["displayName"] == "Alice"
     assert body["limits"] == {
         "planKey": "free",

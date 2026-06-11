@@ -8,15 +8,40 @@
         "metadata": {
           ".write": false
         },
+        "memberUids": {
+          "$uid": {
+            ".write": false
+          }
+        },
         "sessions": {
           "$sessionId": {
-            ".write": false
+            ".write": "auth != null && data.exists() && newData.exists() && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
           }
         },
         "participants": {
           "$participantId": {
             ".write": "auth != null && data.exists() && newData.exists() && data.child('firebaseUid').val() === auth.uid && newData.child('firebaseUid').val() === data.child('firebaseUid').val() && newData.child('participantId').val() === data.child('participantId').val() && newData.child('role').val() === data.child('role').val()"
           }
+        },
+        "issues": {
+          "$issueId": {
+            ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+          }
+        },
+        "reveal": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+        },
+        "currentIssueId": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+        },
+        "timerEnabled": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+        },
+        "timerDuration": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
+        },
+        "timerStartedAt": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('memberUids').child(auth.uid).val() === true && root.child('rooms').child($roomId).child('metadata').child('active').val() !== false"
         }
       }
     },

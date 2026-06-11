@@ -63,6 +63,7 @@ def create_room(
     snapshot = created.snapshot
     return {
         "roomId": created.room.id,
+        "participantId": created.membership.participant_id,
         "sessionId": created.session_id,
         "firebasePath": created.room.firebase_path,
         "title": created.room.title,

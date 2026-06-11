@@ -135,7 +135,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             displayName: "Moderador",
           });
 
-          localStorage.setItem(`participant_id_${created.roomId}`, created.participant.participantId);
+          localStorage.setItem(`participant_id_${created.roomId}`, created.participantId);
 
           // Limpiar el estado anterior y establecer el nuevo estado. La sala y
           // la membresía ya fueron autorizadas y proyectadas por el backend;
@@ -145,7 +145,7 @@ export const useRoomStore = create<RoomState & RoomActions>()(
             roomId: created.roomId,
             roomTitle: created.title,
             sessionId: created.sessionId,
-            currentParticipantId: created.participant.participantId,
+            currentParticipantId: created.participantId,
             seriesKey: created.seriesKey,
             estimationOptions: seriesList[created.seriesKey] || seriesList.fibonacci,
             reveal: false,

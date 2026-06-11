@@ -88,11 +88,12 @@ export interface RoomLimitDetails {
 
 export interface CreateRoomResponse {
   roomId: string;
+  participantId: string;
   sessionId: string;
   firebasePath: string;
   title: string;
   seriesKey: string;
-  participant: {
+  participant?: {
     participantId: string;
     role: 'moderator' | 'participant';
     displayName: string;

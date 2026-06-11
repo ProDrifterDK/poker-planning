@@ -28,6 +28,7 @@ class RoomParticipantResponse(BaseModel):
 
 class RoomCreateResponse(BaseModel):
     roomId: str
+    participantId: str
     sessionId: str
     firebasePath: str
     title: str

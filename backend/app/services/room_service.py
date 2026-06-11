@@ -210,6 +210,7 @@ class RoomService:
             "creatorPlan": snapshot.plan,
             "planKey": snapshot.plan_key,
             "title": room.title,
+            "active": True,
         }
         realtime_db.reference(f"rooms/{room.id}/metadata").update(metadata)
         realtime_db.reference(f"rooms/{room.id}/sessions/{session_id}").update(
@@ -230,6 +231,7 @@ class RoomService:
                 "firebaseUid": membership.firebase_uid,
             }
         )
+        realtime_db.reference(f"rooms/{room.id}/memberUids/{membership.firebase_uid}").set(True)
 
         firestore.client().collection("rooms").document(room.id).set(
             {

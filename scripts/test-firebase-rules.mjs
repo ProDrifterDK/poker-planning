@@ -24,7 +24,11 @@ const testEnv = await initializeTestEnvironment({
 
 try {
   const alice = testEnv.authenticatedContext('alice', { email: 'alice@example.com' });
+  const bob = testEnv.authenticatedContext('bob', { email: 'bob@example.com' });
+  const charlie = testEnv.authenticatedContext('charlie', { email: 'charlie@example.com' });
   const aliceDb = alice.database();
+  const bobDb = bob.database();
+  const charlieDb = charlie.database();
   const aliceFirestore = alice.firestore();
 
   await assertFails(
@@ -52,14 +56,87 @@ try {
   );
 
   await testEnv.withSecurityRulesDisabled(async (admin) => {
-    await set(ref(admin.database(), 'rooms/backend-room/participants/participant-alice'), {
+    const adminDb = admin.database();
+    await set(ref(adminDb, 'rooms/backend-room/metadata'), {
+      active: true,
+      creatorId: 'alice',
+      title: 'Backend-created room',
+    });
+    await set(ref(adminDb, 'rooms/backend-room/memberUids/alice'), true);
+    await set(ref(adminDb, 'rooms/backend-room/memberUids/bob'), true);
+    await set(ref(adminDb, 'rooms/backend-room/sessions/session-backend'), {
+      active: true,
+      reveal: false,
+      currentIssueId: null,
+      startedAt: 123456,
+    });
+    await set(ref(adminDb, 'rooms/backend-room/participants/participant-alice'), {
       firebaseUid: 'alice',
       participantId: 'participant-alice',
       role: 'moderator',
       active: true,
       name: 'Alice',
     });
+    await set(ref(adminDb, 'rooms/backend-room/participants/participant-bob'), {
+      firebaseUid: 'bob',
+      participantId: 'participant-bob',
+      role: 'participant',
+      active: true,
+      name: 'Bob',
+    });
   });
+
+  await assertFails(
+    update(ref(aliceDb, 'rooms/backend-room/metadata'), {
+      creatorPlan: 'enterprise',
+    })
+  );
+
+  await assertFails(
+    set(ref(aliceDb, 'rooms/backend-room/sessions/session-client'), {
+      active: true,
+      reveal: false,
+    })
+  );
+
+  await assertSucceeds(
+    update(ref(aliceDb, 'rooms/backend-room/sessions/session-backend'), {
+      reveal: true,
+      currentIssueId: 'issue-1',
+      timerEnabled: true,
+      timerDuration: 60,
+      timerStartedAt: 123999,
+    })
+  );
+
+  await assertFails(
+    update(ref(charlieDb, 'rooms/backend-room/sessions/session-backend'), {
+      reveal: false,
+    })
+  );
+
+  await assertSucceeds(
+    update(ref(bobDb, 'rooms/backend-room/sessions/session-backend'), {
+      reveal: false,
+      timerStartedAt: null,
+    })
+  );
+
+  await assertSucceeds(
+    update(ref(aliceDb, 'rooms/backend-room'), {
+      reveal: true,
+      currentIssueId: 'issue-1',
+      timerStartedAt: null,
+    })
+  );
+
+  await assertSucceeds(
+    set(ref(aliceDb, 'rooms/backend-room/issues/issue-1'), {
+      key: 'PROJ-1',
+      summary: 'Backend-member issue',
+      status: 'pending',
+    })
+  );
 
   await assertSucceeds(
     update(ref(aliceDb, 'rooms/backend-room/participants/participant-alice'), {
@@ -76,6 +153,16 @@ try {
       firebaseUid: 'alice',
       participantId: 'participant-alice',
       role: 'owner',
+    })
+  );
+
+  await assertSucceeds(
+    update(ref(bobDb, 'rooms/backend-room/participants/participant-bob'), {
+      active: false,
+      firebaseUid: 'bob',
+      participantId: 'participant-bob',
+      role: 'participant',
+      lastActive: 123457,
     })
   );
 

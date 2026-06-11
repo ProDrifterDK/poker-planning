@@ -61,6 +61,12 @@ jest.mock('firebase/database', () => {
 // Mock para src/lib/firebaseConfig.ts
 jest.mock('@/lib/firebaseConfig', () => {
   return {
+    auth: {
+      currentUser: {
+        uid: 'alice',
+        getIdToken: jest.fn(() => Promise.resolve('mock-firebase-token')),
+      },
+    },
     firestore: {
       type: 'firestore',
       app: {
