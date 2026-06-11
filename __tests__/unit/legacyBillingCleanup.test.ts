@@ -21,7 +21,7 @@ function loadNextBillingModules() {
   global.Headers = fetchPolyfill.Headers;
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { middleware } = require('../../middleware');
+  const { proxy } = require('../../src/proxy');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const createRoute = require('@/app/api/paypal/create-subscription/route');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -33,7 +33,7 @@ function loadNextBillingModules() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const webhookRoute = require('@/app/api/webhooks/paypal/route');
 
-  return { middleware, createRoute, executeRoute, detailsRoute, cancelRoute, webhookRoute };
+  return { proxy, createRoute, executeRoute, detailsRoute, cancelRoute, webhookRoute };
 }
 
 function makeRequest(pathname: string, locale = 'en') {
@@ -88,14 +88,17 @@ describe('legacy billing cleanup', () => {
     }
   });
 
-  it('redirects old static billing compatibility URLs to the localized subscription UI', () => {
-    const { middleware } = loadNextBillingModules();
+  it('redirects old static billing compatibility URLs through the Next 16 proxy convention', () => {
+    expect(fs.existsSync(path.join(projectRoot, 'middleware.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/proxy.ts'))).toBe(true);
 
-    const paypalRedirect = middleware(makeRequest('/paypal-pro-subscription-en.html', 'en') as never);
+    const { proxy } = loadNextBillingModules();
+
+    const paypalRedirect = proxy(makeRequest('/paypal-pro-subscription-en.html', 'en') as never);
     expect(paypalRedirect?.status).toBe(307);
     expect(paypalRedirect?.headers.get('location')).toBe('https://example.test/en/settings/subscription');
 
-    const statusRedirect = middleware(makeRequest('/subscription-status.html', 'es') as never);
+    const statusRedirect = proxy(makeRequest('/subscription-status.html', 'es') as never);
     expect(statusRedirect?.status).toBe(307);
     expect(statusRedirect?.headers.get('location')).toBe('https://example.test/es/settings/subscription');
   });

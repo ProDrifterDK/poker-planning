@@ -37,7 +37,7 @@ function getLocale(request: NextRequest): string {
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Compatibility-only legacy billing entry points. The static PayPal checkout

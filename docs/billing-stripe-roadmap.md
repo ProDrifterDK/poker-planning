@@ -69,7 +69,7 @@ For production, use Postgres on Railway. SQLite is only for local/test.
 - Updated `UserSubscription` type with `planKey`, `billingInterval`, provider IDs, and nullable `endDate`.
 - Disabled legacy PayPal API routes with explicit HTTP 410 responses.
 - Removed obsolete `src/lib/paypalSdk.ts`, `src/lib/paypalConfig.ts`, PayPal button/test components, PayPal browser type declarations, and static `public/paypal-*.html` / `public/subscription-status.html` pages.
-- Updated middleware so old static PayPal/status URLs redirect to the localized subscription settings page instead of serving browser-authoritative checkout/status pages.
+- Updated Next 16 `src/proxy.ts` compatibility routing so old static PayPal/status URLs redirect to the localized subscription settings page instead of serving browser-authoritative checkout/status pages.
 - Added `.env.example` for frontend billing/Firebase envs.
 - Updated lint script away from removed `next lint` command.
 
