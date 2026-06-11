@@ -48,6 +48,14 @@ describe('Room Store Integration', () => {
         displayName: 'Moderador',
       },
       limits: {
+        maxActiveRooms: 1,
+        maxParticipants: 5,
+      },
+      usage: {
+        activeRooms: 1,
+        activeParticipants: 1,
+      },
+      entitlement: {
         planKey: 'free',
         plan: 'free',
         limit: 1,

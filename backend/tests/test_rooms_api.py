@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
+from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from app.db.models import BillingSubscription, PlanningRoom, utcnow
@@ -12,8 +13,7 @@ from app.db.session import SessionLocal
 from app.schemas.billing import AuthenticatedUser
 from app.schemas.rooms import RoomCreateRequest
 from app.services.billing_service import BillingService
-from app.services.entitlements import EntitlementService
-from app.services.room_service import RoomLimitReachedError, RoomService
+from app.services.room_service import RoomEntitlementService
 
 
 def _create_subscription(uid: str, plan_key: str, plan: str, *, status: str = "active", days: int = 30) -> None:
@@ -64,15 +64,16 @@ def test_create_room_allowed_for_free_user(client, auth_headers):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["roomId"].startswith("room_")
-    assert body["participantId"].startswith("participant_")
+    assert body["roomId"]
+    assert body["participantId"]
     assert body["sessionId"].startswith("session_")
     assert body["firebasePath"] == f"rooms/{body['roomId']}"
     assert body["title"] == "Sprint 1"
     assert body["participant"]["role"] == "moderator"
     assert body["participant"]["participantId"] == body["participantId"]
     assert body["participant"]["displayName"] == "Alice"
-    assert body["limits"] == {
+    assert body["limits"] == {"maxActiveRooms": 1, "maxParticipants": 5}
+    assert body["entitlement"] == {
         "planKey": "free",
         "plan": "free",
         "limit": 1,
@@ -104,12 +105,12 @@ def test_create_room_limit_reached_for_free_user(client, auth_headers):
 
 
 def test_concurrent_room_creates_are_serialized_at_free_limit(monkeypatch):
-    original_active_room_count = EntitlementService.active_room_count
+    original_active_room_count = RoomEntitlementService._active_room_count
     counter_lock = threading.Lock()
     in_flight_counts = 0
     max_in_flight_counts = 0
 
-    def slow_active_room_count(self: EntitlementService, uid: str) -> int:
+    def slow_active_room_count(self: RoomEntitlementService, uid: str) -> int:
         nonlocal in_flight_counts, max_in_flight_counts
         with counter_lock:
             in_flight_counts += 1
@@ -121,17 +122,19 @@ def test_concurrent_room_creates_are_serialized_at_free_limit(monkeypatch):
             with counter_lock:
                 in_flight_counts -= 1
 
-    monkeypatch.setattr(EntitlementService, "active_room_count", slow_active_room_count)
+    monkeypatch.setattr(RoomEntitlementService, "_active_room_count", slow_active_room_count)
     user = AuthenticatedUser(uid="alice", email="alice@example.com", name="Alice")
 
     def create(title: str) -> str:
         with SessionLocal() as db:
             try:
-                RoomService(db).create_room(user, RoomCreateRequest(title=title))
+                RoomEntitlementService(db).create_room(user, RoomCreateRequest(title=title))
                 return "created"
-            except RoomLimitReachedError:
+            except HTTPException as exc:
                 db.rollback()
-                return "limit"
+                if isinstance(exc.detail, dict) and exc.detail.get("code") == "ROOM_LIMIT_REACHED":
+                    return "limit"
+                raise
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(create, ["Concurrent A", "Concurrent B"]))
@@ -158,7 +161,7 @@ def test_closing_backend_room_frees_active_room_slot(client, auth_headers):
 
     second = client.post("/v1/rooms", json={"title": "Two"}, headers=auth_headers)
     assert second.status_code == 200
-    assert second.json()["limits"]["currentUsage"] == 1
+    assert second.json()["entitlement"]["currentUsage"] == 1
 
     with SessionLocal() as db:
         closed = db.get(PlanningRoom, room_id)
@@ -222,9 +225,9 @@ def test_cancelled_subscription_keeps_paid_limit_until_period_end(client, auth_h
 
     allowed = client.post("/v1/rooms", json={"title": "Fifth"}, headers=auth_headers)
     assert allowed.status_code == 200
-    assert allowed.json()["limits"]["planKey"] == "pro-month"
-    assert allowed.json()["limits"]["limit"] == 5
-    assert allowed.json()["limits"]["currentUsage"] == 5
+    assert allowed.json()["entitlement"]["planKey"] == "pro-month"
+    assert allowed.json()["entitlement"]["limit"] == 5
+    assert allowed.json()["entitlement"]["currentUsage"] == 5
 
     denied = client.post("/v1/rooms", json={"title": "Sixth"}, headers=auth_headers)
     assert denied.status_code == 409

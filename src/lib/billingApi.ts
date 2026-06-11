@@ -99,12 +99,20 @@ export interface CreateRoomResponse {
     displayName: string;
   };
   limits: {
+    maxActiveRooms: number;
+    maxParticipants: number;
+  };
+  usage?: {
+    activeRooms: number;
+    activeParticipants: number;
+  };
+  entitlement?: {
     planKey: string;
     plan: string;
     limit: number;
     currentUsage: number;
     upgradeAvailable: boolean;
-    upgradePath: string;
+    upgradePath?: string | null;
   };
   metadata: Record<string, unknown>;
 }
