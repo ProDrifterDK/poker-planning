@@ -26,6 +26,7 @@ CURRENT_STATUSES = {"active", "trialing", "past_due"}
 INACTIVE_STATUSES = {"canceled", "incomplete", "pending", "failed", "suspended"}
 NORMALIZED_SUBSCRIPTION_STATUSES = CURRENT_STATUSES | INACTIVE_STATUSES
 ACTIVE_STATUSES = CURRENT_STATUSES
+LEGACY_SCHEDULED_CANCEL_STATUSES = {"canceled", "cancelled"}
 PUBLIC_BILLING_PROVIDERS = {"stripe", "paypal"}
 
 STRIPE_STATUS_ALIASES = {
@@ -46,6 +47,7 @@ PAYPAL_STATUS_ALIASES = {
     "approval_pending": "pending",
     "created": "pending",
     "pending": "pending",
+    "past_due": "past_due",
     "suspended": "suspended",
     "cancelled": "canceled",
     "canceled": "canceled",
@@ -237,6 +239,18 @@ class BillingService:
         self.db.flush()
         return customer
 
+    def _period_is_unexpired(self, current_period_end: datetime | None) -> bool:
+        return bool(current_period_end and _aware(current_period_end) > utcnow())
+
+    def _normalize_legacy_scheduled_cancel(self, subscription: BillingSubscription) -> None:
+        if (
+            subscription.status in LEGACY_SCHEDULED_CANCEL_STATUSES
+            and subscription.cancel_at_period_end
+            and self._period_is_unexpired(subscription.current_period_end)
+        ):
+            subscription.status = "active"
+            subscription.updated_at = utcnow()
+
     def current_subscription(self, uid: str) -> BillingSubscription | None:
         subscriptions = self.db.scalars(
             select(BillingSubscription)
@@ -245,6 +259,7 @@ class BillingService:
         ).all()
         now = utcnow()
         for subscription in subscriptions:
+            self._normalize_legacy_scheduled_cancel(subscription)
             if subscription.status in ACTIVE_STATUSES:
                 if subscription.current_period_end and _aware(subscription.current_period_end) < now:
                     continue
@@ -503,6 +518,16 @@ class BillingService:
             return False
         return True
 
+    def _can_degrade_existing_subscription_from_payment(
+        self, subscription: BillingSubscription | None
+    ) -> bool:
+        return bool(
+            subscription
+            and subscription.is_current
+            and subscription.status in ACTIVE_STATUSES
+            and self._period_is_unexpired(subscription.current_period_end)
+        )
+
     def _find_provider_subscription(
         self,
         provider: str,
@@ -759,7 +784,10 @@ class BillingService:
         if subscription and payment.subscription_id is None:
             payment.subscription_id = subscription.id
 
-        if provider_subscription_id:
+        should_update_subscription = status_value == "paid" or self._can_degrade_existing_subscription_from_payment(
+            subscription
+        )
+        if provider_subscription_id and should_update_subscription:
             existing_start = subscription.current_period_start if subscription else None
             existing_end = subscription.current_period_end if subscription else None
             subscription_status = "active" if status_value == "paid" else "past_due"
@@ -915,7 +943,10 @@ class BillingService:
             event_created_at=event_created_at,
             event_id=event_id,
         )
-        if provider_subscription_id:
+        should_update_subscription = status_value == "paid" or self._can_degrade_existing_subscription_from_payment(
+            subscription
+        )
+        if provider_subscription_id and should_update_subscription:
             subscription_status = "active" if status_value == "paid" else "past_due"
             if status_value == "pending":
                 subscription_status = "pending"

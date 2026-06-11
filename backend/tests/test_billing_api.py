@@ -525,6 +525,36 @@ def test_stripe_invoice_events_update_payment_history_and_recover_entitlements(c
     assert payment_count == 1
 
 
+def test_initial_stripe_failed_invoice_records_payment_without_paid_entitlement(client, auth_headers):
+    failed = client.post(
+        "/v1/webhooks/stripe",
+        json={
+            "id": "evt_initial_invoice_failed",
+            "created": 100,
+            "type": "invoice.payment_failed",
+            "data": {
+                "object": {
+                    "id": "in_initial_failed",
+                    "customer": "cus_initial_failed",
+                    "subscription": "sub_initial_failed",
+                    "amount_due": 2999,
+                    "currency": "usd",
+                    "created": 100,
+                    "metadata": {"firebase_uid": "alice", "plan_key": "pro-month"},
+                }
+            },
+        },
+    )
+
+    assert failed.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "free"
+    assert body["subscription"]["features"]["maxActiveRooms"] == 1
+    assert body["payments"][0]["status"] == "failed"
+    assert body["payments"][0]["provider"] == "stripe"
+    assert body["payments"][0]["providerInvoiceId"] == "in_initial_failed"
+
+
 def test_duplicate_stripe_invoice_event_does_not_duplicate_payment_history(client):
     event = {
         "id": "evt_invoice_duplicate_paid",
@@ -646,6 +676,106 @@ def test_cancel_at_period_end_preserves_entitlement_until_deleted_event(client, 
     )
     assert deleted.status_code == 200
     assert client.get("/v1/billing/me", headers=auth_headers).json()["subscription"]["plan"] == "free"
+
+
+def test_legacy_cancelled_status_with_future_period_keeps_grace_entitlement(client, auth_headers):
+    with SessionLocal() as db:
+        db.add(
+            BillingSubscription(
+                firebase_uid="alice",
+                plan_key="pro-month",
+                plan="pro",
+                billing_interval="month",
+                status="cancelled",
+                payment_method="stripe",
+                provider="stripe",
+                provider_customer_id="cus_legacy_cancelled",
+                provider_subscription_id="sub_legacy_cancelled",
+                current_period_start=datetime.now(timezone.utc) - timedelta(days=1),
+                current_period_end=datetime.now(timezone.utc) + timedelta(days=30),
+                cancel_at_period_end=True,
+                is_current=True,
+                raw_provider_object={"legacy": True},
+            )
+        )
+        db.commit()
+
+    subscription = client.get("/v1/billing/me", headers=auth_headers).json()["subscription"]
+
+    assert subscription["plan"] == "pro"
+    assert subscription["status"] == "active"
+    assert subscription["cancelAtPeriodEnd"] is True
+    assert subscription["autoRenew"] is False
+    assert subscription["features"]["maxActiveRooms"] == 5
+
+
+def test_paypal_initial_failed_payment_records_payment_without_paid_entitlement(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+
+    failed_payment = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-INITIAL-FAILED",
+            "event_type": "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-INITIAL-FAILED",
+                "billing_agreement_id": "I-PAYPAL-INITIAL-FAILED",
+                "invoice_id": "PAYPAL-INITIAL-FAILED-INVOICE",
+                "custom_id": metadata,
+                "amount": {"value": "29.99", "currency_code": "USD"},
+                "time": "2026-01-02T00:00:00Z",
+            },
+        },
+    )
+
+    assert failed_payment.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "free"
+    assert body["subscription"]["features"]["maxActiveRooms"] == 1
+    assert body["payments"][0]["status"] == "failed"
+    assert body["payments"][0]["provider"] == "paypal"
+    assert body["payments"][0]["providerInvoiceId"] == "PAYPAL-INITIAL-FAILED-INVOICE"
+
+
+def test_paypal_failed_payment_degrades_existing_subscription_to_past_due(client, auth_headers):
+    metadata = json.dumps({"firebase_uid": "alice", "plan_key": "pro-month"})
+    with SessionLocal() as db:
+        BillingService(db)._activate_subscription(
+            uid="alice",
+            plan_key="pro-month",
+            provider="paypal",
+            provider_checkout_session_id=None,
+            provider_subscription_id="I-PAYPAL-PAST-DUE",
+            provider_customer_id="PAYER-PAST-DUE",
+            raw_provider_object={"provider": "paypal"},
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=30),
+        )
+        db.commit()
+
+    failed_payment = client.post(
+        "/v1/webhooks/paypal",
+        json={
+            "id": "WH-PAYPAL-PAST-DUE",
+            "event_type": "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+            "create_time": "2026-01-02T00:00:00Z",
+            "resource": {
+                "id": "PAYPAL-PAST-DUE-PAYMENT",
+                "billing_agreement_id": "I-PAYPAL-PAST-DUE",
+                "invoice_id": "PAYPAL-PAST-DUE-INVOICE",
+                "custom_id": metadata,
+                "amount": {"value": "29.99", "currency_code": "USD"},
+                "time": "2026-01-02T00:00:00Z",
+            },
+        },
+    )
+
+    assert failed_payment.status_code == 200
+    body = client.get("/v1/billing/me", headers=auth_headers).json()
+    assert body["subscription"]["plan"] == "pro"
+    assert body["subscription"]["provider"] == "paypal"
+    assert body["subscription"]["status"] == "past_due"
+    assert body["payments"][0]["status"] == "failed"
 
 
 def test_paypal_subscription_and_payment_events_update_history_idempotently(client, auth_headers):
