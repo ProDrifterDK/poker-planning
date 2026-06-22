@@ -137,6 +137,22 @@ class Settings(BaseSettings):
             "missingRequiredEnv": [],
         }
 
+    def firebase_projection_status(self) -> dict[str, object]:
+        """Non-secret smoke status for Firebase Realtime Database room projection.
+
+        Only booleans are exposed so ops can confirm presence/absence of the
+        config blocks (project id, service account credentials, database URL)
+        without ever leaking credentials or connection strings.
+        """
+
+        return {
+            "projectConfigured": bool(self.firebase_project_id),
+            "serviceAccountConfigured": bool(
+                self.firebase_service_account_json or self.firebase_service_account_json_b64
+            ),
+            "realtimeDatabaseConfigured": bool(self.firebase_database_url),
+        }
+
     @model_validator(mode="after")
     def validate_environment(self) -> "Settings":
         if self.requires_provider_config:
@@ -152,6 +168,8 @@ class Settings(BaseSettings):
                     missing.append(env_name)
             if not (self.firebase_service_account_json or self.firebase_service_account_json_b64):
                 missing.append("FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_JSON_B64")
+            if not self.firebase_database_url:
+                missing.append("FIREBASE_DATABASE_URL")
 
             if self.billing_provider in PUBLIC_BILLING_PROVIDERS:
                 status = self.provider_config_status(self.billing_provider)

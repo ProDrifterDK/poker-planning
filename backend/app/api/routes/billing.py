@@ -40,6 +40,7 @@ def provider_status() -> dict[str, object]:
         "defaultPublicProvider": default_public_provider,
         "supportedProviders": settings.supported_providers,
         "providers": providers,
+        "firebase": settings.firebase_projection_status(),
         "environment": settings.app_env,
         "database": {
             "postgresConfigured": settings.normalized_database_url.startswith("postgresql+psycopg://"),

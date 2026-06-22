@@ -241,6 +241,49 @@ def test_production_configuration_rejects_fake_billing_and_e2e(monkeypatch):
         Settings()
 
 
+def test_staging_rejects_missing_firebase_database_url(monkeypatch):
+    # Regression: Railway had FIREBASE_PROJECT_ID + service account, but
+    # FIREBASE_DATABASE_URL was missing. App started, /readyz passed, and
+    # POST /v1/rooms later failed with 503 ENTITLEMENT_UNAVAILABLE because
+    # room projection could not reach Firebase Realtime Database. The
+    # provider-config guard must fail fast at boot.
+    monkeypatch.setenv("APP_ENV", "staging")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_x")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_MONTH", "price_pro_month")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_YEAR", "price_pro_year")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_MONTH", "price_ent_month")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.delenv("FIREBASE_DATABASE_URL", raising=False)
+
+    with pytest.raises(ValueError, match="FIREBASE_DATABASE_URL"):
+        Settings()
+
+
+def test_production_rejects_missing_firebase_database_url(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@example.com/db")
+    monkeypatch.setenv("BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("E2E_TEST_MODE", "false")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_x")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_MONTH", "price_pro_month")
+    monkeypatch.setenv("STRIPE_PRICE_PRO_YEAR", "price_pro_year")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_MONTH", "price_ent_month")
+    monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.delenv("FIREBASE_DATABASE_URL", raising=False)
+
+    with pytest.raises(ValueError, match="FIREBASE_DATABASE_URL"):
+        Settings()
+
+
 def test_staging_accepts_railway_postgres_url_with_psycopg_driver(monkeypatch):
     monkeypatch.setenv("APP_ENV", "staging")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
@@ -254,6 +297,7 @@ def test_staging_accepts_railway_postgres_url_with_psycopg_driver(monkeypatch):
     monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
 
     assert Settings().normalized_database_url == "postgresql+psycopg://user:pass@example.com/db"
 
@@ -271,6 +315,7 @@ def test_staging_requires_signed_stripe_webhooks(monkeypatch):
     monkeypatch.setenv("STRIPE_PRICE_ENTERPRISE_YEAR", "price_ent_year")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
     with pytest.raises(ValueError, match="STRIPE_WEBHOOK_SECRET"):
         Settings()
 
@@ -318,6 +363,7 @@ def test_production_accepts_paypal_provider_with_full_env(monkeypatch):
     monkeypatch.setenv("E2E_TEST_MODE", "false")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
     monkeypatch.setenv("PAYPAL_CLIENT_ID", "client_id_x")
     monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "client_secret_x")
     monkeypatch.setenv("PAYPAL_ENVIRONMENT", "live")
@@ -346,6 +392,7 @@ def test_production_paypal_requires_live_environment(monkeypatch):
     monkeypatch.setenv("E2E_TEST_MODE", "false")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
     monkeypatch.setenv("PAYPAL_CLIENT_ID", "client_id_x")
     monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "client_secret_x")
     monkeypatch.setenv("PAYPAL_ENVIRONMENT", "sandbox")
@@ -376,6 +423,21 @@ def test_providers_smoke_endpoint_reports_active_supported_and_default_providers
     assert body["supportedProviders"] == ["stripe", "paypal"]
     assert "environment" in body
     assert body["database"]["sqlite"] is True
+    # Non-secret Firebase projection smoke block (regression guard for the
+    # Railway incident where FIREBASE_DATABASE_URL was missing in production).
+    assert "firebase" in body
+    firebase_status = body["firebase"]
+    assert set(firebase_status) == {
+        "projectConfigured",
+        "serviceAccountConfigured",
+        "realtimeDatabaseConfigured",
+    }
+    for key, value in firebase_status.items():
+        assert isinstance(value, bool), f"firebase.{key} must be a bool, got {type(value).__name__}"
+    # Ensure we never leak raw credentials/URLs in this public smoke endpoint.
+    raw = response.text
+    for forbidden in ("firebase_project_id", "firebase_database_url", "firebase_service_account"):
+        assert forbidden not in raw
     for name in ("stripe", "paypal"):
         assert name in body["providers"]
         entry = body["providers"][name]
@@ -414,6 +476,66 @@ def test_provider_config_status_rejects_unknown_provider():
     assert result["provider"] == "bitcoin"
     assert result["configured"] is False
     assert result["plans"] == {}
+
+
+def test_firebase_projection_status_only_exposes_non_secret_booleans(monkeypatch):
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
+    get_settings.cache_clear()
+    try:
+        status = get_settings().firebase_projection_status()
+        assert status == {
+            "projectConfigured": True,
+            "serviceAccountConfigured": True,
+            "realtimeDatabaseConfigured": True,
+        }
+        # Defensive: booleans only, no values, no env var names.
+        for value in status.values():
+            assert isinstance(value, bool)
+        assert "firebase_database_url" not in status
+        assert "project" not in status
+    finally:
+        get_settings.cache_clear()
+
+
+def test_providers_smoke_endpoint_reflects_firebase_env_flags(client, monkeypatch):
+    # Regression guard: /v1/billing/providers must let ops confirm that
+    # FIREBASE_DATABASE_URL is present in non-local provider-config envs
+    # without ever exposing the raw value.
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
+    get_settings.cache_clear()
+    try:
+        body = client.get("/v1/billing/providers").json()
+        firebase_status = body["firebase"]
+        assert firebase_status["projectConfigured"] is True
+        assert firebase_status["serviceAccountConfigured"] is True
+        assert firebase_status["realtimeDatabaseConfigured"] is True
+        # The raw URL must never appear in the public response.
+        assert "https://project-default-rtdb.firebaseio.com" not in client.get("/v1/billing/providers").text
+    finally:
+        get_settings.cache_clear()
+
+
+def test_providers_smoke_endpoint_flags_missing_firebase_database_url(client, monkeypatch):
+    # Simulates the Railway incident: project + service account set, but
+    # FIREBASE_DATABASE_URL is missing. The smoke endpoint must report
+    # realtimeDatabaseConfigured=False so ops can spot the regression
+    # without reading secrets.
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.delenv("FIREBASE_DATABASE_URL", raising=False)
+    get_settings.cache_clear()
+    try:
+        body = client.get("/v1/billing/providers").json()
+        firebase_status = body["firebase"]
+        assert firebase_status["projectConfigured"] is True
+        assert firebase_status["serviceAccountConfigured"] is True
+        assert firebase_status["realtimeDatabaseConfigured"] is False
+    finally:
+        get_settings.cache_clear()
 
 
 def test_stripe_webhook_rejects_invalid_signature_when_secret_configured(client, monkeypatch):
@@ -826,6 +948,7 @@ def configure_staging_paypal_env(monkeypatch):
     monkeypatch.setenv("E2E_TEST_MODE", "false")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "project")
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"type":"service_account"}')
+    monkeypatch.setenv("FIREBASE_DATABASE_URL", "https://project-default-rtdb.firebaseio.com")
     monkeypatch.setenv("PAYPAL_CLIENT_ID", "paypal-client")
     monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "paypal-secret")
     monkeypatch.setenv("PAYPAL_ENVIRONMENT", "sandbox")
